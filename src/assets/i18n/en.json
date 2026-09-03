@@ -1,0 +1,23 @@
+{
+  "HEADER_SYSTEM_TITLE": "SUPPLIER MANAGEMENT SYSTEM",
+  "HEADER_CHANGE_PASSWORD": "Change Password",
+  "HEADER_LOGOUT": "Logout",
+  "HEADER_CONFIRM_LOGOUT_TITLE": "Confirm Logout",
+  "HEADER_CONFIRM_LOGOUT_MESSAGE": "Are you sure you want to logout?",
+  "HEADER_LOGOUT_YES": "Yes, Logout",
+  "HEADER_LOGOUT_NO": "No, Stay",
+  "HEADER_LANGUAGE": "Language",
+
+  "LOGIN_WELCOME_BACK": "Welcome Back",
+  "LOGIN_SIGN_IN_SUBTITLE": "Sign in to your account",
+  "LOGIN_EMAIL_PLACEHOLDER": "Email Address",
+  "LOGIN_EMAIL_REQUIRED": "Email is required.",
+  "LOGIN_EMAIL_INVALID": "Please enter a valid email address.",
+  "LOGIN_PASSWORD_PLACEHOLDER": "Password",
+  "LOGIN_PASSWORD_REQUIRED": "Password is required.",
+  "LOGIN_SIGN_IN_BUTTON": "Sign In",
+  "LOGIN_SIGNING_IN": "Signing in...",
+  "LOGIN_SUPPLIER_PROMPT": "Are you a supplier looking to work with us?",
+  "LOGIN_REGISTER_BUTTON": "Register as Supplier",
+  "LOGIN_FOOTER_RIGHTS": "All Rights Reserved."
+}

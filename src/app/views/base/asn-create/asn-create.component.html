@@ -1,0 +1,125 @@
+<c-container class="mt-4" fluid>
+  <c-row class="mb-4">
+    <c-col xs="12">
+      <c-card class="border-0 shadow-lg">
+        <div class="asn-header">
+          <c-card-body class="p-4">
+            <h3 class="text-white mb-1 fw-bold">
+              <i class="bi bi-truck me-2"></i>
+              Create Advance Shipping Notice
+            </h3>
+            <p class="text-white mb-0 opacity-90">
+              Tell the buyer what's shipping, how much, and when it's expected to arrive.
+            </p>
+          </c-card-body>
+        </div>
+      </c-card>
+    </c-col>
+  </c-row>
+
+  <c-row *ngIf="isLoadingPOs">
+    <c-col xs="12" class="text-center py-5">
+      <div class="spinner-border text-primary" role="status"></div>
+    </c-col>
+  </c-row>
+
+  <c-row *ngIf="!isLoadingPOs && loadError">
+    <c-col xs="12">
+      <c-alert color="warning">{{ loadError }}</c-alert>
+    </c-col>
+  </c-row>
+
+  <ng-container *ngIf="!isLoadingPOs && !loadError">
+    <c-row *ngIf="eligiblePOs.length === 0">
+      <c-col xs="12">
+        <c-alert color="info">
+          No approved purchase orders are ready for shipping right now. Once a PO is approved and sent to you, it'll show up here.
+        </c-alert>
+      </c-col>
+    </c-row>
+
+    <c-row *ngIf="eligiblePOs.length > 0">
+      <c-col xs="12" lg="10" xl="8">
+        <c-card class="border-0 shadow-sm mb-3">
+          <c-card-body>
+            <label class="form-label fw-bold small">Purchase Order</label>
+            <select class="form-select mb-3" [(ngModel)]="selectedPO" (ngModelChange)="onPOChange()">
+              <option [ngValue]="null">-- Select a PO --</option>
+              <option *ngFor="let po of eligiblePOs" [ngValue]="po">{{ po.poNumber }} — {{ po.buyerName }}</option>
+            </select>
+
+            <ng-container *ngIf="selectedPO">
+              <div class="row g-3 mb-3">
+                <div class="col-md-4">
+                  <label class="form-label fw-bold small">Shipment Date</label>
+                  <input type="date" class="form-control" [(ngModel)]="shipmentDate" />
+                </div>
+                <div class="col-md-4">
+                  <label class="form-label fw-bold small">Expected Delivery Date</label>
+                  <input type="date" class="form-control" [(ngModel)]="expectedDeliveryDate" />
+                </div>
+                <div class="col-md-4">
+                  <label class="form-label fw-bold small">Mode of Transport</label>
+                  <select class="form-select" [(ngModel)]="transportMode" (ngModelChange)="onTransportModeChange()">
+                    <option value="">-- Select --</option>
+                    <option *ngFor="let m of transportModes" [value]="m.value">{{ m.label }}</option>
+                  </select>
+                </div>
+                <div class="col-md-4">
+                  <label class="form-label fw-bold small">{{ carrierNameLabel }}</label>
+                  <input type="text" class="form-control" [(ngModel)]="carrierName" placeholder="e.g. BlueDart" />
+                </div>
+                <div class="col-md-4">
+                  <label class="form-label fw-bold small">{{ trackingNumberLabel }}</label>
+                  <input type="text" class="form-control" [(ngModel)]="trackingNumber" placeholder="Carrier tracking / reference number" />
+                </div>
+                <div class="col-md-4" *ngIf="showVehicleNumber">
+                  <label class="form-label fw-bold small">Vehicle Number</label>
+                  <input type="text" class="form-control" [(ngModel)]="vehicleNumber" placeholder="e.g. KA-01-AB-1234" />
+                </div>
+                <div class="col-md-4">
+                  <label class="form-label fw-bold small">Remarks</label>
+                  <input type="text" class="form-control" [(ngModel)]="remarks" placeholder="Any notes for the buyer" />
+                </div>
+              </div>
+
+              <label class="form-label fw-bold small mb-2">Items Being Shipped</label>
+              <div class="table-responsive">
+                <table class="table table-sm align-middle">
+                  <thead>
+                    <tr>
+                      <th>Item</th>
+                      <th class="text-end">Ordered Qty</th>
+                      <th class="text-end" style="width: 160px;">Shipped Qty</th>
+                      <th>UOM</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr *ngFor="let line of lines">
+                      <td>
+                        <div class="fw-semibold">{{ line.itemDescription }}</div>
+                        <div class="text-muted small" *ngIf="line.itemCode">{{ line.itemCode }}</div>
+                      </td>
+                      <td class="text-end">{{ line.orderedQuantity }}</td>
+                      <td>
+                        <input type="number" class="form-control form-control-sm text-end" [(ngModel)]="line.shippedQuantity" min="0" />
+                      </td>
+                      <td>{{ line.uom }}</td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+
+              <div class="d-flex justify-content-end mt-3">
+                <button cButton color="primary" (click)="submit()" [disabled]="isSubmitting">
+                  <span *ngIf="isSubmitting" class="spinner-border spinner-border-sm me-2"></span>
+                  {{ isSubmitting ? 'Submitting...' : 'Create ASN' }}
+                </button>
+              </div>
+            </ng-container>
+          </c-card-body>
+        </c-card>
+      </c-col>
+    </c-row>
+  </ng-container>
+</c-container>

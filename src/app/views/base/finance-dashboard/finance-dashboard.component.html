@@ -1,0 +1,475 @@
+<div class="container-fluid py-3">
+
+  <!-- Header -->
+  <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
+    <div>
+      <h3 class="fw-bold mb-0" style="color:#0d47a1;">💼 Finance Dashboard</h3>
+      <p class="text-muted small mb-0">Department Budget Management &amp; Budget Increase Requests</p>
+    </div>
+    <button class="btn btn-primary" (click)="openCreateForm()">
+      + Allocate Department Budget
+    </button>
+  </div>
+
+  <!-- Stats Cards -->
+  <div class="row g-3 mb-4" *ngIf="stats">
+    <div class="col-6 col-md-2">
+      <div class="card border-0 shadow-sm h-100 text-center">
+        <div class="card-body py-3">
+          <div class="text-primary fw-bold fs-4">{{ stats.totalDepartments }}</div>
+          <div class="text-muted" style="font-size:12px;">Departments</div>
+        </div>
+      </div>
+    </div>
+    <div class="col-6 col-md-2">
+      <div class="card border-0 shadow-sm h-100 text-center">
+        <div class="card-body py-3">
+          <div class="text-success fw-bold" style="font-size:15px;">{{ formatCurrency(stats.totalAllocated) }}</div>
+          <div class="text-muted" style="font-size:12px;">Total Allocated</div>
+        </div>
+      </div>
+    </div>
+    <div class="col-6 col-md-2">
+      <div class="card border-0 shadow-sm h-100 text-center">
+        <div class="card-body py-3">
+          <div class="text-warning fw-bold" style="font-size:15px;">{{ formatCurrency(stats.totalUtilized) }}</div>
+          <div class="text-muted" style="font-size:12px;">Total Utilized</div>
+        </div>
+      </div>
+    </div>
+    <div class="col-6 col-md-2">
+      <div class="card border-0 shadow-sm h-100 text-center">
+        <div class="card-body py-3">
+          <div class="text-info fw-bold" style="font-size:15px;">{{ formatCurrency(stats.totalRemaining) }}</div>
+          <div class="text-muted" style="font-size:12px;">Total Remaining</div>
+        </div>
+      </div>
+    </div>
+    <div class="col-6 col-md-2">
+      <div class="card border-0 shadow-sm h-100 text-center">
+        <div class="card-body py-3">
+          <div class="text-warning fw-bold fs-4">{{ pendingRequests.length }}</div>
+          <div class="text-muted" style="font-size:12px;">Pending Requests</div>
+        </div>
+      </div>
+    </div>
+    <div class="col-6 col-md-2">
+      <div class="card border-0 shadow-sm h-100 text-center">
+        <div class="card-body py-3">
+          <div class="fw-bold fs-4">
+            <span class="text-success">{{ approvedCount }}</span> /
+            <span class="text-danger">{{ rejectedCount }}</span>
+          </div>
+          <div class="text-muted" style="font-size:12px;">Approved / Rejected</div>
+        </div>
+      </div>
+    </div>
+    <div class="col-6 col-md-2">
+      <div class="card border-0 shadow-sm h-100 text-center">
+        <div class="card-body py-3">
+          <div class="text-success fw-bold fs-4">{{ readyToIncrease.length }}</div>
+          <div class="text-muted" style="font-size:12px;">Ready to Increase</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Tabs -->
+  <ul class="nav nav-tabs mb-3">
+    <li class="nav-item">
+      <button class="nav-link" [class.active]="activeTab==='overview'" (click)="setTab('overview')">
+        📊 Budget Overview
+      </button>
+    </li>
+    <li class="nav-item">
+      <button class="nav-link" [class.active]="activeTab==='requests'" (click)="setTab('requests')">
+        💰 Pending Requests
+        <span class="badge bg-warning text-dark ms-1" *ngIf="pendingRequests.length > 0">{{ pendingRequests.length }}</span>
+      </button>
+    </li>
+    <li class="nav-item">
+      <button class="nav-link" [class.active]="activeTab==='increase'" (click)="setTab('increase')">
+        ✅ Ready to Increase
+        <span class="badge bg-success ms-1" *ngIf="readyToIncrease.length > 0">{{ readyToIncrease.length }}</span>
+      </button>
+    </li>
+    <li class="nav-item">
+      <button class="nav-link" [class.active]="activeTab==='history'" (click)="setTab('history')">
+        📜 All Requests History
+      </button>
+    </li>
+  </ul>
+
+  <!-- ══════════ Budget Overview Tab ══════════ -->
+  <div *ngIf="activeTab === 'overview'">
+    <div class="mb-3" style="max-width:320px;">
+      <input type="text" class="form-control form-control-sm" placeholder="🔍 Search department or fiscal year..."
+        [(ngModel)]="searchText" (ngModelChange)="applyFilter()">
+    </div>
+    <div *ngIf="loading" class="text-center py-4"><div class="spinner-border text-primary"></div></div>
+    <div *ngIf="!loading && filteredBudgets.length === 0" class="alert alert-info">
+      No department budgets found. Click "Allocate Department Budget" to get started.
+    </div>
+    <div *ngIf="!loading && filteredBudgets.length > 0" class="table-responsive">
+      <table class="table table-hover align-middle">
+        <thead class="table-dark">
+          <tr>
+            <th>Department</th>
+            <th>Fiscal Year</th>
+            <th class="text-end">Initial</th>
+            <th class="text-end">Current</th>
+            <th class="text-end">Utilized</th>
+            <th class="text-end">Remaining</th>
+            <th class="text-end">Increased</th>
+            <th style="min-width:130px;">Utilization</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let b of filteredBudgets">
+            <td class="fw-semibold">
+              {{ b.departmentName }}
+              <div class="text-muted" style="font-size:11px;" *ngIf="b.locationName">
+                📍 {{ b.locationName }}<span *ngIf="b.city">, {{ b.city }}</span>
+              </div>
+            </td>
+            <td><span class="badge bg-secondary">{{ b.fiscalYear }}</span></td>
+            <td class="text-end small">{{ formatCurrency(b.initialBudget) }}</td>
+            <td class="text-end fw-semibold">{{ formatCurrency(b.currentBudget) }}</td>
+            <td class="text-end text-warning">{{ formatCurrency(b.totalUtilized) }}</td>
+            <td class="text-end fw-bold" [class.text-success]="b.remainingBudget > 0"
+              [class.text-danger]="b.remainingBudget <= 0">
+              {{ formatCurrency(b.remainingBudget) }}
+            </td>
+            <td class="text-end text-info small">{{ formatCurrency(b.totalIncreased) }}</td>
+            <td>
+              <div class="d-flex align-items-center gap-2">
+                <div class="progress flex-grow-1" style="height:8px;">
+                  <div class="progress-bar bg-{{ getUtilizationClass(b.utilizationPercent) }}"
+                    [style.width.%]="b.utilizationPercent"></div>
+                </div>
+                <small class="text-nowrap">{{ b.utilizationPercent | number:'1.0-0' }}%</small>
+              </div>
+            </td>
+            <td class="text-nowrap">
+              <button class="btn btn-outline-primary btn-sm me-1" (click)="openIncreaseForm(b)" title="Increase Budget">➕</button>
+              <button class="btn btn-outline-secondary btn-sm" (click)="openHistory(b)" title="View History">📜</button>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- ══════════ Pending Requests Tab ══════════ -->
+  <div *ngIf="activeTab === 'requests'">
+    <div *ngIf="pendingRequests.length === 0" class="alert alert-success">
+      ✅ No pending budget increase requests.
+    </div>
+    <div *ngIf="pendingRequests.length > 0" class="table-responsive">
+      <table class="table table-hover align-middle">
+        <thead class="table-dark">
+          <tr>
+            <th>Request No.</th>
+            <th>RFQ / PO</th>
+            <th>Department</th>
+            <th>Requested By</th>
+            <th class="text-end">Current Budget</th>
+            <th class="text-end">Remaining</th>
+            <th class="text-end">RFQ/PO Amount</th>
+            <th class="text-end">Requested</th>
+            <th>Reason</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let req of pendingRequests">
+            <td class="fw-bold text-primary text-nowrap">{{ req.requestNumber }}</td>
+            <td class="text-nowrap">
+              {{ req.rfqNumber || '—' }}
+              <div class="text-muted" style="font-size:11px;" *ngIf="req.poNumber">PO: {{ req.poNumber }}</div>
+            </td>
+            <td>{{ req.departmentName }}</td>
+            <td>{{ req.requestedByName }}<br><small class="text-muted">{{ req.requestedDate | date:'dd MMM yyyy' }}</small></td>
+            <td class="text-end">{{ formatCurrency(req.currentAllocatedBudget) }}</td>
+            <td class="text-end text-danger">{{ formatCurrency(req.remainingBudget) }}</td>
+            <td class="text-end">{{ formatCurrency(req.rfqRequiredAmount) }}</td>
+            <td class="text-end text-success fw-bold">{{ formatCurrency(req.requestedAdditionalAmount) }}</td>
+            <td style="max-width:180px;"><small class="text-muted">{{ req.reason }}</small></td>
+            <td class="text-nowrap">
+              <button class="btn btn-info btn-sm me-1" (click)="openAction(req, 'view')">👁 View</button>
+              <button class="btn btn-success btn-sm me-1" (click)="openAction(req, 'approve')">Proceed for Approval</button>
+              <button class="btn btn-danger btn-sm" (click)="openAction(req, 'reject')">✗ Reject</button>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- ══════════ Ready to Increase Tab ══════════ -->
+  <div *ngIf="activeTab === 'increase'">
+    <div *ngIf="readyToIncrease.length === 0" class="alert alert-secondary">
+      No requests are currently ready for a budget increase.
+    </div>
+    <div *ngIf="readyToIncrease.length > 0" class="table-responsive">
+      <table class="table table-hover align-middle">
+        <thead class="table-success">
+          <tr>
+            <th>Request No.</th>
+            <th>RFQ / PO</th>
+            <th>Department</th>
+            <th>Requested By</th>
+            <th class="text-end">Current Budget</th>
+            <th class="text-end">Increase Amount</th>
+            <th class="text-end">New Budget (after)</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let req of readyToIncrease">
+            <td class="fw-bold text-primary text-nowrap">{{ req.requestNumber }}</td>
+            <td class="text-nowrap">
+              {{ req.rfqNumber || '—' }}
+              <div class="text-muted" style="font-size:11px;" *ngIf="req.poNumber">PO: {{ req.poNumber }}</div>
+            </td>
+            <td>{{ req.departmentName }}</td>
+            <td>{{ req.requestedByName }}</td>
+            <td class="text-end">{{ formatCurrency(req.currentAllocatedBudget) }}</td>
+            <td class="text-end text-success fw-bold">{{ formatCurrency(req.requestedAdditionalAmount) }}</td>
+            <td class="text-end fw-bold">{{ formatCurrency(req.totalBudgetRequired) }}</td>
+            <td class="text-nowrap">
+              <button class="btn btn-info btn-sm me-1" (click)="openAction(req, 'view')">👁 View</button>
+              <button class="btn btn-success btn-sm" [disabled]="increasingBudgetId === req.id"
+                (click)="confirmIncreaseBudget(req)">
+                <span *ngIf="increasingBudgetId === req.id" class="spinner-border spinner-border-sm me-1"></span>
+                💰 Increase Budget
+              </button>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- ══════════ All Requests History Tab ══════════ -->
+  <div *ngIf="activeTab === 'history'">
+    <div *ngIf="allRequests.length === 0" class="alert alert-secondary">No budget increase requests yet.</div>
+    <div *ngIf="allRequests.length > 0" class="table-responsive">
+      <table class="table table-sm table-hover align-middle">
+        <thead class="table-light">
+          <tr>
+            <th>Request No.</th>
+            <th>RFQ / PO</th>
+            <th>Department</th>
+            <th>Requested By</th>
+            <th class="text-end">Requested Amount</th>
+            <th class="text-end">Approved Amount</th>
+            <th>Request Date</th>
+            <th>Finance Review</th>
+            <th>Final Approval</th>
+            <th>Status</th>
+            <th>Rejection Reason</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let r of allRequests">
+            <td class="fw-bold text-primary text-nowrap">{{ r.requestNumber }}</td>
+            <td class="text-nowrap">
+              {{ r.rfqNumber || '—' }}
+              <div class="text-muted" style="font-size:11px;" *ngIf="r.poNumber">PO: {{ r.poNumber }}</div>
+            </td>
+            <td>{{ r.departmentName }}</td>
+            <td class="small">{{ r.requestedByName }}</td>
+            <td class="text-end">{{ formatCurrency(r.requestedAdditionalAmount) }}</td>
+            <td class="text-end">{{ r.finalApprovedAmount ? formatCurrency(r.finalApprovedAmount) : '—' }}</td>
+            <td class="small text-nowrap">{{ r.requestedDate | date:'dd MMM yy' }}</td>
+            <td class="small text-nowrap">{{ r.financeReviewedDate ? (r.financeReviewedDate | date:'dd MMM yy') : '—' }}</td>
+            <td class="small text-nowrap">{{ r.finalApprovalDate ? (r.finalApprovalDate | date:'dd MMM yy') : '—' }}</td>
+            <td><span class="badge bg-{{ getStatusClass(r.status) }}">{{ formatStatus(r.status) }}</span></td>
+            <td class="small text-danger">{{ r.rejectionReason || '—' }}</td>
+            <td><button class="btn btn-outline-info btn-sm" (click)="openAction(r, 'view')">👁</button></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- ══════════ Create Budget Modal ══════════ -->
+  <div *ngIf="showCreateForm" class="position-fixed top-0 start-0 w-100 h-100 d-flex align-items-center justify-content-center"
+    style="background:rgba(0,0,0,0.5);z-index:1055;">
+    <div class="card shadow-lg" style="width:480px;max-width:95vw;">
+      <div class="card-header d-flex justify-content-between align-items-center bg-primary text-white">
+        <strong>Allocate Department Budget</strong>
+        <button type="button" class="btn-close btn-close-white" (click)="closeCreateForm()"></button>
+      </div>
+      <div class="card-body">
+        <div class="alert alert-danger py-2 small" *ngIf="createError">{{ createError }}</div>
+        <div class="alert alert-success py-2 small" *ngIf="createSuccess">{{ createSuccess }}</div>
+        <div class="mb-3">
+          <label class="form-label fw-semibold">Department <span class="text-danger">*</span></label>
+          <select class="form-select" [(ngModel)]="createForm.departmentId">
+            <option value="">— Select Department —</option>
+            <option *ngFor="let d of departments" [value]="d.id">{{ d.displayLabel || d.departmentName }}</option>
+          </select>
+          <small class="text-muted" *ngIf="departments.length === 0">
+            No departments found for this company. Create departments first under Buyer Management.
+          </small>
+        </div>
+        <div class="mb-3">
+          <label class="form-label fw-semibold">Fiscal Year</label>
+          <input type="text" class="form-control" [(ngModel)]="createForm.fiscalYear"
+            placeholder="e.g. 2026-27 (blank = current FY)">
+        </div>
+        <div class="mb-3">
+          <label class="form-label fw-semibold">Initial Budget Amount (₹) <span class="text-danger">*</span></label>
+          <input type="number" class="form-control" [(ngModel)]="createForm.initialAmount"
+            placeholder="e.g. 1000000" min="1">
+        </div>
+        <div class="mb-3">
+          <label class="form-label fw-semibold">Notes</label>
+          <textarea class="form-control" rows="2" [(ngModel)]="createForm.notes"></textarea>
+        </div>
+        <div class="d-flex gap-2 justify-content-end">
+          <button class="btn btn-outline-secondary" (click)="closeCreateForm()">Cancel</button>
+          <button class="btn btn-primary" (click)="submitCreateBudget()" [disabled]="creating">
+            <span *ngIf="creating" class="spinner-border spinner-border-sm me-1"></span>
+            {{ creating ? 'Allocating...' : 'Allocate Budget' }}
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════ Increase Budget Modal ══════════ -->
+  <div *ngIf="showIncreaseForm && increaseTarget" class="position-fixed top-0 start-0 w-100 h-100 d-flex align-items-center justify-content-center"
+    style="background:rgba(0,0,0,0.5);z-index:1055;">
+    <div class="card shadow-lg" style="width:440px;max-width:95vw;">
+      <div class="card-header d-flex justify-content-between align-items-center bg-success text-white">
+        <strong>Increase Budget — {{ increaseTarget.departmentName }}</strong>
+        <button type="button" class="btn-close btn-close-white" (click)="closeIncreaseForm()"></button>
+      </div>
+      <div class="card-body">
+        <div class="alert alert-danger py-2 small" *ngIf="increaseError">{{ increaseError }}</div>
+        <div class="small text-muted mb-3">
+          Current Budget: <strong>{{ formatCurrency(increaseTarget.currentBudget) }}</strong> |
+          Remaining: <strong>{{ formatCurrency(increaseTarget.remainingBudget) }}</strong>
+        </div>
+        <div class="mb-3">
+          <label class="form-label fw-semibold">Increase Amount (₹) <span class="text-danger">*</span></label>
+          <input type="number" class="form-control" [(ngModel)]="increaseForm.amount" min="1">
+        </div>
+        <div class="mb-3">
+          <label class="form-label fw-semibold">Reason <span class="text-danger">*</span></label>
+          <textarea class="form-control" rows="2" [(ngModel)]="increaseForm.reason"></textarea>
+        </div>
+        <div class="d-flex gap-2 justify-content-end">
+          <button class="btn btn-outline-secondary" (click)="closeIncreaseForm()">Cancel</button>
+          <button class="btn btn-success" (click)="submitIncrease()" [disabled]="increasing">
+            <span *ngIf="increasing" class="spinner-border spinner-border-sm me-1"></span>
+            {{ increasing ? 'Updating...' : 'Increase Budget' }}
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════ Budget History Modal ══════════ -->
+  <div *ngIf="showHistoryModal && historyBudget" class="position-fixed top-0 start-0 w-100 h-100 d-flex align-items-center justify-content-center"
+    style="background:rgba(0,0,0,0.5);z-index:1055;">
+    <div class="card shadow-lg" style="width:760px;max-width:95vw;max-height:85vh;overflow:auto;">
+      <div class="card-header d-flex justify-content-between align-items-center bg-dark text-white">
+        <strong>Budget History — {{ historyBudget.departmentName }} ({{ historyBudget.fiscalYear }})</strong>
+        <button type="button" class="btn-close btn-close-white" (click)="closeHistory()"></button>
+      </div>
+      <div class="card-body">
+        <div *ngIf="budgetHistory.length === 0" class="alert alert-secondary">No history records yet.</div>
+        <table class="table table-sm align-middle" *ngIf="budgetHistory.length > 0">
+          <thead class="table-light">
+            <tr>
+              <th>Date</th><th>Type</th><th class="text-end">Change</th>
+              <th class="text-end">Before</th><th class="text-end">After</th><th>By</th><th>Reason</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let h of budgetHistory">
+              <td class="small text-nowrap">{{ h.createdAt | date:'dd MMM yy HH:mm' }}</td>
+              <td><span class="badge bg-{{ getChangeTypeClass(h.changeType) }}">{{ h.changeType }}</span></td>
+              <td class="text-end fw-semibold">{{ formatCurrency(h.changeAmount) }}</td>
+              <td class="text-end small">{{ formatCurrency(h.budgetBefore) }}</td>
+              <td class="text-end small">{{ formatCurrency(h.budgetAfter) }}</td>
+              <td class="small">{{ h.changedByName }}</td>
+              <td class="small text-muted">{{ h.reason }}</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════ Approve/Reject/View Request Modal ══════════ -->
+  <div *ngIf="showActionModal && actionRequest" class="position-fixed top-0 start-0 w-100 h-100 d-flex align-items-center justify-content-center"
+    style="background:rgba(0,0,0,0.5);z-index:1055;">
+    <div class="card shadow-lg" style="width:480px;max-width:95vw;max-height:85vh;overflow:auto;">
+      <div class="card-header d-flex justify-content-between align-items-center text-white"
+        [class.bg-success]="actionType === 'approve'" [class.bg-danger]="actionType === 'reject'"
+        [class.bg-info]="actionType === 'view'">
+        <strong>
+          {{ actionType === 'approve' ? 'Proceed for Approval' : actionType === 'reject' ? '✗ Reject' : '👁 Request Details' }}
+          — {{ actionRequest.requestNumber }}
+        </strong>
+        <button type="button" class="btn-close btn-close-white" (click)="closeAction()"></button>
+      </div>
+      <div class="card-body">
+        <div class="alert alert-danger py-2 small" *ngIf="actionError">{{ actionError }}</div>
+
+        <!-- Full audit details, always shown -->
+        <div class="small mb-3">
+          <div><strong>RFQ:</strong> {{ actionRequest.rfqNumber || '—' }}</div>
+          <div *ngIf="actionRequest.poNumber"><strong>PO:</strong> {{ actionRequest.poNumber }}</div>
+          <div><strong>Department:</strong> {{ actionRequest.departmentName }}</div>
+          <div><strong>Current Allocated Budget:</strong> {{ formatCurrency(actionRequest.currentAllocatedBudget) }}</div>
+          <div><strong>Current Utilized Budget:</strong> {{ formatCurrency(actionRequest.currentUtilizedBudget) }}</div>
+          <div><strong>Remaining Budget:</strong> {{ formatCurrency(actionRequest.remainingBudget) }}</div>
+          <div><strong>RFQ/PO Required Amount:</strong> {{ formatCurrency(actionRequest.rfqRequiredAmount) }}</div>
+          <div><strong>Requested Additional:</strong> {{ formatCurrency(actionRequest.requestedAdditionalAmount) }}</div>
+          <div><strong>Total Budget Required:</strong> {{ formatCurrency(actionRequest.totalBudgetRequired) }}</div>
+          <div><strong>Requested By:</strong> {{ actionRequest.requestedByName }} ({{ actionRequest.requestedByEmail }})</div>
+          <div><strong>Requested Date:</strong> {{ actionRequest.requestedDate | date:'dd MMM yyyy HH:mm' }}</div>
+          <div><strong>Reason:</strong> {{ actionRequest.reason }}</div>
+          <div><strong>Status:</strong> <span class="badge bg-{{ getStatusClass(actionRequest.status) }}">{{ formatStatus(actionRequest.status) }}</span></div>
+          <div *ngIf="actionRequest.financeReviewerName"><strong>Finance Reviewer:</strong> {{ actionRequest.financeReviewerName }}</div>
+          <div *ngIf="actionRequest.financeComments"><strong>Finance Comments:</strong> {{ actionRequest.financeComments }}</div>
+          <div *ngIf="actionRequest.finalApprovedAmount"><strong>Final Approved Amount:</strong> {{ formatCurrency(actionRequest.finalApprovedAmount) }}</div>
+          <div *ngIf="actionRequest.finalApprovalDate"><strong>Final Approval Date:</strong> {{ actionRequest.finalApprovalDate | date:'dd MMM yyyy HH:mm' }}</div>
+          <div *ngIf="actionRequest.rejectionReason" class="text-danger"><strong>Rejection Reason:</strong> {{ actionRequest.rejectionReason }}</div>
+        </div>
+
+        <div *ngIf="actionType === 'approve'" class="alert alert-info py-2 small">
+          ℹ️ "Proceed for Approval" sends this request into the <strong>existing approval hierarchy</strong>.
+          Finance does not increase the budget from this step — the budget is only increased later,
+          after every approver has signed off, via the separate "Increase Budget" action.
+        </div>
+
+        <div class="mb-3" *ngIf="actionType !== 'view'">
+          <label class="form-label fw-semibold">
+            {{ actionType === 'approve' ? 'Comments (optional)' : 'Rejection Reason' }}
+            <span *ngIf="actionType === 'reject'" class="text-danger">*</span>
+          </label>
+          <textarea class="form-control" rows="3" [(ngModel)]="actionComments"></textarea>
+        </div>
+
+        <div class="d-flex gap-2 justify-content-end">
+          <button class="btn btn-outline-secondary" (click)="closeAction()">{{ actionType === 'view' ? 'Close' : 'Cancel' }}</button>
+          <button *ngIf="actionType !== 'view'" class="btn" [class.btn-success]="actionType === 'approve'" [class.btn-danger]="actionType === 'reject'"
+            (click)="submitAction()" [disabled]="actionSubmitting">
+            <span *ngIf="actionSubmitting" class="spinner-border spinner-border-sm me-1"></span>
+            {{ actionSubmitting ? 'Processing...' : (actionType === 'approve' ? 'Proceed for Approval' : 'Reject Request') }}
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>

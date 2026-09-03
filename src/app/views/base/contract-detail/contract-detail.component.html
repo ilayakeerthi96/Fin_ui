@@ -1,0 +1,206 @@
+<c-container class="mt-4" fluid>
+  <c-row class="mb-4">
+    <c-col xs="12">
+      <c-card class="border-0 shadow-lg">
+        <div class="contract-header">
+          <c-card-body class="p-4">
+            <h3 class="text-white mb-1 fw-bold">
+              <i class="bi bi-file-earmark-text me-2"></i>
+              {{ contract?.title || 'Contract' }}
+            </h3>
+            <p class="text-white mb-0 opacity-90" *ngIf="contract">
+              {{ contract.consultantCompanyName }} &harr; {{ buyerCompanyName }}
+            </p>
+          </c-card-body>
+        </div>
+      </c-card>
+    </c-col>
+  </c-row>
+
+  <c-row *ngIf="isLoading">
+    <c-col xs="12" class="text-center py-5">
+      <div class="spinner-border text-primary" role="status"></div>
+    </c-col>
+  </c-row>
+
+  <c-row *ngIf="!isLoading && loadError">
+    <c-col xs="12">
+      <c-alert color="warning">{{ loadError }}</c-alert>
+      <button cButton color="secondary" (click)="goBack()"><i class="bi bi-arrow-left me-1"></i> Back</button>
+    </c-col>
+  </c-row>
+
+  <ng-container *ngIf="!isLoading && !loadError && contract">
+    <c-row class="mb-3">
+      <c-col xs="12">
+        <c-card class="border-0 shadow-sm">
+          <c-card-body>
+            <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-3">
+              <c-badge [color]="statusColor(contract.status)" class="fs-6 px-3 py-2">{{ contract.status }}</c-badge>
+              <div class="d-flex gap-2">
+                <button cButton color="primary" variant="outline" size="sm" (click)="previewPdf()">
+                  <i class="bi bi-file-earmark-text me-1"></i> View Full Document
+                </button>
+                <button cButton color="dark" variant="outline" size="sm" (click)="downloadPdf()">
+                  <i class="bi bi-download me-1"></i> Download PDF
+                </button>
+              </div>
+            </div>
+
+            <div class="row g-3">
+              <div class="col-md-6">
+                <div class="text-muted small">Consultant (Supplier)</div>
+                <div class="fw-semibold">{{ contract.consultantCompanyName }}</div>
+                <div class="small text-muted">{{ contract.consultantAddress }}</div>
+              </div>
+              <div class="col-md-6">
+                <div class="text-muted small">Client (Buyer)</div>
+                <div class="fw-semibold">{{ buyerCompanyName }}</div>
+              </div>
+              <div class="col-md-4">
+                <div class="text-muted small">Agreement Date</div>
+                <div>{{ contract.agreementDate }}</div>
+              </div>
+              <div class="col-md-4" *ngIf="contract.expiryDate">
+                <div class="text-muted small">Expiry Date</div>
+                <div>{{ contract.expiryDate }}</div>
+              </div>
+            </div>
+          </c-card-body>
+        </c-card>
+      </c-col>
+    </c-row>
+
+    <!-- Approval status -->
+    <c-row class="mb-3" *ngIf="contract.status !== 'DRAFT'">
+      <c-col xs="12">
+        <c-card class="border-0 shadow-sm">
+          <c-card-body>
+            <h6 class="fw-bold mb-2"><i class="bi bi-check2-square me-1"></i> Internal Approval</h6>
+            <div *ngIf="contract.status === 'PENDING_APPROVAL'" class="text-muted small">Awaiting internal approval.</div>
+            <div *ngIf="contract.approvedByName" class="small">
+              Approved by <strong>{{ contract.approvedByName }}</strong> ({{ contract.approvedByRole }}) on {{ contract.approvedAt | date:'medium' }}
+              <div *ngIf="contract.approvalComments" class="text-muted">"{{ contract.approvalComments }}"</div>
+            </div>
+            <div *ngIf="contract.status === 'REJECTED'" class="small text-danger">
+              Rejected by <strong>{{ contract.rejectedByName }}</strong> on {{ contract.rejectedAt | date:'medium' }}
+              <div>"{{ contract.rejectionComments }}"</div>
+            </div>
+            <div *ngIf="isReturnedForRevision" class="small">
+              <div class="alert alert-warning py-2 mb-2">
+                <i class="bi bi-arrow-return-left me-1"></i>
+                <strong>More information requested</strong> by {{ contract.returnedByName }}
+                ({{ contract.returnedByRole }}) on {{ contract.returnedAt | date:'medium' }}
+              </div>
+              <div class="mb-2">"{{ contract.returnComments }}"</div>
+
+              <div class="attachment-preview-grid mb-2" *ngIf="returnAttachments.length > 0">
+                <a *ngFor="let att of returnAttachments" [href]="att.url" target="_blank" class="attachment-preview-item" [title]="att.filename">
+                  <img *ngIf="att.isImage" [src]="att.url" class="attachment-preview-thumb" [alt]="att.filename" />
+                  <div *ngIf="!att.isImage" class="attachment-preview-icon">
+                    <i class="bi bi-file-earmark-text"></i>
+                  </div>
+                  <div class="attachment-preview-name">{{ att.filename }}</div>
+                </a>
+              </div>
+
+              <div class="text-muted mt-2" *ngIf="isBuyer">
+                Update the contract details as needed, then resubmit for approval below.
+              </div>
+            </div>
+          </c-card-body>
+        </c-card>
+      </c-col>
+    </c-row>
+
+    <!-- Signatures -->
+    <c-row class="mb-3" *ngIf="['APPROVED','AWAITING_SIGNATURES','FULLY_SIGNED'].includes(contract.status)">
+      <c-col xs="12" md="6" class="mb-3 mb-md-0">
+        <c-card class="border-0 shadow-sm h-100">
+          <c-card-body>
+            <h6 class="fw-bold mb-2">Consultant Signature</h6>
+            <div *ngIf="contract.supplierSignedAt" class="text-success small">
+              <i class="bi bi-check-circle-fill me-1"></i>
+              Signed by {{ contract.supplierSignedByName }} ({{ contract.supplierSignedByTitle }})<br/>
+              {{ contract.supplierSignedAt | date:'medium' }}
+            </div>
+            <div *ngIf="!contract.supplierSignedAt" class="text-muted small">Not yet signed.</div>
+            <button *ngIf="canSignAsSupplier" cButton color="primary" size="sm" class="mt-2" (click)="openSignModal('supplier')">
+              <i class="bi bi-pen me-1"></i> Sign as Supplier
+            </button>
+          </c-card-body>
+        </c-card>
+      </c-col>
+      <c-col xs="12" md="6">
+        <c-card class="border-0 shadow-sm h-100">
+          <c-card-body>
+            <h6 class="fw-bold mb-2">Client Signature</h6>
+            <div *ngIf="contract.buyerSignedAt" class="text-success small">
+              <i class="bi bi-check-circle-fill me-1"></i>
+              Signed by {{ contract.buyerSignedByName }} ({{ contract.buyerSignedByTitle }})<br/>
+              {{ contract.buyerSignedAt | date:'medium' }}
+            </div>
+            <div *ngIf="!contract.buyerSignedAt" class="text-muted small">Not yet signed.</div>
+            <button *ngIf="canSignAsBuyer" cButton color="primary" size="sm" class="mt-2" (click)="openSignModal('buyer')">
+              <i class="bi bi-pen me-1"></i> Sign as Buyer
+            </button>
+          </c-card-body>
+        </c-card>
+      </c-col>
+    </c-row>
+
+    <c-row>
+      <c-col xs="12" class="d-flex justify-content-between mb-5">
+        <button cButton color="secondary" (click)="goBack()">
+          <i class="bi bi-arrow-left me-1"></i> Back
+        </button>
+        <button *ngIf="canSubmitForApproval" cButton color="success" (click)="submitForApproval()" [disabled]="isSubmitting">
+          <span *ngIf="isSubmitting" class="spinner-border spinner-border-sm me-2"></span>
+          {{ isReturnedForRevision ? 'Resubmit for Approval' : 'Submit for Approval' }}
+        </button>
+      </c-col>
+    </c-row>
+  </ng-container>
+</c-container>
+
+<!-- Click-to-sign modal (plain Bootstrap markup, not CoreUI c-modal - see app.config.ts
+     comment: c-modal's animation trigger is broken on this Angular/CoreUI version combo
+     and leaves the dialog permanently invisible; this pattern is proven working
+     elsewhere in the app, e.g. budget-approvals.component.html) -->
+<div class="modal fade" [class.show]="showSignModal" [style.display]="showSignModal ? 'block' : 'none'"
+     tabindex="-1" style="background-color: rgba(0,0,0,.5);">
+  <div class="modal-dialog modal-dialog-centered modal-sm">
+    <div class="modal-content" *ngIf="showSignModal">
+      <div class="modal-header">
+        <h5 class="modal-title"><i class="bi bi-pen me-2"></i> Sign Contract</h5>
+        <button type="button" class="btn-close" (click)="closeSignModal()" [disabled]="isSubmitting"></button>
+      </div>
+      <div class="modal-body">
+        <p class="small text-muted">
+          This is a click-to-sign electronic signature: your typed name/title and the time of signing are recorded
+          as your acceptance of this agreement.
+        </p>
+        <div class="mb-2">
+          <label class="form-label small fw-bold">Full Name <span class="text-danger">*</span></label>
+          <input type="text" class="form-control" [(ngModel)]="signName" [ngModelOptions]="{standalone: true}" />
+        </div>
+        <div class="mb-2">
+          <label class="form-label small fw-bold">Title / Designation</label>
+          <input type="text" class="form-control" [(ngModel)]="signTitle" [ngModelOptions]="{standalone: true}" />
+        </div>
+        <div class="form-check mt-3">
+          <input type="checkbox" class="form-check-input" id="signAgree" [(ngModel)]="signAgree" [ngModelOptions]="{standalone: true}" />
+          <label class="form-check-label small" for="signAgree">I have read and agree to the terms of this Master Service Agreement.</label>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" (click)="closeSignModal()" [disabled]="isSubmitting">Cancel</button>
+        <button type="button" class="btn btn-success" (click)="confirmSign()" [disabled]="isSubmitting || !signName.trim() || !signAgree">
+          <span *ngIf="isSubmitting" class="spinner-border spinner-border-sm me-2"></span>
+          Confirm Signature
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+<div class="modal-backdrop fade show" *ngIf="showSignModal"></div>

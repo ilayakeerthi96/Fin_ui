@@ -1,0 +1,257 @@
+<div class="sc-page">
+
+  <!-- ═══════════════ TOP BAR ═══════════════ -->
+  <div class="sc-topbar">
+    <div>
+      <div class="topbar-title-main">
+        <i class="bi bi-calendar3 me-2"></i>Service Planner
+      </div>
+      <div class="topbar-sub">
+        Service activity planned vs actually delivered between
+        {{ isSupplierMode ? 'you and your buyer' : 'you and your supplier' }} —
+        {{ isMultiYearView ? financialYear : 'financial year ' + financialYear }}
+      </div>
+    </div>
+    <div class="sc-topbar-controls">
+      <div *ngIf="!isSupplierMode">
+        <label class="sc-label">Supplier</label>
+        <select class="sc-input" [(ngModel)]="supplierId" (change)="onSupplierChange()">
+          <option *ngFor="let s of suppliers" [ngValue]="s.supplierId">{{ s.supplierName }}</option>
+        </select>
+      </div>
+      <div *ngIf="!isMultiYearView">
+        <label class="sc-label">Financial Year</label>
+        <select class="sc-input" [(ngModel)]="fyStartYear" (change)="onYearChange()">
+          <option *ngFor="let y of fyOptions" [ngValue]="y">{{ y }}–{{ (y + 1) % 100 }}</option>
+        </select>
+      </div>
+      <div>
+        <label class="sc-label">&nbsp;</label>
+        <button type="button" class="btn-sc-multiyear" [disabled]="isLoading" (click)="toggleMultiYearView()"
+                title="Every year of service history in one table — for a manager review">
+          <i class="bi" [ngClass]="isMultiYearView ? 'bi-calendar-week' : 'bi-collection'"></i>
+          {{ isMultiYearView ? 'Back to Single Year' : 'View All Years' }}
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <div class="sc-alert sc-alert-error" *ngIf="errorMessage">
+    <i class="bi bi-exclamation-triangle me-2"></i>{{ errorMessage }}
+    <button class="sc-alert-close" (click)="errorMessage = ''"><i class="bi bi-x-lg"></i></button>
+  </div>
+  <div class="sc-alert sc-alert-success" *ngIf="successMessage">
+    <i class="bi bi-check-circle me-2"></i>{{ successMessage }}
+    <button class="sc-alert-close" (click)="successMessage = ''"><i class="bi bi-x-lg"></i></button>
+  </div>
+
+  <!-- ═══════════════ SERVICE CONTRACT CONTEXT ═══════════════ -->
+  <div class="sc-context" *ngIf="serviceContext">
+    <div class="sc-context-main">
+      <div class="sc-context-block">
+        <div class="sc-context-label">Service Frequency</div>
+        <div class="sc-context-value">
+          <i class="bi bi-arrow-repeat me-1"></i>{{ serviceContext.frequencyLabel }}
+        </div>
+      </div>
+      <div class="sc-context-block sc-context-scope">
+        <div class="sc-context-label">Service Scope</div>
+        <div class="sc-context-value" *ngIf="serviceContext.serviceScope?.length">
+          <span class="sc-scope-chip" *ngFor="let s of serviceContext.serviceScope">{{ s }}</span>
+        </div>
+        <div class="sc-context-value sc-context-muted" *ngIf="!serviceContext.serviceScope?.length">
+          No service lines recorded yet — they appear once a Service Entry Sheet exists.
+        </div>
+      </div>
+    </div>
+    <button class="btn-sc-plan" *ngIf="canEdit && serviceContext.schedulable && !isMultiYearView"
+            [disabled]="isAutoPlanning" (click)="autoPlanVisits()"
+            title="Tick the Scheduled Service Visit row at the agreed interval across this year">
+      <i class="bi" [ngClass]="isAutoPlanning ? 'bi-arrow-repeat spin' : 'bi-magic'"></i>
+      {{ isAutoPlanning ? 'Planning…' : 'Auto-plan visits' }}
+    </button>
+  </div>
+
+  <!-- ═══════════════ YEARLY STATUS SUMMARY ═══════════════ -->
+  <div class="sc-stats" *ngIf="summary">
+    <div class="sc-stat-card">
+      <div class="sc-stat-label">Planned</div>
+      <div class="sc-stat-num">{{ summary.plannedCount }}</div>
+    </div>
+    <div class="sc-stat-card sc-stat-done">
+      <div class="sc-stat-label">Completed</div>
+      <div class="sc-stat-num">{{ summary.completedCount }}</div>
+    </div>
+    <div class="sc-stat-card sc-stat-missed">
+      <div class="sc-stat-label">Missed</div>
+      <div class="sc-stat-num">{{ summary.missedCount }}</div>
+    </div>
+    <div class="sc-stat-card sc-stat-unplanned">
+      <div class="sc-stat-label">Unplanned</div>
+      <div class="sc-stat-num">{{ summary.unplannedCount }}</div>
+    </div>
+    <div class="sc-stat-card sc-stat-adherence">
+      <div class="sc-stat-label">Plan Adherence</div>
+      <div class="sc-stat-num">
+        {{ summary.adherencePercent !== null ? summary.adherencePercent + '%' : '—' }}
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════ LEGEND ═══════════════ -->
+  <div class="sc-legend">
+    <span class="sc-legend-item"><span class="sc-swatch sc-done"></span>Planned &amp; delivered</span>
+    <span class="sc-legend-item"><span class="sc-swatch sc-missed"></span>Planned, not delivered</span>
+    <span class="sc-legend-item"><span class="sc-swatch sc-unplanned"></span>Delivered, not planned</span>
+    <span class="sc-legend-item"><span class="sc-swatch sc-empty"></span>Nothing</span>
+    <span class="sc-legend-note" *ngIf="canEdit">
+      <i class="bi bi-info-circle me-1"></i>Click a cell to plan it, or type into
+      <strong>What Was Done / Updated</strong> to record what the visit covered.
+      <strong>Click any tick</strong> to see the exact services, spares and dates behind it.
+    </span>
+    <span class="sc-legend-note" *ngIf="!canEdit">
+      <i class="bi bi-eye me-1"></i>Read-only — your buyer maintains the plan. What you delivered is counted
+      automatically; <strong>click any tick</strong> to see the services, spares and dates behind it.
+    </span>
+  </div>
+
+  <div class="sc-loading" *ngIf="isLoading">
+    <i class="bi bi-arrow-repeat spin me-2"></i>Loading calendar…
+  </div>
+
+  <!-- ═══════════════ THE GRID ═══════════════ -->
+  <div class="sc-table-wrap" *ngIf="!isLoading && months.length">
+    <table class="sc-table">
+      <thead>
+        <tr>
+          <th class="sc-month-col">Month</th>
+          <th *ngFor="let a of activities" [class.sc-auto-col]="a.autoTracked">
+            {{ a.label }}
+            <i *ngIf="a.autoTracked" class="bi bi-lightning-charge-fill sc-auto-icon"
+               title="Auto-tracked from real records"></i>
+          </th>
+        </tr>
+        <tr class="sc-freq-row">
+          <th class="sc-month-col">Frequency</th>
+          <th *ngFor="let a of activities">{{ a.frequency || '—' }}</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let m of months">
+          <td class="sc-month-col sc-month-name">{{ m.monthLabel }}</td>
+          <td *ngFor="let a of activities"
+              class="sc-cell"
+              [ngClass]="'sc-' + cellStatus(m.cells[a.key])">
+
+            <!-- Free-text column being edited -->
+            <ng-container *ngIf="editingCellKey === cellKey(m, a.key); else cellDisplay">
+              <input type="text" class="sc-cell-input" [(ngModel)]="editingText"
+                     (blur)="commitEditText(m, a)"
+                     (keyup.enter)="commitEditText(m, a)"
+                     (keyup.escape)="cancelEditText()"
+                     placeholder="e.g. 73rd Audit" autofocus />
+            </ng-container>
+
+            <ng-template #cellDisplay>
+              <div class="sc-cell-inner"
+                   [class.sc-clickable]="canEdit"
+                   (click)="canEdit && (a.autoTracked ? togglePlanned(m, a) : startEditText(m, a))"
+                   [title]="canEdit
+                      ? (a.autoTracked ? 'Click to plan / unplan this month' : 'Click to add a note')
+                      : ''">
+
+                <!-- Planned tick -->
+                <span class="sc-tick" *ngIf="m.cells[a.key].planned">Y</span>
+
+                <!-- Actual marker + count — click to see exactly which records these are -->
+                <span class="sc-actual sc-actual-clickable" *ngIf="m.cells[a.key].actual"
+                      (click)="openCellDetails($event, m, a)"
+                      [title]="'Click to see the ' + m.cells[a.key].actualCount + ' record(s) behind this'">
+                  <i class="bi bi-check-circle-fill"></i>
+                  <span class="sc-count" *ngIf="m.cells[a.key].actualCount > 1">{{ m.cells[a.key].actualCount }}</span>
+                </span>
+
+                <!-- Free text -->
+                <span class="sc-text" *ngIf="m.cells[a.key].plannedText">{{ m.cells[a.key].plannedText }}</span>
+
+                <!-- Empty affordance -->
+                <span class="sc-empty-dash"
+                      *ngIf="!m.cells[a.key].planned && !m.cells[a.key].actual && !m.cells[a.key].plannedText">–</span>
+              </div>
+            </ng-template>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="sc-note" *ngIf="!isLoading && months.length">
+    <i class="bi bi-info-circle me-1"></i>
+    A tentative service plan set at the start of the year, with a running record of what was actually
+    delivered against it. "Missed" simply means a month was planned but no matching service record
+    exists yet. This planner covers service delivery only — invoices, payments and pricing live on the
+    Invoice and Purchase Order screens.
+  </div>
+
+  <div class="sc-empty-state" *ngIf="!isLoading && !months.length && !errorMessage">
+    <i class="bi bi-calendar-x"></i>
+    <p>No calendar to show yet. Pick a supplier and financial year above.</p>
+  </div>
+
+  <!-- ═══════════════ CELL DRILL-DOWN ═══════════════ -->
+  <div class="sc-modal-backdrop" *ngIf="showDetailModal" (click)="closeDetailModal()">
+    <div class="sc-modal" (click)="$event.stopPropagation()">
+      <div class="sc-modal-header">
+        <div>
+          <div class="sc-modal-title">
+            {{ detailData?.activityLabel || 'Records' }}
+          </div>
+          <div class="sc-modal-sub" *ngIf="detailData">
+            {{ detailData.monthLabel }} · {{ detailData.count }} record{{ detailData.count === 1 ? '' : 's' }}
+          </div>
+        </div>
+        <button class="sc-modal-close" (click)="closeDetailModal()"><i class="bi bi-x-lg"></i></button>
+      </div>
+
+      <div class="sc-modal-body">
+        <div class="sc-loading" *ngIf="isLoadingDetails">
+          <i class="bi bi-arrow-repeat spin me-2"></i>Loading records…
+        </div>
+
+        <ng-container *ngIf="!isLoadingDetails && detailData">
+          <div class="sc-record" *ngFor="let rec of detailData.records; let i = index">
+            <div class="sc-record-head">
+              <span class="sc-record-index">{{ i + 1 }}</span>
+              <span class="sc-record-ref">{{ rec.reference || '—' }}</span>
+              <span class="sc-record-status" *ngIf="rec.status">{{ rec.status }}</span>
+            </div>
+            <div class="sc-record-date">
+              <i class="bi bi-calendar-event me-1"></i>
+              <strong>{{ rec.dateLabel }}:</strong>
+              {{ rec.date ? (rec.date | date:'EEEE, dd MMMM yyyy') : '—' }}
+            </div>
+            <table class="sc-record-fields" *ngIf="rec.fields?.length">
+              <tr *ngFor="let f of rec.fields">
+                <td class="sc-field-label">{{ f.label }}</td>
+                <td class="sc-field-value">{{ f.value }}</td>
+              </tr>
+            </table>
+          </div>
+
+          <div class="sc-empty-state" *ngIf="!detailData.records?.length">
+            <i class="bi bi-inbox"></i>
+            <p *ngIf="detailData.autoTracked">No records found for this month.</p>
+            <p *ngIf="!detailData.autoTracked">
+              This is a free-text column — it has no linked records, only whatever note you type into the cell.
+            </p>
+          </div>
+        </ng-container>
+      </div>
+
+      <div class="sc-modal-footer">
+        <button class="btn-sc-secondary" (click)="closeDetailModal()">Close</button>
+      </div>
+    </div>
+  </div>
+
+</div>

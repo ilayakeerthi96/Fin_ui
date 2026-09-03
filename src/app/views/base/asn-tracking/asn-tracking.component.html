@@ -1,0 +1,162 @@
+<c-container class="mt-4" fluid>
+  <c-row class="mb-4">
+    <c-col xs="12">
+      <c-card class="border-0 shadow-lg">
+        <div class="asn-header">
+          <c-card-body class="p-4 d-flex justify-content-between align-items-center flex-wrap gap-2">
+            <div>
+              <h3 class="text-white mb-1 fw-bold">
+                <i class="bi bi-geo-alt me-2"></i>
+                ASN Tracking
+              </h3>
+              <p class="text-white mb-0 opacity-90">Advance Shipping Notices raised by your suppliers against your POs.</p>
+            </div>
+            <button cButton color="light" size="sm" (click)="load()" [disabled]="isLoading">
+              <i class="bi bi-arrow-clockwise me-1"></i>Refresh
+            </button>
+          </c-card-body>
+        </div>
+      </c-card>
+    </c-col>
+  </c-row>
+
+  <c-row *ngIf="isLoading">
+    <c-col xs="12" class="text-center py-5">
+      <div class="spinner-border text-primary" role="status"></div>
+    </c-col>
+  </c-row>
+
+  <c-row *ngIf="!isLoading && loadError">
+    <c-col xs="12">
+      <c-alert color="warning">{{ loadError }}</c-alert>
+    </c-col>
+  </c-row>
+
+  <ng-container *ngIf="!isLoading && !loadError">
+    <c-row *ngIf="asns.length === 0">
+      <c-col xs="12">
+        <c-alert color="info">No shipments have been notified yet.</c-alert>
+      </c-col>
+    </c-row>
+
+    <c-row *ngFor="let asn of asns" class="mb-3">
+      <c-col xs="12">
+        <c-card class="border-0 shadow-sm">
+          <c-card-body>
+            <div class="d-flex justify-content-between align-items-start flex-wrap gap-2">
+              <div>
+                <h6 class="mb-1 fw-bold">{{ asn.asnNumber }} &middot; PO {{ asn.poNumber }}</h6>
+                <small class="text-muted d-block">{{ asn.supplierName }}</small>
+                <small class="text-muted d-block">
+                  Shipped {{ formatDate(asn.shipmentDate) }}
+                  <span *ngIf="asn.expectedDeliveryDate"> &middot; Expected {{ formatDate(asn.expectedDeliveryDate) }}</span>
+                </small>
+                <small class="text-muted d-block" *ngIf="asn.carrierName || asn.trackingNumber || asn.vehicleNumber">
+                  {{ asn.carrierName }}
+                  <span *ngIf="asn.trackingNumber"> &middot; Tracking: {{ asn.trackingNumber }}</span>
+                  <span *ngIf="asn.vehicleNumber"> &middot; Vehicle: {{ asn.vehicleNumber }}</span>
+                </small>
+                <small class="text-muted d-block fst-italic" *ngIf="asn.remarks">"{{ asn.remarks }}"</small>
+                <small class="text-success d-block" *ngIf="asn.status === 'DELIVERED' && asn.receiverName">
+                  <i class="bi bi-person-check-fill me-1"></i>Received by <strong>{{ asn.receiverName }}</strong>
+                  <span *ngIf="asn.receiverDetails">({{ asn.receiverDetails }})</span>
+                </small>
+              </div>
+              <c-badge [color]="statusColor(asn.status)">{{ asn.status }}</c-badge>
+            </div>
+
+            <!-- Status progress bar -->
+            <div class="asn-progress mt-3" *ngIf="asn.status !== 'CANCELLED'">
+              <div class="asn-progress-step" [class.done]="isStepDone(asn, 'CREATED')">
+                <div class="dot"></div><span>Created</span>
+              </div>
+              <div class="asn-progress-line" [class.done]="isStepDone(asn, 'IN_TRANSIT')"></div>
+              <div class="asn-progress-step" [class.done]="isStepDone(asn, 'IN_TRANSIT')">
+                <div class="dot"></div><span>In Transit</span>
+              </div>
+              <div class="asn-progress-line" [class.done]="isStepDone(asn, 'DELIVERED')"></div>
+              <div class="asn-progress-step" [class.done]="isStepDone(asn, 'DELIVERED')">
+                <div class="dot"></div><span>Delivered</span>
+              </div>
+            </div>
+
+            <div class="mt-3 d-flex flex-wrap gap-2 align-items-center">
+              <button class="btn btn-sm btn-light" (click)="toggleLineItems(asn)">
+                <i class="bi" [class.bi-chevron-down]="expandedAsnId !== asn.id" [class.bi-chevron-up]="expandedAsnId === asn.id"></i>
+                {{ expandedAsnId === asn.id ? 'Hide' : 'View' }} Items
+              </button>
+              <button *ngIf="canMarkDelivered(asn)" class="btn btn-sm btn-success" (click)="openDeliverModal(asn)">
+                <i class="bi bi-check-lg me-1"></i>Mark Delivered
+              </button>
+            </div>
+            <div class="mt-3">
+              <div *ngIf="expandedAsnId === asn.id" class="mt-3">
+                <div *ngIf="isLoadingLines" class="text-center py-2">
+                  <div class="spinner-border spinner-border-sm text-primary"></div>
+                </div>
+                <div class="table-responsive" *ngIf="!isLoadingLines && lineItemsByAsnId[asn.id]">
+                  <table class="table table-sm align-middle mb-0">
+                    <thead>
+                      <tr>
+                        <th>Item</th>
+                        <th class="text-end">Ordered</th>
+                        <th class="text-end">Shipped</th>
+                        <th>UOM</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr *ngFor="let line of lineItemsByAsnId[asn.id]">
+                        <td>
+                          <div class="fw-semibold">{{ line.itemDescription }}</div>
+                          <div class="text-muted small" *ngIf="line.itemCode">{{ line.itemCode }}</div>
+                        </td>
+                        <td class="text-end">{{ line.orderedQuantity }}</td>
+                        <td class="text-end">{{ line.shippedQuantity }}</td>
+                        <td>{{ line.uom }}</td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+          </c-card-body>
+        </c-card>
+      </c-col>
+    </c-row>
+  </ng-container>
+</c-container>
+
+<!-- Plain Bootstrap modal (not CoreUI c-modal — c-modal's animation trigger is broken on this
+     Angular/CoreUI version combo and leaves the dialog permanently invisible). Same pattern as
+     the supplier's equivalent modal used to be on asn-list.component.html. -->
+<div class="modal fade" [class.show]="showDeliverModal" [style.display]="showDeliverModal ? 'block' : 'none'"
+     tabindex="-1" style="background-color: rgba(0,0,0,.5);">
+  <div class="modal-dialog modal-dialog-centered modal-sm">
+    <div class="modal-content" *ngIf="showDeliverModal">
+      <div class="modal-header">
+        <h5 class="modal-title"><i class="bi bi-check-circle me-2"></i>Confirm Delivery</h5>
+        <button type="button" class="btn-close" (click)="closeDeliverModal()" [disabled]="isConfirmingDelivery"></button>
+      </div>
+      <div class="modal-body">
+        <p class="small text-muted">{{ deliverTargetAsn?.asnNumber }} &middot; PO {{ deliverTargetAsn?.poNumber }}</p>
+        <div class="alert alert-info py-2 small">
+          <i class="bi bi-info-circle me-1"></i>Name who actually received the shipment — this is recorded to confirm the delivery is genuine.
+        </div>
+        <label class="form-label small fw-bold">Receiver Name <span class="text-danger">*</span></label>
+        <input type="text" class="form-control mb-3" [(ngModel)]="receiverName" [ngModelOptions]="{standalone: true}"
+          placeholder="Who received the goods" />
+        <label class="form-label small fw-bold">Receiver Details <span class="text-muted fw-normal">(optional)</span></label>
+        <input type="text" class="form-control" [(ngModel)]="receiverDetails" [ngModelOptions]="{standalone: true}"
+          placeholder="Designation, department, phone, etc." />
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" (click)="closeDeliverModal()" [disabled]="isConfirmingDelivery">Cancel</button>
+        <button type="button" class="btn btn-success" (click)="confirmDelivered()" [disabled]="isConfirmingDelivery">
+          <span *ngIf="isConfirmingDelivery" class="spinner-border spinner-border-sm me-2"></span>
+          Confirm Delivered
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+<div class="modal-backdrop fade show" *ngIf="showDeliverModal"></div>

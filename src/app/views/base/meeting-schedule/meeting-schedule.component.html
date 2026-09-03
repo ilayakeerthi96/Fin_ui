@@ -1,0 +1,155 @@
+<!-- ============================================================
+     Meeting Schedule Modal
+============================================================ -->
+<div class="ms-overlay" (click)="close()">
+  <div class="ms-modal" (click)="$event.stopPropagation()">
+
+    <!-- Header -->
+    <div class="ms-header">
+      <div class="ms-header-left">
+        <div class="ms-icon"><i class="bi bi-camera-video-fill"></i></div>
+        <div>
+          <div class="ms-title">Schedule a Meeting</div>
+          <div class="ms-sub" *ngIf="rfqNumber">RFQ: {{ rfqNumber }}</div>
+        </div>
+      </div>
+      <button class="ms-close-btn" (click)="close()">
+        <i class="bi bi-x-lg"></i>
+      </button>
+    </div>
+
+    <!-- Body -->
+    <div class="ms-body">
+
+      <!-- ── Scope selector (one-to-one vs group) — only shown when >1 supplier ── -->
+      <div class="ms-scope-row" *ngIf="allParticipants.length > 1">
+        <div class="ms-scope-label">
+          <i class="bi bi-people me-1"></i>Who to invite?
+        </div>
+        <div class="ms-scope-options">
+          <label class="ms-scope-option" [class.active]="meetingScope === 'one'">
+            <input type="radio" name="scope" value="one" [(ngModel)]="meetingScope">
+            <i class="bi bi-person-fill me-1"></i>
+            <span>One Supplier</span>
+          </label>
+          <label class="ms-scope-option" [class.active]="meetingScope === 'all'">
+            <input type="radio" name="scope" value="all" [(ngModel)]="meetingScope">
+            <i class="bi bi-people-fill me-1"></i>
+            <span>All RFQ Suppliers</span>
+          </label>
+        </div>
+      </div>
+
+      <!-- Supplier selector for one-to-one (when >1 supplier exists) -->
+      <div class="ms-field" *ngIf="meetingScope === 'one' && allParticipants.length > 1">
+        <label class="ms-label">Select Supplier</label>
+        <select class="ms-input ms-select" [(ngModel)]="selectedSupplierIndex">
+          <option *ngFor="let s of allParticipants; let i = index" [value]="i">
+            {{ s.userName }}
+          </option>
+        </select>
+      </div>
+
+      <!-- Meeting type tabs -->
+      <div class="ms-type-tabs">
+        <button class="ms-type-tab" [class.active]="meetingType === 'INSTANT'"
+                (click)="meetingType = 'INSTANT'; onTypeChange()">
+          <i class="bi bi-lightning-fill me-1"></i>Instant Meeting
+        </button>
+        <button class="ms-type-tab" [class.active]="meetingType === 'SCHEDULED'"
+                (click)="meetingType = 'SCHEDULED'; onTypeChange()">
+          <i class="bi bi-calendar-event me-1"></i>Schedule for Later
+        </button>
+      </div>
+
+      <div class="ms-instant-note" *ngIf="meetingType === 'INSTANT'">
+        <i class="bi bi-info-circle me-1"></i>
+        Participants will be notified immediately. Meeting starts as soon as you join.
+      </div>
+
+      <!-- Title -->
+      <div class="ms-field">
+        <label class="ms-label">Meeting Title <span class="ms-required">*</span></label>
+        <input class="ms-input" type="text" [(ngModel)]="title"
+               placeholder="e.g. RFQ Discussion with Supplier"
+               maxlength="120">
+      </div>
+
+      <!-- Scheduled at (only for SCHEDULED) -->
+      <div class="ms-field" *ngIf="meetingType === 'SCHEDULED'">
+        <label class="ms-label">Date & Time <span class="ms-required">*</span></label>
+        <input class="ms-input" type="datetime-local"
+               [(ngModel)]="scheduledAt" [min]="minDateTime">
+      </div>
+
+      <!-- Duration -->
+      <div class="ms-field">
+        <label class="ms-label">Duration</label>
+        <select class="ms-input ms-select" [(ngModel)]="durationMinutes">
+          <option *ngFor="let d of durationOptions" [value]="d.val">{{ d.label }}</option>
+        </select>
+      </div>
+
+      <!-- Description -->
+      <div class="ms-field">
+        <label class="ms-label">Description</label>
+        <textarea class="ms-input ms-textarea" [(ngModel)]="description"
+                  placeholder="Brief description (optional)" rows="2"
+                  maxlength="500"></textarea>
+      </div>
+
+      <!-- Agenda -->
+      <div class="ms-field">
+        <label class="ms-label">Agenda</label>
+        <textarea class="ms-input ms-textarea" [(ngModel)]="agenda"
+                  placeholder="Meeting agenda points (optional)" rows="3"
+                  maxlength="1000"></textarea>
+      </div>
+
+      <!-- Participants preview (uses effective scope) -->
+      <div class="ms-field">
+        <label class="ms-label">
+          Participants
+          <span class="ms-participant-count">({{ effectiveParticipants.length + 1 }} total)</span>
+        </label>
+        <div class="ms-participants-list">
+          <!-- Host -->
+          <div class="ms-participant">
+            <div class="ms-p-avatar">{{ hostName.charAt(0).toUpperCase() }}</div>
+            <div class="ms-p-name">{{ hostName }}</div>
+            <span class="ms-p-role host">Host (You)</span>
+          </div>
+          <!-- Invited -->
+          <div class="ms-participant" *ngFor="let p of effectiveParticipants">
+            <div class="ms-p-avatar">{{ p.userName.charAt(0).toUpperCase() }}</div>
+            <div class="ms-p-name">{{ p.userName }}</div>
+            <span class="ms-p-role">Supplier</span>
+          </div>
+          <div class="ms-no-participants" *ngIf="effectiveParticipants.length === 0">
+            <i class="bi bi-exclamation-circle me-1"></i>No participants found for this RFQ.
+          </div>
+        </div>
+      </div>
+
+      <!-- Error -->
+      <div class="ms-error" *ngIf="errorMsg">
+        <i class="bi bi-exclamation-triangle-fill me-1"></i>{{ errorMsg }}
+      </div>
+
+    </div>
+
+    <!-- Footer -->
+    <div class="ms-footer">
+      <button class="ms-btn ms-btn-cancel" (click)="close()" [disabled]="isCreating">
+        Cancel
+      </button>
+      <button class="ms-btn ms-btn-create" (click)="create()" [disabled]="isCreating">
+        <span *ngIf="isCreating" class="spinner-border spinner-border-sm me-1"
+              style="width:0.85rem;height:0.85rem;" role="status"></span>
+        <i *ngIf="!isCreating" class="bi bi-camera-video-fill me-1"></i>
+        {{ meetingType === 'INSTANT' ? 'Start Meeting Now' : 'Schedule Meeting' }}
+      </button>
+    </div>
+
+  </div>
+</div>

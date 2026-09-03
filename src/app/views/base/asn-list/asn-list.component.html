@@ -1,0 +1,80 @@
+<c-container class="mt-4" fluid>
+  <c-row class="mb-4">
+    <c-col xs="12">
+      <c-card class="border-0 shadow-lg">
+        <div class="asn-header">
+          <c-card-body class="p-4 d-flex justify-content-between align-items-center flex-wrap gap-2">
+            <div>
+              <h3 class="text-white mb-1 fw-bold">
+                <i class="bi bi-truck me-2"></i>
+                My Shipments
+              </h3>
+              <p class="text-white mb-0 opacity-90">Every Advance Shipping Notice you've raised, and its current status.</p>
+            </div>
+            <a routerLink="/asn-create" cButton color="light" size="sm">
+              <i class="bi bi-plus-lg me-1"></i>New ASN
+            </a>
+          </c-card-body>
+        </div>
+      </c-card>
+    </c-col>
+  </c-row>
+
+  <c-row *ngIf="isLoading">
+    <c-col xs="12" class="text-center py-5">
+      <div class="spinner-border text-primary" role="status"></div>
+    </c-col>
+  </c-row>
+
+  <c-row *ngIf="!isLoading && loadError">
+    <c-col xs="12">
+      <c-alert color="warning">{{ loadError }}</c-alert>
+    </c-col>
+  </c-row>
+
+  <ng-container *ngIf="!isLoading && !loadError">
+    <c-row *ngIf="asns.length === 0">
+      <c-col xs="12">
+        <c-alert color="info">You haven't raised any shipping notices yet.</c-alert>
+      </c-col>
+    </c-row>
+
+    <c-row *ngFor="let asn of asns" class="mb-3">
+      <c-col xs="12">
+        <c-card class="border-0 shadow-sm">
+          <c-card-body>
+            <div class="d-flex justify-content-between align-items-start flex-wrap gap-2">
+              <div>
+                <h6 class="mb-1 fw-bold">{{ asn.asnNumber }} &middot; PO {{ asn.poNumber }}</h6>
+                <small class="text-muted d-block">
+                  Shipped {{ formatDate(asn.shipmentDate) }}
+                  <span *ngIf="asn.expectedDeliveryDate"> &middot; Expected {{ formatDate(asn.expectedDeliveryDate) }}</span>
+                </small>
+                <small class="text-muted d-block" *ngIf="asn.carrierName || asn.trackingNumber">
+                  {{ asn.carrierName }} <span *ngIf="asn.trackingNumber">&middot; Tracking: {{ asn.trackingNumber }}</span>
+                </small>
+                <small class="text-success d-block" *ngIf="asn.status === 'DELIVERED' && asn.receiverName">
+                  <i class="bi bi-person-check-fill me-1"></i>Received by {{ asn.receiverName }}
+                  <span *ngIf="asn.receiverDetails">({{ asn.receiverDetails }})</span>
+                </small>
+              </div>
+              <c-badge [color]="statusColor(asn.status)">{{ asn.status }}</c-badge>
+            </div>
+
+            <div class="d-flex justify-content-end gap-2 mt-3">
+              <button *ngIf="canMarkInTransit(asn)" class="btn btn-sm btn-info text-white"
+                      (click)="updateStatus(asn, 'IN_TRANSIT')" [disabled]="updatingId === asn.id">
+                <i class="bi bi-truck me-1"></i>Mark In Transit
+              </button>
+              <button *ngIf="canCancel(asn)" class="btn btn-sm btn-outline-danger"
+                      (click)="updateStatus(asn, 'CANCELLED')" [disabled]="updatingId === asn.id">
+                <i class="bi bi-x-lg me-1"></i>Cancel
+              </button>
+            </div>
+          </c-card-body>
+        </c-card>
+      </c-col>
+    </c-row>
+  </ng-container>
+</c-container>
+

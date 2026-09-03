@@ -1,0 +1,185 @@
+.cap-page {
+  --surface-1:      #fcfcfb;
+  --surface-page:   #f6f8fc;
+  --border:         #e6eaf3;
+  --text-primary:   #0b0b0b;
+  --text-secondary: #52514e;
+  --text-muted:     #94a3b8;
+  --grid:           #eef1f8;
+  --accent:         #2a78d6;
+
+  padding: 22px; background: var(--surface-page); min-height: 100vh;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) .cap-page {
+    --surface-1: #1e293b; --surface-page: #0f172a; --border: #334155;
+    --text-primary: #e2e8f0; --text-secondary: #cbd5e1; --text-muted: #94a3b8;
+    --grid: #334155; --accent: #3987e5;
+  }
+}
+:root[data-theme="dark"] .cap-page {
+  --surface-1: #1e293b; --surface-page: #0f172a; --border: #334155;
+  --text-primary: #e2e8f0; --text-secondary: #cbd5e1; --text-muted: #94a3b8;
+  --grid: #334155; --accent: #3987e5;
+}
+
+.cap-topbar {
+  background: var(--surface-1); border: 1px solid var(--border); border-radius: 14px;
+  padding: 18px 22px; margin-bottom: 16px;
+  display: flex; align-items: center; justify-content: space-between; gap: 16px; flex-wrap: wrap;
+}
+.cap-title { font-size: 18px; font-weight: 800; color: var(--text-primary); }
+.cap-subtitle { font-size: 13px; color: var(--text-secondary); margin-top: 3px; }
+
+.btn-cap-primary {
+  background: var(--accent); border: none; color: #fff; border-radius: 8px;
+  padding: 9px 16px; font-weight: 700; font-size: 13px; cursor: pointer;
+}
+.btn-cap-primary:disabled { opacity: .6; cursor: default; }
+.btn-cap-secondary {
+  background: var(--surface-1); border: 1px solid var(--border); color: var(--text-primary);
+  border-radius: 8px; padding: 8px 14px; font-weight: 700; font-size: 12.5px; cursor: pointer;
+}
+.btn-cap-secondary:disabled { opacity: .6; cursor: default; }
+
+.cap-alert {
+  background: #fef2f2; color: #b91c1c; border: 1px solid #fecaca;
+  border-radius: 10px; padding: 11px 16px; margin-bottom: 14px; font-size: 13.5px;
+}
+.cap-loading { text-align: center; padding: 44px; color: var(--text-secondary); font-weight: 600; }
+
+/* Follows the viewport (not the page) so an error is seen the instant it happens, regardless of
+   scroll position. */
+.cap-toast {
+  position: fixed; top: 18px; left: 50%; transform: translateX(-50%); z-index: 2000;
+  width: min(560px, calc(100% - 32px));
+}
+.cap-toast-msg {
+  margin: 0 !important; box-shadow: 0 12px 28px rgba(15,23,42,.22);
+  display: flex; align-items: center; justify-content: space-between; gap: 12px;
+}
+.cap-toast-close {
+  background: none; border: none; color: inherit; opacity: .65; cursor: pointer;
+  font-size: 15px; line-height: 1; padding: 0; flex-shrink: 0;
+}
+.cap-toast-close:hover { opacity: 1; }
+
+.cap-filters { display: flex; align-items: flex-end; gap: 14px; margin-bottom: 14px; flex-wrap: wrap; }
+.cap-search-wrap { flex: 1; min-width: 220px; }
+.cap-label {
+  font-size: 11px; font-weight: 700; color: var(--text-muted);
+  text-transform: uppercase; letter-spacing: .03em; display: block; margin-bottom: 4px;
+}
+.cap-input, .cap-textarea {
+  border: 1px solid var(--border); border-radius: 8px; padding: 8px 12px; font-size: 13.5px;
+  color: var(--text-primary); background: var(--surface-1); width: 100%; box-sizing: border-box;
+  font-family: inherit;
+}
+.cap-input:focus, .cap-textarea:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px rgba(42,120,214,.15); }
+.cap-textarea { resize: vertical; }
+
+.cap-empty { text-align: center; padding: 50px 20px; color: var(--text-muted); }
+.cap-empty i { font-size: 40px; display: block; margin-bottom: 12px; }
+.cap-empty-hint { font-size: 12.5px; max-width: 480px; margin: 6px auto 0; }
+
+.cap-table-wrap {
+  background: var(--surface-1); border: 1px solid var(--border); border-radius: 12px;
+  overflow-x: auto;
+}
+.cap-table { width: 100%; border-collapse: collapse; table-layout: fixed; }
+.cap-table thead th {
+  text-align: left; font-size: 11px; font-weight: 800; color: var(--text-muted);
+  text-transform: uppercase; letter-spacing: .03em;
+  padding: 10px 14px; border-bottom: 1px solid var(--border);
+}
+.cap-table tbody td {
+  padding: 10px 14px; font-size: 13px; color: var(--text-primary);
+  border-bottom: 1px solid var(--grid); overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.cap-table .num { text-align: right; font-variant-numeric: tabular-nums; }
+.cap-strong { font-weight: 700; }
+.cap-row { cursor: pointer; transition: background .1s ease; }
+.cap-row:hover { background: var(--grid); }
+.cap-row td:last-child { color: var(--text-muted); text-align: right; }
+
+.cap-badge {
+  display: inline-block; padding: 3px 9px; border-radius: 20px; font-size: 11px; font-weight: 700;
+}
+.cap-badge-open        { background: #e2e8f0; color: #334155; }
+.cap-badge-rca          { background: #fef3c7; color: #92400e; }
+.cap-badge-planned      { background: #dbeafe; color: #1d4ed8; }
+.cap-badge-progress     { background: #cffafe; color: #0e7490; }
+.cap-badge-verify       { background: #ede9fe; color: #6d28d9; }
+.cap-badge-closed       { background: #dcfce7; color: #15803d; }
+.cap-badge-reopened     { background: #fee2e2; color: #b91c1c; }
+
+.cap-sev { display: inline-block; padding: 3px 9px; border-radius: 20px; font-size: 11px; font-weight: 700; }
+.cap-sev-low      { background: #dcfce7; color: #15803d; }
+.cap-sev-medium   { background: #fef3c7; color: #92400e; }
+.cap-sev-high     { background: #ffedd5; color: #c2410c; }
+.cap-sev-critical { background: #fee2e2; color: #b91c1c; }
+
+.cap-overdue-flag { color: #b91c1c; margin-left: 6px; }
+
+/* ── Raise CAP modal ── */
+.cap-modal-backdrop {
+  position: fixed; inset: 0; background: rgba(15,23,42,.55); z-index: 1100;
+  display: flex; align-items: center; justify-content: center; padding: 20px;
+}
+.cap-modal {
+  background: var(--surface-1); border-radius: 14px; width: 100%; max-width: 760px;
+  max-height: 90vh; display: flex; flex-direction: column;
+}
+.cap-modal-header {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 18px 22px; border-bottom: 1px solid var(--border);
+}
+.cap-modal-title { font-size: 16.5px; font-weight: 800; color: var(--text-primary); }
+.cap-modal-close { border: none; background: none; font-size: 18px; color: var(--text-muted); cursor: pointer; }
+.cap-modal-body { padding: 18px 22px; overflow-y: auto; }
+/* Sits between the header and the scrollable body so it never scrolls out of view. */
+.cap-modal-alert-slot { padding: 14px 22px 0; }
+.cap-modal-alert-slot .cap-alert { margin: 0; }
+.cap-modal-footer { display: flex; justify-content: flex-end; gap: 10px; padding: 14px 22px; border-top: 1px solid var(--border); }
+
+.cap-grn-link { background: var(--grid); border-radius: 10px; padding: 14px; margin-bottom: 18px; }
+.cap-grn-filter-row { display: flex; gap: 10px; margin-bottom: 10px; flex-wrap: wrap; }
+.cap-grn-filter-row select.cap-input { max-width: 200px; }
+.cap-grn-filter-row input[type="date"].cap-input { max-width: 160px; }
+.cap-grn-link-row { display: flex; gap: 10px; }
+.cap-grn-link-row .cap-input { flex: 1; }
+.cap-hint { font-size: 11.5px; color: var(--text-secondary); margin: 8px 0 0; line-height: 1.5; }
+
+.cap-grn-results {
+  margin-top: 10px; border: 1px solid var(--border); border-radius: 8px; overflow: hidden;
+  background: var(--surface-1);
+}
+.cap-grn-result {
+  display: flex; align-items: center; justify-content: space-between; gap: 10px;
+  padding: 10px 12px; cursor: pointer; border-bottom: 1px solid var(--border);
+}
+.cap-grn-result:last-child { border-bottom: none; }
+.cap-grn-result:hover { background: var(--grid); }
+.cap-grn-result-main { display: flex; flex-direction: column; gap: 2px; }
+.cap-grn-result-main strong { font-size: 13px; color: var(--text-primary); }
+.cap-grn-result-meta { font-size: 11.5px; color: var(--text-secondary); }
+.cap-grn-result i { color: var(--text-muted); flex-shrink: 0; }
+
+/* Disposition — the first decision in the form, given its own visual weight so it reads as a
+   distinct step rather than just another field in the grid. */
+.cap-disposition-block {
+  border: 1px solid var(--accent); border-radius: 10px; padding: 14px 16px; margin-bottom: 16px;
+  background: rgba(42,120,214,.04);
+}
+.cap-disposition-fields { margin-top: 12px; }
+.cap-checkbox-row {
+  display: flex; align-items: flex-start; gap: 8px; font-size: 13.5px;
+  color: var(--text-primary); cursor: pointer; font-weight: 600;
+}
+.cap-checkbox-row input[type="checkbox"] { margin-top: 2px; flex-shrink: 0; }
+
+.cap-form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+.cap-span-2 { grid-column: 1 / -1; }
+
+.spin { display: inline-block; animation: cap-spin 1s linear infinite; }
+@keyframes cap-spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }

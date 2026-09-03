@@ -1,0 +1,23 @@
+{
+  "HEADER_SYSTEM_TITLE": "SYSTÈME DE GESTION DES FOURNISSEURS",
+  "HEADER_CHANGE_PASSWORD": "Changer le Mot de Passe",
+  "HEADER_LOGOUT": "Déconnexion",
+  "HEADER_CONFIRM_LOGOUT_TITLE": "Confirmer la Déconnexion",
+  "HEADER_CONFIRM_LOGOUT_MESSAGE": "Êtes-vous sûr de vouloir vous déconnecter ?",
+  "HEADER_LOGOUT_YES": "Oui, Déconnexion",
+  "HEADER_LOGOUT_NO": "Non, Rester",
+  "HEADER_LANGUAGE": "Langue",
+
+  "LOGIN_WELCOME_BACK": "Bon Retour",
+  "LOGIN_SIGN_IN_SUBTITLE": "Connectez-vous à votre compte",
+  "LOGIN_EMAIL_PLACEHOLDER": "Adresse E-mail",
+  "LOGIN_EMAIL_REQUIRED": "L'e-mail est requis.",
+  "LOGIN_EMAIL_INVALID": "Veuillez saisir une adresse e-mail valide.",
+  "LOGIN_PASSWORD_PLACEHOLDER": "Mot de Passe",
+  "LOGIN_PASSWORD_REQUIRED": "Le mot de passe est requis.",
+  "LOGIN_SIGN_IN_BUTTON": "Se Connecter",
+  "LOGIN_SIGNING_IN": "Connexion en cours...",
+  "LOGIN_SUPPLIER_PROMPT": "Êtes-vous un fournisseur souhaitant travailler avec nous ?",
+  "LOGIN_REGISTER_BUTTON": "S'inscrire en tant que Fournisseur",
+  "LOGIN_FOOTER_RIGHTS": "Tous Droits Réservés."
+}

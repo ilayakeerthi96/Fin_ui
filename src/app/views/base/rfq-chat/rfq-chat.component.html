@@ -1,0 +1,232 @@
+<!-- ============================================================
+     RFQ Chat Panel — One-on-One + Broadcast
+     Buyer  : Chat with selected supplier + Send announcements to all suppliers
+     Supplier: Chat with buyer + View buyer announcements
+============================================================ -->
+
+<div class="chat-overlay" (click)="close()"></div>
+
+<div class="chat-panel">
+
+  <!-- ── Header ──────────────────────────────────────────────── -->
+  <div class="chat-header">
+    <div class="chat-header-info">
+      <div class="chat-avatar">
+        <i class="bi bi-chat-dots-fill"></i>
+      </div>
+      <div class="chat-header-text">
+        <div class="chat-header-title">
+          {{ getOtherPartyName() }}
+        </div>
+        <div class="chat-header-subtitle">
+          RFQ: {{ rfqNumber || chatRoomInfo?.rfqNumber || ('RFQ #' + rfqId) }}
+          &nbsp;
+          <span class="chat-status-dot"
+                [class.connected]="isConnected"
+                [title]="isConnected ? 'Connected' : 'Connecting...'"></span>
+        </div>
+      </div>
+    </div>
+    <div class="chat-header-actions">
+      <!-- Video call button — only when chat is available -->
+      <button *ngIf="chatAvailable"
+              class="chat-action-btn"
+              (click)="startMeeting()"
+              title="Start Video / Audio Call">
+        <i class="bi bi-camera-video-fill"></i>
+      </button>
+      <button class="chat-close-btn" (click)="close()" title="Close chat">
+        <i class="bi bi-x-lg"></i>
+      </button>
+    </div>
+  </div>
+
+  <!-- ── Tabs (Chat | Announcements) ────────────────────────── -->
+  <div class="chat-tabs">
+    <button class="chat-tab-btn" [class.active]="activeTab === 'chat'" (click)="setTab('chat')">
+      <i class="bi bi-chat-left-text me-1"></i>Chat
+    </button>
+    <button class="chat-tab-btn" [class.active]="activeTab === 'announcements'" (click)="setTab('announcements')">
+      <i class="bi bi-megaphone me-1"></i>Announcements
+      <span *ngIf="announcements.length > 0" class="badge bg-warning text-dark ms-1" style="font-size:0.65rem;">
+        {{ announcements.length }}
+      </span>
+    </button>
+  </div>
+
+  <!-- ════════════════════════════════════════════════════════════
+       TAB 1 — ONE-ON-ONE CHAT
+  ════════════════════════════════════════════════════════════ -->
+  <ng-container *ngIf="activeTab === 'chat'">
+
+    <!-- Loading state -->
+    <div *ngIf="isLoading" class="chat-state-container">
+      <div class="chat-spinner">
+        <div class="spinner-border text-primary" role="status" style="width:2rem;height:2rem;">
+          <span class="visually-hidden">Loading...</span>
+        </div>
+        <p class="mt-3 text-muted">Loading chat...</p>
+      </div>
+    </div>
+
+    <!-- Chat not available -->
+    <div *ngIf="!isLoading && !chatAvailable" class="chat-state-container">
+      <div class="chat-unavailable">
+        <div class="chat-unavailable-icon">
+          <i class="bi bi-lock-fill"></i>
+        </div>
+        <h6 class="mt-3 mb-2 fw-semibold">Chat Not Available</h6>
+        <p class="text-muted text-center" style="font-size:0.85rem; max-width:260px;">
+          {{ errorMessage || 'Chat will be enabled after a supplier is selected for this RFQ.' }}
+        </p>
+      </div>
+    </div>
+
+    <!-- Messages area -->
+    <div *ngIf="!isLoading && chatAvailable" class="chat-body">
+      <div class="chat-messages" #messagesContainer>
+
+        <!-- Empty state -->
+        <div *ngIf="messages.length === 0" class="chat-empty">
+          <i class="bi bi-chat-left-dots" style="font-size:2rem; opacity:0.3;"></i>
+          <p class="mt-2 text-muted" style="font-size:0.82rem;">No messages yet. Start the conversation!</p>
+        </div>
+
+        <!-- Message bubbles -->
+        <div *ngFor="let msg of messages"
+             class="chat-message-row"
+             [class.mine]="isMine(msg)"
+             [class.theirs]="!isMine(msg)">
+
+          <!-- ── Regular text message ── -->
+          <div *ngIf="!isMeetingInvite(msg.content)" class="chat-bubble-wrapper">
+            <div *ngIf="!isMine(msg)" class="chat-sender-name">{{ msg.senderName }}</div>
+            <div class="chat-bubble" [class.mine-bubble]="isMine(msg)" [class.their-bubble]="!isMine(msg)">
+              <p class="chat-bubble-text">{{ msg.content }}</p>
+              <div class="chat-bubble-meta">
+                <span class="chat-time">{{ formatTime(msg.sentAt) }}</span>
+                <span *ngIf="isMine(msg)" class="chat-read-indicator ms-1">
+                  <i [class]="msg.isRead ? 'bi bi-check2-all text-info' : 'bi bi-check2'"
+                     style="font-size:0.75rem;"></i>
+                </span>
+              </div>
+            </div>
+          </div>
+
+          <!-- ── Meeting invite card ── -->
+          <div *ngIf="isMeetingInvite(msg.content)" class="meeting-invite-wrap">
+            <div class="meeting-invite-card">
+              <div class="mic-invite-icon">
+                <i class="bi bi-camera-video-fill"></i>
+              </div>
+              <div class="mic-invite-body">
+                <div class="mic-invite-title">Video Meeting</div>
+                <div class="mic-invite-sub">
+                  <span class="mic-who">{{ msg.senderName }}</span> started a meeting
+                  <span class="mic-time ms-1">· {{ formatTime(msg.sentAt) }}</span>
+                </div>
+              </div>
+              <button class="mic-join-btn" (click)="joinMeeting(msg.content)">
+                <i class="bi bi-camera-video-fill me-1"></i>Join
+              </button>
+            </div>
+          </div>
+
+        </div>
+
+      </div>
+
+      <!-- Input area -->
+      <div class="chat-input-area">
+        <textarea
+          class="chat-input"
+          placeholder="Type a message… (Enter to send)"
+          [(ngModel)]="newMessage"
+          (keydown)="onKeyDown($event)"
+          rows="1"
+          maxlength="2000"
+          [disabled]="isSending">
+        </textarea>
+        <button
+          class="chat-send-btn"
+          (click)="sendMessage()"
+          [disabled]="!newMessage.trim() || isSending"
+          title="Send message">
+          <span *ngIf="!isSending"><i class="bi bi-send-fill"></i></span>
+          <span *ngIf="isSending" class="spinner-border spinner-border-sm" role="status"></span>
+        </button>
+      </div>
+    </div>
+
+  </ng-container>
+
+  <!-- ════════════════════════════════════════════════════════════
+       TAB 2 — ANNOUNCEMENTS / BROADCAST
+  ════════════════════════════════════════════════════════════ -->
+  <ng-container *ngIf="activeTab === 'announcements'">
+    <div class="chat-body">
+
+      <!-- Announcement list -->
+      <div class="chat-messages" #announcementsContainer>
+
+        <!-- Empty state -->
+        <div *ngIf="announcements.length === 0" class="chat-empty">
+          <i class="bi bi-megaphone" style="font-size:2rem; opacity:0.3;"></i>
+          <p class="mt-2 text-muted" style="font-size:0.82rem;">
+            <span *ngIf="isBuyer">No announcements sent yet. Use the field below to broadcast a message to all suppliers.</span>
+            <span *ngIf="!isBuyer">No announcements from the buyer yet.</span>
+          </p>
+        </div>
+
+        <!-- Announcement cards -->
+        <div *ngFor="let ann of announcements" class="announcement-card">
+          <div class="announcement-header">
+            <i class="bi bi-megaphone-fill text-warning me-1"></i>
+            <span class="announcement-sender">{{ ann.senderName }}</span>
+            <span class="announcement-time ms-auto">{{ formatTime(ann.sentAt) }}</span>
+          </div>
+          <p class="announcement-content">{{ ann.content }}</p>
+        </div>
+
+      </div>
+
+      <!-- Broadcast input — BUYER ONLY -->
+      <div *ngIf="isBuyer" class="chat-input-area">
+        <textarea
+          class="chat-input"
+          placeholder="Type a broadcast message to ALL suppliers… (Enter to send)"
+          [(ngModel)]="newAnnouncement"
+          (keydown)="onAnnouncementKeyDown($event)"
+          rows="1"
+          maxlength="2000"
+          [disabled]="isSendingAnnouncement">
+        </textarea>
+        <button
+          class="chat-send-btn broadcast-btn"
+          (click)="sendAnnouncement()"
+          [disabled]="!newAnnouncement.trim() || isSendingAnnouncement"
+          title="Broadcast to all suppliers">
+          <span *ngIf="!isSendingAnnouncement"><i class="bi bi-megaphone-fill"></i></span>
+          <span *ngIf="isSendingAnnouncement" class="spinner-border spinner-border-sm" role="status"></span>
+        </button>
+      </div>
+
+      <!-- Supplier view: read-only note -->
+      <div *ngIf="!isBuyer" class="announcement-readonly-note">
+        <i class="bi bi-info-circle me-1 text-primary"></i>
+        These are announcements from the buyer to all suppliers.
+      </div>
+
+    </div>
+  </ng-container>
+
+</div>
+
+<!-- ── Video Meeting Modal (full-screen, above everything) ── -->
+<app-rfq-meeting
+  *ngIf="isMeetingOpen"
+  [roomName]="currentMeetingRoom"
+  [displayName]="userName || userType"
+  [rfqNumber]="rfqNumber"
+  (meetingClosed)="closeMeeting()">
+</app-rfq-meeting>

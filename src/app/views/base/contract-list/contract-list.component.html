@@ -1,0 +1,54 @@
+<c-container class="mt-4" fluid>
+  <c-row class="mb-4">
+    <c-col xs="12">
+      <c-card class="border-0 shadow-lg">
+        <div class="contract-header">
+          <c-card-body class="p-4">
+            <h3 class="text-white mb-1 fw-bold">
+              <i class="bi bi-file-earmark-text me-2"></i>
+              Contracts
+            </h3>
+            <p class="text-white mb-0 opacity-90">Master Service Agreements — generated after supplier selection, before the PO.</p>
+          </c-card-body>
+        </div>
+      </c-card>
+    </c-col>
+  </c-row>
+
+  <c-row *ngIf="isLoading">
+    <c-col xs="12" class="text-center py-5">
+      <div class="spinner-border text-primary" role="status"></div>
+    </c-col>
+  </c-row>
+
+  <c-row *ngIf="!isLoading && contracts.length === 0">
+    <c-col xs="12">
+      <c-card class="border-0 shadow-sm">
+        <c-card-body class="text-center py-5">
+          <p class="text-muted mb-0">No contracts yet. Create one from the PO Negotiation page after selecting a winning supplier.</p>
+        </c-card-body>
+      </c-card>
+    </c-col>
+  </c-row>
+
+  <c-row *ngFor="let contract of contracts" class="mb-3">
+    <c-col xs="12">
+      <c-card class="border-0 shadow-sm">
+        <c-card-body class="d-flex justify-content-between align-items-center flex-wrap gap-3">
+          <div>
+            <div class="d-flex align-items-center gap-2 mb-1">
+              <strong>{{ contract.title }}</strong>
+              <c-badge [color]="statusColor(contract.status)">{{ contract.status }}</c-badge>
+            </div>
+            <div class="text-muted small">
+              {{ contract.consultantCompanyName }} &middot; Agreement Date: {{ contract.agreementDate }}
+            </div>
+          </div>
+          <button cButton color="primary" variant="outline" size="sm" (click)="viewContract(contract.id)">
+            <i class="bi bi-eye me-1"></i> View
+          </button>
+        </c-card-body>
+      </c-card>
+    </c-col>
+  </c-row>
+</c-container>

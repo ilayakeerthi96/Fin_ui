@@ -1,0 +1,7 @@
+{
+  "version": 3,
+  "sources": ["src/app/views/base/contract-list/contract-list.component.css"],
+  "sourcesContent": [".contract-header {\n  background: linear-gradient(135deg, #1a5276 0%, #2c3e50 100%);\n  border-radius: 12px;\n  padding: 10px;\n}\n"],
+  "mappings": ";AAAA,CAAC;AACC;AAAA,IAAY;AAAA,MAAgB,MAAhB;AAAA,MAAwB,QAAQ,EAAhC;AAAA,MAAoC,QAAQ;AACxD,iBAAe;AACf,WAAS;AACX;",
+  "names": []
+}

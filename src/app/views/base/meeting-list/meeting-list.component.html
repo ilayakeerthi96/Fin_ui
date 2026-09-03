@@ -1,0 +1,151 @@
+<!-- ============================================================
+     Meeting List Panel
+============================================================ -->
+<div class="ml-overlay" (click)="close()">
+  <div class="ml-panel" (click)="$event.stopPropagation()">
+
+    <!-- Header -->
+    <div class="ml-header">
+      <div class="ml-header-left">
+        <div class="ml-icon"><i class="bi bi-camera-video-fill"></i></div>
+        <div>
+          <div class="ml-title">Meetings</div>
+          <div class="ml-sub" *ngIf="rfqNumber">RFQ: {{ rfqNumber }}</div>
+        </div>
+      </div>
+      <div class="ml-header-actions">
+        <button class="ml-new-btn" (click)="scheduleMeeting.emit(); $event.stopPropagation()"
+                title="Schedule a new meeting">
+          <i class="bi bi-plus-circle-fill me-1"></i>New Meeting
+        </button>
+        <button class="ml-close-btn" (click)="close()">
+          <i class="bi bi-x-lg"></i>
+        </button>
+      </div>
+    </div>
+
+    <!-- Tabs -->
+    <div class="ml-tabs">
+      <button class="ml-tab" [class.active]="activeTab === 'upcoming'"
+              (click)="activeTab = 'upcoming'">
+        <i class="bi bi-calendar-check me-1"></i>
+        Upcoming
+        <span class="ml-tab-badge" *ngIf="upcomingMeetings.length > 0">
+          {{ upcomingMeetings.length }}
+        </span>
+      </button>
+      <button class="ml-tab" [class.active]="activeTab === 'past'"
+              (click)="activeTab = 'past'">
+        <i class="bi bi-clock-history me-1"></i>Past
+      </button>
+    </div>
+
+    <!-- Body -->
+    <div class="ml-body">
+
+      <!-- Loading -->
+      <div class="ml-loading" *ngIf="isLoading">
+        <div class="ml-spinner"></div>
+        <p class="mt-2">Loading meetings…</p>
+      </div>
+
+      <!-- Error -->
+      <div class="ml-error" *ngIf="errorMsg && !isLoading">
+        <i class="bi bi-exclamation-triangle-fill me-1"></i>{{ errorMsg }}
+        <button class="ml-retry-btn" (click)="load()">Retry</button>
+      </div>
+
+      <!-- Upcoming meetings -->
+      <ng-container *ngIf="!isLoading && !errorMsg && activeTab === 'upcoming'">
+        <div class="ml-empty" *ngIf="upcomingMeetings.length === 0">
+          <i class="bi bi-calendar-x" style="font-size:2.5rem;opacity:0.25;"></i>
+          <p class="mt-2">No upcoming meetings.</p>
+          <button class="ml-new-btn-empty" (click)="scheduleMeeting.emit()">
+            <i class="bi bi-plus-circle me-1"></i>Schedule a Meeting
+          </button>
+        </div>
+
+        <div class="ml-meeting-card" *ngFor="let m of upcomingMeetings">
+          <div class="ml-card-top">
+            <div class="ml-card-info">
+              <div class="ml-meeting-title">{{ m.title }}</div>
+              <div class="ml-meeting-meta">
+                <span [class]="'ml-status-badge ' + statusBadgeClass(m.status)">
+                  {{ m.status }}
+                </span>
+                <span class="ml-meta-item" *ngIf="m.scheduledAt">
+                  <i class="bi bi-calendar3 me-1"></i>{{ formatDate(m.scheduledAt) }}
+                </span>
+                <span class="ml-meta-item" *ngIf="m.status === 'ACTIVE' && m.startedAt">
+                  <i class="bi bi-play-fill me-1 text-success"></i>Started {{ formatDate(m.startedAt) }}
+                </span>
+                <span class="ml-meta-item">
+                  <i class="bi bi-clock me-1"></i>{{ m.durationMinutes }} min
+                </span>
+              </div>
+              <div class="ml-meeting-host">
+                <i class="bi bi-person-fill me-1"></i>Host: {{ m.hostName }}
+              </div>
+            </div>
+          </div>
+
+          <div class="ml-card-agenda" *ngIf="m.agenda">
+            <i class="bi bi-list-ul me-1"></i>{{ m.agenda }}
+          </div>
+
+          <div class="ml-card-actions">
+            <!-- Join -->
+            <button class="ml-join-btn" *ngIf="canJoin(m)" (click)="join(m)">
+              <i class="bi bi-camera-video-fill me-1"></i>
+              {{ m.status === 'ACTIVE' ? 'Join Now' : 'Join Early' }}
+            </button>
+            <span class="ml-soon-label" *ngIf="!canJoin(m) && m.status === 'SCHEDULED'">
+              <i class="bi bi-hourglass-split me-1"></i>Not yet open
+            </span>
+
+            <!-- Host controls -->
+            <button class="ml-end-btn" *ngIf="isHost(m) && m.status === 'ACTIVE'"
+                    (click)="endMeeting(m)">
+              <i class="bi bi-telephone-x-fill me-1"></i>End
+            </button>
+            <button class="ml-cancel-btn" *ngIf="isHost(m) && m.status === 'SCHEDULED'"
+                    (click)="cancelMeeting(m)">
+              <i class="bi bi-x-circle me-1"></i>Cancel
+            </button>
+          </div>
+        </div>
+      </ng-container>
+
+      <!-- Past meetings -->
+      <ng-container *ngIf="!isLoading && !errorMsg && activeTab === 'past'">
+        <div class="ml-empty" *ngIf="pastMeetings.length === 0">
+          <i class="bi bi-calendar-x" style="font-size:2.5rem;opacity:0.25;"></i>
+          <p class="mt-2">No past meetings.</p>
+        </div>
+
+        <div class="ml-meeting-card ml-past" *ngFor="let m of pastMeetings">
+          <div class="ml-card-top">
+            <div class="ml-card-info">
+              <div class="ml-meeting-title">{{ m.title }}</div>
+              <div class="ml-meeting-meta">
+                <span [class]="'ml-status-badge ' + statusBadgeClass(m.status)">
+                  {{ m.status }}
+                </span>
+                <span class="ml-meta-item" *ngIf="m.startedAt">
+                  <i class="bi bi-calendar3 me-1"></i>{{ formatDate(m.startedAt) }}
+                </span>
+                <span class="ml-meta-item" *ngIf="m.endedAt">
+                  <i class="bi bi-stop-fill me-1"></i>Ended {{ formatDate(m.endedAt) }}
+                </span>
+                <span class="ml-meta-item">
+                  <i class="bi bi-person-fill me-1"></i>Host: {{ m.hostName }}
+                </span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </ng-container>
+
+    </div>
+  </div>
+</div>

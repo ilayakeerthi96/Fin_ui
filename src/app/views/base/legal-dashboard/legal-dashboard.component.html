@@ -1,0 +1,294 @@
+<div class="container-fluid p-4">
+
+  <!-- ==================== COMPANY INFO CARD ==================== -->
+  <div class="row mb-4">
+    <div class="col-12">
+      <div class="card border-0 shadow-lg" style="border-radius: 12px; overflow: hidden;">
+        <div class="gradient-header">
+          <div class="row align-items-center">
+            <div class="col-12 col-lg-4 text-center text-lg-start mb-3 mb-lg-0">
+              <div class="d-flex align-items-center justify-content-center justify-content-lg-start">
+                <div class="avatar-circle-large me-3">{{ userName.substring(0, 2).toUpperCase() }}</div>
+                <div class="text-white">
+                  <h3 class="mb-1 fw-bold" style="font-size: 1.5rem;">{{ userName }}</h3>
+                  <p class="mb-0" style="opacity: 0.9; font-size: 0.95rem;">
+                    <i class="bi bi-shield-check me-1"></i>{{ hierarchyLevelName }}
+                  </p>
+                </div>
+              </div>
+            </div>
+            <div class="col-12 col-lg-8">
+              <div class="row g-2">
+                <div class="col-12 col-md-4">
+                  <div class="info-card">
+                    <div class="info-card-icon"><i class="bi bi-building-fill"></i></div>
+                    <div class="info-card-content">
+                      <div class="info-label">Company Name</div>
+                      <div class="info-value">{{ companyName }}</div>
+                    </div>
+                  </div>
+                </div>
+                <div class="col-12 col-md-4">
+                  <div class="info-card">
+                    <div class="info-card-icon"><i class="bi bi-envelope-fill"></i></div>
+                    <div class="info-card-content">
+                      <div class="info-label">Email</div>
+                      <div class="info-value">{{ userEmail }}</div>
+                    </div>
+                  </div>
+                </div>
+                <div class="col-12 col-md-4">
+                  <div class="info-card">
+                    <div class="info-card-icon"><i class="bi bi-briefcase-fill"></i></div>
+                    <div class="info-card-content">
+                      <div class="info-label">Team</div>
+                      <div class="info-value">Legal</div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================== HEADER ==================== -->
+  <div class="row mb-4">
+    <div class="col-12">
+      <div class="d-flex justify-content-between align-items-center">
+        <div>
+          <h3 class="fw-bold text-dark mb-1">
+            <i class="bi bi-speedometer2"></i>&nbsp;&nbsp;Legal Dashboard
+          </h3>
+          <p class="text-muted small mb-0">Review and manage Contracts awaiting your approval.</p>
+        </div>
+        <div class="d-flex gap-2">
+          <button class="btn btn-warning position-relative" (click)="scrollToPending()" *ngIf="pendingCount > 0">
+            <i class="bi bi-clock-history"></i> Contracts Awaiting Review
+            <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger">
+              {{ pendingCount }}
+            </span>
+          </button>
+          <button class="btn btn-outline-primary" (click)="refresh()" [disabled]="isLoading">
+            <i class="bi bi-arrow-clockwise"></i> Refresh
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================== DATE FILTER BAR ==================== -->
+  <div class="date-filter-card mb-4">
+    <div class="date-filter-accent"></div>
+    <div class="date-filter-inner">
+
+      <div class="date-filter-title-wrap">
+        <div class="date-filter-icon-wrap"><i class="bi bi-calendar3-range"></i></div>
+        <div>
+          <div class="date-filter-title">Date Range</div>
+          <div class="date-filter-subtitle">Filter contracts by creation date</div>
+        </div>
+      </div>
+
+      <div class="date-filter-divider"></div>
+
+      <div class="date-filter-controls">
+        <div class="date-filter-field">
+          <label class="date-filter-label">
+            <i class="bi bi-calendar2-check me-1"></i>Financial Year / Period
+          </label>
+          <div class="date-filter-select-wrap">
+            <select class="date-filter-select" [(ngModel)]="selectedFYOption" (change)="onFYOptionChange()">
+              <option value="ALL">All Time</option>
+              <option *ngFor="let fy of financialYearOptions" [value]="fy.value">{{ fy.label }}</option>
+              <option value="CUSTOM">Custom Range</option>
+            </select>
+            <i class="bi bi-chevron-down date-filter-select-icon"></i>
+          </div>
+        </div>
+
+        <div class="date-filter-field date-filter-custom-field"
+             [class.date-filter-field-visible]="selectedFYOption === 'CUSTOM'">
+          <label class="date-filter-label"><i class="bi bi-calendar-event me-1"></i>From Date</label>
+          <div class="date-filter-input-wrap">
+            <input type="date" class="date-filter-input" [(ngModel)]="customFromDate" (change)="onFYOptionChange()" />
+          </div>
+        </div>
+
+        <div class="date-filter-field date-filter-custom-field"
+             [class.date-filter-field-visible]="selectedFYOption === 'CUSTOM'">
+          <label class="date-filter-label"><i class="bi bi-calendar-event-fill me-1"></i>To Date</label>
+          <div class="date-filter-input-wrap">
+            <input type="date" class="date-filter-input" [(ngModel)]="customToDate" (change)="onFYOptionChange()" />
+          </div>
+        </div>
+      </div>
+
+      <div class="date-filter-divider"></div>
+
+      <div class="date-filter-right">
+        <div class="date-filter-badge-wrap" *ngIf="activeDateRangeLabel">
+          <div class="date-filter-badge-icon"><i class="bi bi-funnel-fill"></i></div>
+          <div>
+            <div class="date-filter-badge-label">Active Filter</div>
+            <div class="date-filter-badge-value">{{ activeDateRangeLabel }}</div>
+          </div>
+        </div>
+        <button class="date-filter-reset-btn"
+                *ngIf="selectedFYOption !== getCurrentFYValue()"
+                (click)="resetDateFilter()"
+                title="Reset to current financial year">
+          <i class="bi bi-arrow-counterclockwise me-1"></i>Current FY
+        </button>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ==================== CONTRACT STAT CARDS ==================== -->
+  <div class="section-label-row mb-2">
+    <span class="section-label-text"><i class="bi bi-file-earmark-text me-1"></i>Contract Overview</span>
+    <hr class="section-label-line">
+  </div>
+  <div class="row g-3 mb-4">
+    <div class="col-6 col-md-3">
+      <div class="stat-card">
+        <div class="stat-icon" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color:white;">
+          <i class="bi bi-file-earmark-text"></i>
+        </div>
+        <div class="stat-info"><h4>{{ totalCount }}</h4><p>Total Contracts</p></div>
+      </div>
+    </div>
+    <div class="col-6 col-md-3">
+      <div class="stat-card" style="cursor:pointer;" (click)="scrollToPending()">
+        <div class="stat-icon" style="background: linear-gradient(135deg, #f5576c 0%, #c0392b 100%); color:white;">
+          <i class="bi bi-hourglass-split"></i>
+        </div>
+        <div class="stat-info">
+          <h4 [style.color]="pendingCount > 0 ? '#c0392b' : '#2d3748'">{{ pendingCount }}</h4>
+          <p>Pending Your Review</p>
+          <small *ngIf="pendingCount > 0" class="text-danger fw-bold" style="font-size:0.72rem;">
+            <i class="bi bi-exclamation-circle-fill me-1"></i>Action Required
+          </small>
+        </div>
+      </div>
+    </div>
+    <div class="col-6 col-md-3">
+      <div class="stat-card">
+        <div class="stat-icon" style="background: linear-gradient(135deg, #43e97b 0%, #1a8a3c 100%); color:white;">
+          <i class="bi bi-check-circle"></i>
+        </div>
+        <div class="stat-info"><h4>{{ approvedCount }}</h4><p>Approved Contracts</p></div>
+      </div>
+    </div>
+    <div class="col-6 col-md-3">
+      <div class="stat-card">
+        <div class="stat-icon" style="background: linear-gradient(135deg, #ff8f00 0%, #e65100 100%); color:white;">
+          <i class="bi bi-x-circle"></i>
+        </div>
+        <div class="stat-info"><h4>{{ rejectedCount }}</h4><p>Rejected Contracts</p></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================== CONTRACTS AWAITING REVIEW ==================== -->
+  <div id="pending-contracts" class="section-label-row mb-2">
+    <span class="section-label-text"><i class="bi bi-hourglass-split me-1"></i>Contracts Awaiting Your Review</span>
+    <hr class="section-label-line">
+  </div>
+
+  <div *ngIf="isLoading" class="text-center py-5">
+    <div class="spinner-border text-primary" role="status"></div>
+  </div>
+
+  <div *ngIf="!isLoading && pendingContracts.length === 0" class="card border-0 shadow-sm">
+    <div class="card-body text-center py-5">
+      <p class="text-muted mb-0">No contracts pending your approval right now.</p>
+    </div>
+  </div>
+
+  <div *ngFor="let contract of pendingContracts" class="card border-0 shadow-sm mb-3">
+    <div class="card-body d-flex justify-content-between align-items-center flex-wrap gap-3">
+      <div>
+        <strong>{{ contract.title }}</strong>
+        <div class="text-muted small">{{ contract.consultantCompanyName }} &middot; Agreement Date: {{ contract.agreementDate }}</div>
+      </div>
+      <div class="d-flex gap-2">
+        <button class="btn btn-outline-secondary btn-sm" (click)="viewContract(contract.id)">
+          <i class="bi bi-eye me-1"></i> View
+        </button>
+        <button class="btn btn-success btn-sm" (click)="openModal(contract, 'approve')">
+          <i class="bi bi-check-lg me-1"></i> Approve
+        </button>
+        <button class="btn btn-outline-warning btn-sm" (click)="openModal(contract, 'moreInfo')">
+          <i class="bi bi-chat-left-text me-1"></i> Request More Info
+        </button>
+        <button class="btn btn-outline-danger btn-sm" (click)="openModal(contract, 'reject')">
+          <i class="bi bi-x-lg me-1"></i> Reject
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Plain Bootstrap modal (not CoreUI c-modal — see app.config.ts comment: c-modal's
+     animation trigger is broken on this Angular/CoreUI version combo and leaves the
+     dialog permanently invisible). This pattern matches budget-approvals.component.html. -->
+<div class="modal fade" [class.show]="showModal" [style.display]="showModal ? 'block' : 'none'"
+     tabindex="-1" style="background-color: rgba(0,0,0,.5);">
+  <div class="modal-dialog modal-dialog-centered" [class.modal-lg]="modalMode === 'moreInfo'" [class.modal-sm]="modalMode !== 'moreInfo'">
+    <div class="modal-content" *ngIf="showModal">
+      <div class="modal-header">
+        <h5 class="modal-title">
+          {{ modalMode === 'approve' ? 'Approve' : modalMode === 'reject' ? 'Reject' : 'Request More Info —' }} Contract
+        </h5>
+        <button type="button" class="btn-close" (click)="closeModal()" [disabled]="isSubmitting"></button>
+      </div>
+      <div class="modal-body">
+        <p class="small text-muted">{{ selectedContract?.title }}</p>
+
+        <div class="alert alert-warning py-2 small" *ngIf="modalMode === 'moreInfo'">
+          <i class="bi bi-info-circle me-1"></i>
+          This sends the contract back to its creator instead of approving/rejecting. Explain exactly what's
+          missing — they'll see your remarks (and attachments, if any) and can resubmit once addressed.
+        </div>
+
+        <label class="form-label small fw-bold">
+          {{ modalMode === 'moreInfo' ? 'What information is needed?' : 'Comments' }}
+          <span *ngIf="modalMode === 'reject' || modalMode === 'moreInfo'" class="text-danger">*</span>
+        </label>
+        <textarea class="form-control" rows="3" [(ngModel)]="comments" [ngModelOptions]="{standalone: true}"
+          [placeholder]="modalMode === 'reject' ? 'Reason for rejection' : modalMode === 'moreInfo' ? 'Be specific — mention everything you need' : 'Optional comments'"></textarea>
+
+        <div class="mt-3" *ngIf="modalMode === 'moreInfo'">
+          <label class="form-label small fw-bold">Attachments <span class="text-muted fw-normal">(optional, any number of files)</span></label>
+          <input type="file" class="form-control form-control-sm" multiple (change)="onAttachmentsSelected($event)" />
+
+          <div class="attachment-preview-grid mt-3" *ngIf="pendingAttachments.length > 0">
+            <div class="attachment-preview-item" *ngFor="let att of pendingAttachments; let i = index">
+              <img *ngIf="att.isImage" [src]="att.previewUrl" class="attachment-preview-thumb" [alt]="att.file.name" />
+              <div *ngIf="!att.isImage" class="attachment-preview-icon">
+                <i class="bi bi-file-earmark-text"></i>
+              </div>
+              <div class="attachment-preview-name" [title]="att.file.name">{{ att.file.name }}</div>
+              <button type="button" class="attachment-preview-remove" (click)="removeAttachment(i)" title="Remove">
+                <i class="bi bi-x-lg"></i>
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" (click)="closeModal()" [disabled]="isSubmitting">Cancel</button>
+        <button type="button" [class]="'btn ' + (modalMode === 'approve' ? 'btn-success' : modalMode === 'reject' ? 'btn-danger' : 'btn-warning')"
+          (click)="confirm()" [disabled]="isSubmitting">
+          <span *ngIf="isSubmitting" class="spinner-border spinner-border-sm me-2"></span>
+          {{ modalMode === 'approve' ? 'Confirm Approval' : modalMode === 'reject' ? 'Confirm Rejection' : 'Send Back for Revision' }}
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+<div class="modal-backdrop fade show" *ngIf="showModal"></div>

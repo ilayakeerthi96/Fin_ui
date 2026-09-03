@@ -1,0 +1,245 @@
+<div class="cap-page">
+
+  <div class="cap-topbar">
+    <div>
+      <div class="cap-title"><i class="bi bi-shield-check me-2"></i>{{ pageTitle }}</div>
+      <div class="cap-subtitle">{{ pageSubtitle }}</div>
+    </div>
+    <button class="btn-cap-primary" *ngIf="!isSupplierMode" (click)="openRaiseModal()">
+      <i class="bi bi-plus-lg me-1"></i>Raise CAP
+    </button>
+  </div>
+
+  <!-- Fixed to the viewport, not the page — visible immediately regardless of scroll position.
+       Hidden while the Raise CAP modal is open, since its own pinned alert shows then instead. -->
+  <div class="cap-toast" *ngIf="errorMessage && !showRaiseModal">
+    <div class="cap-alert cap-toast-msg">
+      <span><i class="bi bi-exclamation-triangle me-2"></i>{{ errorMessage }}</span>
+      <button class="cap-toast-close" (click)="errorMessage = ''" aria-label="Dismiss"><i class="bi bi-x"></i></button>
+    </div>
+  </div>
+
+  <div class="cap-filters">
+    <div>
+      <label class="cap-label">Status</label>
+      <select class="cap-input" [(ngModel)]="statusFilter" (change)="onFilterChange()">
+        <option value="ALL">All statuses</option>
+        <option *ngFor="let s of STATUSES" [value]="s">{{ statusLabel(s) }}</option>
+      </select>
+    </div>
+    <div class="cap-search-wrap">
+      <label class="cap-label">Search</label>
+      <input type="text" class="cap-input" placeholder="CAP number, item, department…" [(ngModel)]="searchText" />
+    </div>
+  </div>
+
+  <div class="cap-loading" *ngIf="isLoading"><i class="bi bi-arrow-repeat spin me-2"></i>Loading…</div>
+
+  <div class="cap-empty" *ngIf="!isLoading && !filteredCaps.length">
+    <i class="bi bi-shield-check"></i>
+    <p>No corrective action plans found.</p>
+    <p class="cap-empty-hint" *ngIf="!isSupplierMode">
+      Raise one whenever a customer rejects a defective or damaged delivery — replacing the item
+      solves their immediate problem, but a CAP tracks the root cause so it doesn't happen again.
+    </p>
+  </div>
+
+  <div class="cap-table-wrap" *ngIf="!isLoading && filteredCaps.length">
+    <table class="cap-table">
+      <thead>
+        <tr>
+          <th style="width:130px;">CAP Number</th>
+          <th>Item</th>
+          <th *ngIf="isSupplierMode">Customer</th>
+          <th *ngIf="!isSupplierMode">Supplier</th>
+          <th style="width:100px;">Severity</th>
+          <th style="width:160px;">Status</th>
+          <th style="width:90px;" class="num">Actions</th>
+          <th style="width:110px;">Target Close</th>
+          <th style="width:70px;"></th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let c of filteredCaps" (click)="openDetail(c)" class="cap-row">
+          <td class="cap-strong">{{ c.capNumber }}</td>
+          <td>{{ c.itemDescription || '—' }}</td>
+          <td *ngIf="isSupplierMode">{{ c.buyerCompanyName || '—' }}</td>
+          <td *ngIf="!isSupplierMode">{{ c.supplierCompanyName || '—' }}</td>
+          <td><span class="cap-sev" [ngClass]="severityClass(c.severity)">{{ c.severity }}</span></td>
+          <td><span class="cap-badge" [ngClass]="statusClass(c.status)">{{ statusLabel(c.status) }}</span></td>
+          <td class="num">{{ c.actionCount }}</td>
+          <td>
+            {{ c.targetCloseDate ? (c.targetCloseDate | date:'dd MMM yyyy') : '—' }}
+            <span class="cap-overdue-flag" *ngIf="c.overdue" title="Past target close date"><i class="bi bi-exclamation-circle"></i></span>
+          </td>
+          <td><i class="bi bi-chevron-right"></i></td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- ═══════════════ RAISE CAP MODAL ═══════════════ -->
+  <div class="cap-modal-backdrop" *ngIf="showRaiseModal" (click)="closeRaiseModal()">
+    <div class="cap-modal" (click)="$event.stopPropagation()">
+      <div class="cap-modal-header">
+        <div class="cap-modal-title">Raise Corrective Action Plan</div>
+        <button class="cap-modal-close" (click)="closeRaiseModal()"><i class="bi bi-x-lg"></i></button>
+      </div>
+
+      <!-- Pinned above the scrollable body so a validation error is always visible, even if the
+           user has scrolled down through the form when it fires. -->
+      <div class="cap-modal-alert-slot" *ngIf="errorMessage">
+        <div class="cap-alert">{{ errorMessage }}</div>
+      </div>
+
+      <div class="cap-modal-body">
+        <div class="cap-grn-link">
+          <label class="cap-label">Link a rejected GRN line (optional)</label>
+
+          <div class="cap-grn-filter-row">
+            <select class="cap-input" [(ngModel)]="grnPeriod" (change)="onGrnPeriodChange()">
+              <option [ngValue]="GRN_ALL">All time</option>
+              <option [ngValue]="GRN_TODAY">Today</option>
+              <option *ngFor="let y of grnFyOptions" [ngValue]="y">FY {{ y }}–{{ (y + 1) % 100 }}</option>
+              <option [ngValue]="GRN_CUSTOM">Custom date range</option>
+            </select>
+            <ng-container *ngIf="grnPeriod === GRN_CUSTOM">
+              <input type="date" class="cap-input" [(ngModel)]="grnCustomFrom" title="From" />
+              <input type="date" class="cap-input" [(ngModel)]="grnCustomTo" title="To" />
+            </ng-container>
+          </div>
+
+          <div class="cap-grn-link-row">
+            <input type="text" class="cap-input" placeholder="Search by GRN number, e.g. GLOB/GRN/26/014"
+                   [(ngModel)]="grnSearchQuery" (keyup.enter)="searchRejectedGrnLines()" />
+            <button class="btn-cap-secondary" (click)="searchRejectedGrnLines()" [disabled]="isSearchingGrn">
+              <i class="bi bi-search me-1"></i>{{ isSearchingGrn ? 'Searching…' : 'Search' }}
+            </button>
+          </div>
+          <p class="cap-hint">Shows only lines that were actually rejected — narrow by date and/or GRN
+            number, then pick one from the dropdown to pull its item, PO, GRN and supplier straight in,
+            plus a starting problem description you can edit.</p>
+
+          <div *ngIf="grnSearchResults.length" style="margin-top:10px;">
+            <label class="cap-label">{{ grnSearchResults.length }} rejected line{{ grnSearchResults.length === 1 ? '' : 's' }} found — select one</label>
+            <select class="cap-input" (change)="onGrnResultSelected($any($event.target).value)">
+              <option value="" selected disabled>Choose a rejected GRN line…</option>
+              <option *ngFor="let line of grnSearchResults" [value]="line.grnLineItemId">
+                {{ line.grnNumber }} — {{ line.itemDescription }} (rejected {{ line.rejectedQuantity }} {{ line.uom }})
+              </option>
+            </select>
+          </div>
+          <p class="cap-hint" *ngIf="grnSearchAttempted && !isSearchingGrn && !grnSearchResults.length">
+            No rejected lines found for that search. You can still raise this CAP without linking a GRN —
+            just fill in the item details below.
+          </p>
+        </div>
+
+        <div class="cap-form-grid">
+          <div class="cap-span-2">
+            <label class="cap-label">Supplier *</label>
+            <select class="cap-input" [(ngModel)]="raiseForm.supplierId">
+              <option value="" disabled>Select supplier…</option>
+              <option *ngFor="let s of suppliers" [ngValue]="s.id">{{ s.companyName }}</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- ═══ DISPOSITION — decided first, before anything else ═══ -->
+        <div class="cap-disposition-block">
+          <label class="cap-label">What is happening to the goods? *</label>
+          <select class="cap-input" [(ngModel)]="raiseForm.disposition">
+            <option value="" disabled>Select disposition…</option>
+            <option *ngFor="let d of DISPOSITIONS" [value]="d.value">{{ d.label }}</option>
+          </select>
+
+          <!-- REJECT / REJECT & REPLACE — goods are going back -->
+          <div class="cap-form-grid cap-disposition-fields"
+               *ngIf="raiseForm.disposition === 'REJECT' || raiseForm.disposition === 'REJECT_AND_REPLACE'">
+            <div>
+              <label class="cap-label">Packed By</label>
+              <input type="text" class="cap-input" [(ngModel)]="raiseForm.returnPackedBy" placeholder="Who is packing the return" />
+            </div>
+            <div>
+              <label class="cap-label">In-Charge</label>
+              <input type="text" class="cap-input" [(ngModel)]="raiseForm.returnInChargeName" placeholder="Who is accountable for the return" />
+            </div>
+          </div>
+
+          <!-- ACCEPT WITH DEVIATION — does the fix need to happen on our side? -->
+          <div class="cap-disposition-fields" *ngIf="raiseForm.disposition === 'ACCEPT_WITH_DEVIATION'">
+            <label class="cap-checkbox-row">
+              <input type="checkbox" [(ngModel)]="raiseForm.internalCorrectionRequired" />
+              <span>Requires internal correction — our own team will provide the fix, not the supplier</span>
+            </label>
+            <p class="cap-hint">Kept and used despite the known issue — this is a quality decision, not a
+              payment one. Leave unchecked and the Supplier fills in the Corrective Action as usual.</p>
+          </div>
+        </div>
+
+        <div class="cap-form-grid">
+          <div>
+            <label class="cap-label">Personnel Involved (RFQ Creator)</label>
+            <select class="cap-input" [(ngModel)]="selectedPersonnelId" (change)="onPersonnelChange()">
+              <option value="" disabled>Select person…</option>
+              <option *ngFor="let p of personnelOptions" [ngValue]="p.id">{{ p.name }}{{ p.departmentName ? ' — ' + p.departmentName : '' }}</option>
+            </select>
+          </div>
+          <div>
+            <label class="cap-label">Item Code</label>
+            <input type="text" class="cap-input" [(ngModel)]="raiseForm.itemCode" />
+          </div>
+          <div>
+            <label class="cap-label">Item Description</label>
+            <input type="text" class="cap-input" [(ngModel)]="raiseForm.itemDescription" />
+          </div>
+          <div>
+            <label class="cap-label">Severity</label>
+            <select class="cap-input" [(ngModel)]="raiseForm.severity">
+              <option value="LOW">Low</option>
+              <option value="MEDIUM">Medium</option>
+              <option value="HIGH">High</option>
+              <option value="CRITICAL">Critical</option>
+            </select>
+          </div>
+          <div>
+            <label class="cap-label">When Detected</label>
+            <input type="date" class="cap-input" [(ngModel)]="raiseForm.whenDetected" [max]="todayIso" />
+            <p class="cap-hint" style="margin-top:4px;">Can't be a future date — this is when the issue was actually found.</p>
+          </div>
+          <div>
+            <label class="cap-label">Assigned Owner</label>
+            <input type="text" class="cap-input" [(ngModel)]="raiseForm.assignedOwner" placeholder="Person/team accountable for this CAP" />
+          </div>
+          <div>
+            <label class="cap-label">Target Close Date</label>
+            <input type="date" class="cap-input" [(ngModel)]="raiseForm.targetCloseDate" />
+          </div>
+          <div>
+            <label class="cap-label">Department</label>
+            <input type="text" class="cap-input" [value]="raiseForm.department" readonly disabled
+                   placeholder="Auto-filled from the selected person" />
+          </div>
+          <div class="cap-span-2">
+            <label class="cap-label">Problem Description *</label>
+            <textarea class="cap-textarea" rows="3" [(ngModel)]="raiseForm.problemDescription"
+              placeholder="What happened, in the customer's own terms — e.g. 'Received 5 units with cracked housings and rejected the delivery.'"></textarea>
+          </div>
+          <div class="cap-span-2">
+            <label class="cap-label">Immediate Correction (not the corrective action)</label>
+            <textarea class="cap-textarea" rows="2" [(ngModel)]="raiseForm.immediateCorrection"
+              placeholder="What was done to solve the customer's immediate problem — e.g. 'Replaced 5 units from buffer stock.' This is recorded for context only; it will never count as the fix."></textarea>
+          </div>
+        </div>
+      </div>
+
+      <div class="cap-modal-footer">
+        <button class="btn-cap-secondary" (click)="closeRaiseModal()">Cancel</button>
+        <button class="btn-cap-primary" (click)="submitRaiseForm()" [disabled]="isSavingCap">
+          {{ isSavingCap ? 'Raising…' : 'Raise CAP' }}
+        </button>
+      </div>
+    </div>
+  </div>
+
+</div>

@@ -1,0 +1,255 @@
+/* ============================================================
+   Meeting Room — Full-screen video conference
+============================================================ */
+
+/* Full viewport overlay */
+:host {
+  position: fixed;
+  inset: 0;
+  z-index: 3000;
+  display: flex;
+  flex-direction: column;
+  background: #0d1117;
+  color: #fff;
+  font-family: inherit;
+}
+
+/* ── Loading / Error ── */
+.mr-loading {
+  display: flex; align-items: center; justify-content: center;
+  height: 100vh; background: #0d1117;
+}
+.mr-loading-inner { text-align: center; }
+.mr-loader {
+  width: 64px; height: 64px; border-radius: 50%;
+  border: 4px solid rgba(255,255,255,0.1);
+  border-top-color: #1a73e8;
+  animation: spin 0.9s linear infinite;
+  margin: 0 auto;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+.mr-error-icon { font-size: 3.5rem; color: #ef5350; }
+
+/* ── Room layout ── */
+.mr-room {
+  display: flex; flex-direction: column;
+  height: 100vh; overflow: hidden;
+}
+
+/* ── Top bar ── */
+.mr-topbar {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 10px 20px; background: #161b22;
+  border-bottom: 1px solid rgba(255,255,255,0.07);
+  flex-shrink: 0; height: 58px;
+}
+.mr-topbar-left { display: flex; align-items: center; gap: 12px; }
+.mr-room-icon {
+  width: 36px; height: 36px; border-radius: 50%;
+  background: linear-gradient(135deg,#1a73e8,#0d47a1);
+  display: flex; align-items: center; justify-content: center; font-size: 1rem;
+}
+.mr-room-title { font-size: 0.92rem; font-weight: 600; color: #e6edf3; }
+.mr-room-sub   { font-size: 0.72rem; color: rgba(255,255,255,0.45); }
+.mr-topbar-center { flex: 1; display: flex; justify-content: center; }
+.mr-timer {
+  background: rgba(255,255,255,0.07); border-radius: 20px;
+  padding: 5px 14px; font-size: 0.85rem; font-weight: 500;
+  color: #e6edf3; letter-spacing: 0.05em;
+}
+.mr-topbar-right { display: flex; align-items: center; gap: 8px; }
+.mr-status-dot {
+  width: 8px; height: 8px; border-radius: 50%; background: #f44336;
+  transition: background 0.3s;
+}
+.mr-status-dot.connected { background: #4caf50; }
+.mr-status-label { font-size: 0.75rem; color: rgba(255,255,255,0.5); }
+
+/* ── Body ── */
+.mr-body {
+  flex: 1; display: flex; overflow: hidden;
+}
+
+/* ── Video area ── */
+.mr-video-area {
+  flex: 1; position: relative; background: #0d1117; overflow: hidden;
+  display: flex; align-items: center; justify-content: center;
+}
+
+/* Remote video grid — dynamically populated */
+.mr-remote-grid {
+  width: 100%; height: 100%;
+  display: flex; flex-wrap: wrap;
+  align-items: center; justify-content: center;
+  gap: 8px; padding: 8px;
+}
+.mr-waiting {
+  display: flex; flex-direction: column; align-items: center;
+  justify-content: center; color: rgba(255,255,255,0.4);
+}
+
+/* Styles for dynamically created remote videos */
+:host ::ng-deep .remote-video-container {
+  position: relative;
+  background: #1c2128;
+  border-radius: 10px;
+  overflow: hidden;
+  min-width: 200px;
+  min-height: 150px;
+  flex: 1 1 300px;
+  max-width: 560px;
+  max-height: 420px;
+}
+:host ::ng-deep .remote-video {
+  width: 100%; height: 100%;
+  object-fit: cover; display: block;
+}
+:host ::ng-deep .video-label {
+  position: absolute; bottom: 6px; left: 10px;
+  font-size: 0.75rem; font-weight: 600; color: #fff;
+  background: rgba(0,0,0,0.55); padding: 2px 8px; border-radius: 10px;
+}
+
+/* Local video (self-view, bottom-right corner) */
+.mr-local-wrap {
+  position: absolute; bottom: 16px; right: 16px;
+  width: 160px; height: 120px; border-radius: 10px;
+  overflow: hidden; background: #1c2128;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.5);
+  border: 2px solid rgba(255,255,255,0.1);
+}
+.mr-local-video {
+  width: 100%; height: 100%; object-fit: cover;
+  transform: scaleX(-1); /* mirror self-view */
+}
+.mr-local-video.hidden { display: none; }
+.mr-video-avatar {
+  width: 100%; height: 100%;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 2.5rem; color: rgba(255,255,255,0.3);
+}
+.mr-local-label {
+  position: absolute; bottom: 4px; left: 6px;
+  font-size: 0.68rem; font-weight: 600; color: #fff;
+  background: rgba(0,0,0,0.6); padding: 1px 7px; border-radius: 8px;
+}
+.mr-screen-badge {
+  position: absolute; top: 4px; left: 6px;
+  font-size: 0.65rem; color: #fff;
+  background: #1a73e8; padding: 1px 8px; border-radius: 8px;
+}
+
+/* ── Sidebar ── */
+.mr-sidebar {
+  width: 280px; background: #161b22;
+  border-left: 1px solid rgba(255,255,255,0.07);
+  display: flex; flex-direction: column;
+  flex-shrink: 0; overflow: hidden;
+}
+.mr-sidebar-tabs {
+  display: flex; border-bottom: 1px solid rgba(255,255,255,0.07);
+  flex-shrink: 0;
+}
+.mr-stab {
+  flex: 1; padding: 10px 6px; border: none; background: transparent;
+  color: rgba(255,255,255,0.5); font-size: 0.78rem; font-weight: 500;
+  cursor: pointer; border-bottom: 2px solid transparent;
+  margin-bottom: -1px; transition: color 0.2s, border-color 0.2s;
+  display: flex; align-items: center; justify-content: center; gap: 4px;
+}
+.mr-stab.active { color: #58a6ff; border-bottom-color: #58a6ff; }
+.mr-stab:hover:not(.active) { color: rgba(255,255,255,0.8); background: rgba(255,255,255,0.04); }
+
+/* Participants list */
+.mr-participants {
+  flex: 1; overflow-y: auto; padding: 10px;
+}
+.mr-participant {
+  display: flex; align-items: center; gap: 10px;
+  padding: 8px 10px; border-radius: 8px;
+  margin-bottom: 4px;
+  transition: background 0.15s;
+}
+.mr-participant:hover { background: rgba(255,255,255,0.04); }
+.mr-p-avatar {
+  width: 34px; height: 34px; border-radius: 50%;
+  background: linear-gradient(135deg,#1a73e8,#0d47a1);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 0.85rem; font-weight: 700; color: #fff; flex-shrink: 0;
+}
+.mr-p-info { flex: 1; min-width: 0; }
+.mr-p-name { font-size: 0.82rem; color: #e6edf3; font-weight: 500;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.mr-p-icons { display: flex; color: rgba(255,255,255,0.5); }
+
+/* Chat */
+.mr-chat-body {
+  flex: 1; display: flex; flex-direction: column; overflow: hidden;
+  background: #0d1117;
+}
+.mr-chat-messages {
+  flex: 1; overflow-y: auto; padding: 10px;
+  display: flex; flex-direction: column; gap: 4px;
+}
+.mr-chat-empty {
+  flex: 1; display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+  color: rgba(255,255,255,0.3); padding: 20px;
+}
+.mr-chat-bubble { max-width: 85%; display: flex; flex-direction: column; }
+.mr-chat-bubble.mine  { align-self: flex-end; }
+.mr-chat-bubble.theirs { align-self: flex-start; }
+.mr-chat-sender { font-size: 0.68rem; color: rgba(255,255,255,0.45); margin-bottom: 2px; padding-left: 4px; }
+.mr-chat-text {
+  padding: 6px 10px; border-radius: 12px; font-size: 0.82rem; word-break: break-word;
+}
+.mr-chat-bubble.mine  .mr-chat-text { background: #1a73e8; color: #fff; border-bottom-right-radius: 3px; }
+.mr-chat-bubble.theirs .mr-chat-text { background: #21262d; color: #e6edf3; border-bottom-left-radius: 3px; }
+.mr-chat-time { font-size: 0.62rem; color: rgba(255,255,255,0.3); margin-top: 2px;
+  text-align: right; padding-right: 4px; }
+.mr-chat-input-wrap {
+  display: flex; gap: 6px; padding: 8px 10px;
+  border-top: 1px solid rgba(255,255,255,0.07); background: #161b22;
+}
+.mr-chat-input {
+  flex: 1; background: #21262d; border: 1px solid rgba(255,255,255,0.1);
+  border-radius: 16px; color: #e6edf3; padding: 6px 12px; font-size: 0.82rem; outline: none;
+}
+.mr-chat-input:focus { border-color: #1a73e8; }
+.mr-chat-send {
+  width: 32px; height: 32px; border-radius: 50%; background: #1a73e8;
+  color: #fff; border: none; display: flex; align-items: center; justify-content: center;
+  cursor: pointer; font-size: 0.8rem; flex-shrink: 0;
+}
+.mr-chat-send:disabled { background: #30363d; cursor: not-allowed; }
+
+/* ── Control bar ── */
+.mr-controls {
+  display: flex; align-items: center; justify-content: center;
+  gap: 8px; padding: 12px 20px;
+  background: #161b22;
+  border-top: 1px solid rgba(255,255,255,0.07);
+  flex-shrink: 0;
+}
+.mr-ctrl-wrap { display: flex; flex-direction: column; align-items: center; gap: 4px; }
+.mr-ctrl-btn {
+  width: 48px; height: 48px; border-radius: 50%;
+  background: rgba(255,255,255,0.08); color: #e6edf3;
+  border: none; display: flex; align-items: center; justify-content: center;
+  cursor: pointer; font-size: 1.1rem; position: relative;
+  transition: background 0.2s, transform 0.1s;
+}
+.mr-ctrl-btn:hover { background: rgba(255,255,255,0.15); transform: scale(1.06); }
+.mr-ctrl-btn.active { background: rgba(239,83,80,0.25); color: #ef5350; }
+.mr-ctrl-btn.sharing { background: rgba(26,115,232,0.3); color: #58a6ff; }
+.end-btn  { background: #c62828 !important; color: #fff !important; }
+.end-btn:hover { background: #b71c1c !important; }
+.leave-btn { background: rgba(239,83,80,0.15) !important; color: #ef5350 !important; }
+.leave-btn:hover { background: rgba(239,83,80,0.3) !important; }
+.mr-ctrl-label { font-size: 0.65rem; color: rgba(255,255,255,0.4); white-space: nowrap; }
+.mr-ctrl-badge {
+  position: absolute; top: -2px; right: -2px;
+  background: #f44336; color: #fff; border-radius: 50%;
+  width: 16px; height: 16px; font-size: 0.6rem;
+  display: flex; align-items: center; justify-content: center;
+}

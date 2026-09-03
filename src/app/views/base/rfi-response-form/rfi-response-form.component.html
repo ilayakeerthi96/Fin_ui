@@ -1,0 +1,74 @@
+<c-container class="mt-4" fluid>
+  <c-row class="mb-4">
+    <c-col xs="12">
+      <c-card class="border-0 shadow-lg">
+        <div class="rfi-header">
+          <c-card-body class="p-4">
+            <h3 class="text-white mb-1 fw-bold">
+              <i class="bi bi-question-circle me-2"></i>
+              {{ rfi?.title || 'Request for Information' }}
+            </h3>
+            <p class="text-white mb-0 opacity-90" *ngIf="rfi?.description">{{ rfi.description }}</p>
+          </c-card-body>
+        </div>
+      </c-card>
+    </c-col>
+  </c-row>
+
+  <c-row *ngIf="isLoading">
+    <c-col xs="12" class="text-center py-5">
+      <div class="spinner-border text-primary" role="status"></div>
+      <p class="text-muted mt-3">Loading...</p>
+    </c-col>
+  </c-row>
+
+  <c-row *ngIf="!isLoading && loadError">
+    <c-col xs="12">
+      <div class="alert alert-warning">{{ loadError }}</div>
+      <button cButton color="secondary" (click)="goBack()"><i class="bi bi-arrow-left me-1"></i> Back</button>
+    </c-col>
+  </c-row>
+
+  <ng-container *ngIf="!isLoading && !loadError">
+    <c-row *ngIf="isClosed" class="mb-3">
+      <c-col xs="12">
+        <c-alert color="secondary">
+          This RFI is closed. You can view your submitted answers below, but no further changes can be made.
+        </c-alert>
+      </c-col>
+    </c-row>
+
+    <c-row *ngFor="let q of questions; let i = index" class="mb-3">
+      <c-col xs="12">
+        <c-card class="border-0 shadow-sm">
+          <c-card-body>
+            <label class="form-label fw-semibold small">
+              {{ i + 1 }}. {{ q.questionText }}
+              <span *ngIf="q.isMandatory" class="text-danger">*</span>
+            </label>
+            <textarea class="form-control" rows="2" [(ngModel)]="answers[q.id]" [disabled]="isClosed"
+              placeholder="Your answer"></textarea>
+          </c-card-body>
+        </c-card>
+      </c-col>
+    </c-row>
+
+    <c-row *ngIf="errorMessage" class="mb-3">
+      <c-col xs="12">
+        <c-alert color="danger">{{ errorMessage }}</c-alert>
+      </c-col>
+    </c-row>
+
+    <c-row>
+      <c-col xs="12" class="d-flex justify-content-between mb-5">
+        <button cButton color="secondary" (click)="goBack()" [disabled]="isSubmitting">
+          <i class="bi bi-arrow-left me-1"></i> Back
+        </button>
+        <button *ngIf="!isClosed" cButton color="success" (click)="submit()" [disabled]="isSubmitting">
+          <span *ngIf="isSubmitting" class="spinner-border spinner-border-sm me-2"></span>
+          {{ isSubmitting ? 'Submitting...' : 'Submit Response' }}
+        </button>
+      </c-col>
+    </c-row>
+  </ng-container>
+</c-container>

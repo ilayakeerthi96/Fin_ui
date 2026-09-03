@@ -1,0 +1,23 @@
+{
+  "HEADER_SYSTEM_TITLE": "نظام إدارة الموردين",
+  "HEADER_CHANGE_PASSWORD": "تغيير كلمة المرور",
+  "HEADER_LOGOUT": "تسجيل الخروج",
+  "HEADER_CONFIRM_LOGOUT_TITLE": "تأكيد تسجيل الخروج",
+  "HEADER_CONFIRM_LOGOUT_MESSAGE": "هل أنت متأكد أنك تريد تسجيل الخروج؟",
+  "HEADER_LOGOUT_YES": "نعم، تسجيل الخروج",
+  "HEADER_LOGOUT_NO": "لا، البقاء",
+  "HEADER_LANGUAGE": "اللغة",
+
+  "LOGIN_WELCOME_BACK": "مرحبًا بعودتك",
+  "LOGIN_SIGN_IN_SUBTITLE": "سجّل الدخول إلى حسابك",
+  "LOGIN_EMAIL_PLACEHOLDER": "البريد الإلكتروني",
+  "LOGIN_EMAIL_REQUIRED": "البريد الإلكتروني مطلوب.",
+  "LOGIN_EMAIL_INVALID": "يرجى إدخال عنوان بريد إلكتروني صحيح.",
+  "LOGIN_PASSWORD_PLACEHOLDER": "كلمة المرور",
+  "LOGIN_PASSWORD_REQUIRED": "كلمة المرور مطلوبة.",
+  "LOGIN_SIGN_IN_BUTTON": "تسجيل الدخول",
+  "LOGIN_SIGNING_IN": "جارٍ تسجيل الدخول...",
+  "LOGIN_SUPPLIER_PROMPT": "هل أنت مورّد وترغب في العمل معنا؟",
+  "LOGIN_REGISTER_BUTTON": "التسجيل كمورّد",
+  "LOGIN_FOOTER_RIGHTS": "جميع الحقوق محفوظة."
+}

@@ -1,0 +1,120 @@
+<c-container class="mt-4" fluid>
+  <c-row class="mb-4">
+    <c-col xs="12">
+      <c-card class="border-0 shadow-lg">
+        <div class="contract-header">
+          <c-card-body class="p-4">
+            <h3 class="text-white mb-1 fw-bold">
+              <i class="bi bi-check2-square me-2"></i>
+              Contract Approvals
+            </h3>
+            <p class="text-white mb-0 opacity-90">Contracts awaiting your internal approval before they're sent to the supplier.</p>
+          </c-card-body>
+        </div>
+      </c-card>
+    </c-col>
+  </c-row>
+
+  <c-row *ngIf="isLoading">
+    <c-col xs="12" class="text-center py-5">
+      <div class="spinner-border text-primary" role="status"></div>
+    </c-col>
+  </c-row>
+
+  <c-row *ngIf="!isLoading && contracts.length === 0">
+    <c-col xs="12">
+      <c-card class="border-0 shadow-sm">
+        <c-card-body class="text-center py-5">
+          <p class="text-muted mb-0">No contracts pending approval.</p>
+        </c-card-body>
+      </c-card>
+    </c-col>
+  </c-row>
+
+  <c-row *ngFor="let contract of contracts" class="mb-3">
+    <c-col xs="12">
+      <c-card class="border-0 shadow-sm">
+        <c-card-body class="d-flex justify-content-between align-items-center flex-wrap gap-3">
+          <div>
+            <strong>{{ contract.title }}</strong>
+            <div class="text-muted small">{{ contract.consultantCompanyName }} &middot; Agreement Date: {{ contract.agreementDate }}</div>
+          </div>
+          <div class="d-flex gap-2">
+            <button cButton color="secondary" variant="outline" size="sm" (click)="viewContract(contract.id)">
+              <i class="bi bi-eye me-1"></i> View
+            </button>
+            <button cButton color="success" size="sm" (click)="openModal(contract, 'approve')">
+              <i class="bi bi-check-lg me-1"></i> Approve
+            </button>
+            <button cButton color="warning" variant="outline" size="sm" (click)="openModal(contract, 'moreInfo')">
+              <i class="bi bi-chat-left-text me-1"></i> Request More Info
+            </button>
+            <button cButton color="danger" variant="outline" size="sm" (click)="openModal(contract, 'reject')">
+              <i class="bi bi-x-lg me-1"></i> Reject
+            </button>
+          </div>
+        </c-card-body>
+      </c-card>
+    </c-col>
+  </c-row>
+</c-container>
+
+<!-- Plain Bootstrap modal (not CoreUI c-modal — see app.config.ts comment: c-modal's
+     animation trigger is broken on this Angular/CoreUI version combo and leaves the
+     dialog permanently invisible). This pattern matches budget-approvals.component.html. -->
+<div class="modal fade" [class.show]="showModal" [style.display]="showModal ? 'block' : 'none'"
+     tabindex="-1" style="background-color: rgba(0,0,0,.5);">
+  <div class="modal-dialog modal-dialog-centered" [class.modal-lg]="modalMode === 'moreInfo'" [class.modal-sm]="modalMode !== 'moreInfo'">
+    <div class="modal-content" *ngIf="showModal">
+      <div class="modal-header">
+        <h5 class="modal-title">
+          {{ modalMode === 'approve' ? 'Approve' : modalMode === 'reject' ? 'Reject' : 'Request More Info —' }} Contract
+        </h5>
+        <button type="button" class="btn-close" (click)="closeModal()" [disabled]="isSubmitting"></button>
+      </div>
+      <div class="modal-body">
+        <p class="small text-muted">{{ selectedContract?.title }}</p>
+
+        <div class="alert alert-warning py-2 small" *ngIf="modalMode === 'moreInfo'">
+          <i class="bi bi-info-circle me-1"></i>
+          This sends the contract back to its creator instead of approving/rejecting. Explain exactly what's
+          missing — they'll see your remarks (and attachments, if any) and can resubmit once addressed.
+        </div>
+
+        <label class="form-label small fw-bold">
+          {{ modalMode === 'moreInfo' ? 'What information is needed?' : 'Comments' }}
+          <span *ngIf="modalMode === 'reject' || modalMode === 'moreInfo'" class="text-danger">*</span>
+        </label>
+        <textarea class="form-control" rows="3" [(ngModel)]="comments" [ngModelOptions]="{standalone: true}"
+          [placeholder]="modalMode === 'reject' ? 'Reason for rejection' : modalMode === 'moreInfo' ? 'Be specific — mention everything you need' : 'Optional comments'"></textarea>
+
+        <div class="mt-3" *ngIf="modalMode === 'moreInfo'">
+          <label class="form-label small fw-bold">Attachments <span class="text-muted fw-normal">(optional, any number of files)</span></label>
+          <input type="file" class="form-control form-control-sm" multiple (change)="onAttachmentsSelected($event)" />
+
+          <div class="attachment-preview-grid mt-3" *ngIf="pendingAttachments.length > 0">
+            <div class="attachment-preview-item" *ngFor="let att of pendingAttachments; let i = index">
+              <img *ngIf="att.isImage" [src]="att.previewUrl" class="attachment-preview-thumb" [alt]="att.file.name" />
+              <div *ngIf="!att.isImage" class="attachment-preview-icon">
+                <i class="bi bi-file-earmark-text"></i>
+              </div>
+              <div class="attachment-preview-name" [title]="att.file.name">{{ att.file.name }}</div>
+              <button type="button" class="attachment-preview-remove" (click)="removeAttachment(i)" title="Remove">
+                <i class="bi bi-x-lg"></i>
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" (click)="closeModal()" [disabled]="isSubmitting">Cancel</button>
+        <button type="button" [class]="'btn ' + (modalMode === 'approve' ? 'btn-success' : modalMode === 'reject' ? 'btn-danger' : 'btn-warning')"
+          (click)="confirm()" [disabled]="isSubmitting">
+          <span *ngIf="isSubmitting" class="spinner-border spinner-border-sm me-2"></span>
+          {{ modalMode === 'approve' ? 'Confirm Approval' : modalMode === 'reject' ? 'Confirm Rejection' : 'Send Back for Revision' }}
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+<div class="modal-backdrop fade show" *ngIf="showModal"></div>

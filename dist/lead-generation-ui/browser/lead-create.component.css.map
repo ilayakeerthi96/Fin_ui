@@ -1,0 +1,7 @@
+{
+  "version": 3,
+  "sources": ["src/app/views/base/lead-create/lead-create.component.css"],
+  "sourcesContent": [".required-star {\r\n  color: red;\r\n  font-weight: bold;\r\n  margin-left: 2px;\r\n}\r\n\r\n.is-invalid {\r\n  border-color: #dc3545 !important;\r\n}\r\n\r\n.error-text {\r\n  color: #dc3545;\r\n  font-size: 0.8rem;\r\n  margin-top: 2px;\r\n}\r\n"],
+  "mappings": ";AAAA,CAAC;AACC,SAAO;AACP,eAAa;AACb,eAAa;AACf;AAEA,CAAC;AACC,gBAAc;AAChB;AAEA,CAAC;AACC,SAAO;AACP,aAAW;AACX,cAAY;AACd;",
+  "names": []
+}

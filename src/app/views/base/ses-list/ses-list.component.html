@@ -1,0 +1,653 @@
+<div class="sl-page">
+
+  <div class="sl-topbar">
+    <div class="topbar-title">
+      <i class="bi bi-clipboard-check"></i>
+      <div>
+        <div class="topbar-title-main">Service Entry Sheets</div>
+        <div class="topbar-title-sub">Confirm service delivery for Service-type POs before invoice approval</div>
+      </div>
+    </div>
+    <div class="topbar-spacer"></div>
+    <button class="btn-sl-primary" (click)="goToCreate()">
+      <i class="bi bi-plus-lg me-1"></i> Create Service Entry Sheet
+    </button>
+  </div>
+
+  <div class="sl-body">
+
+    <div *ngIf="errorMessage" class="sl-alert sl-alert-danger">
+      <i class="bi bi-exclamation-triangle-fill"></i>
+      <span>{{ errorMessage }}</span>
+      <button class="sl-alert-close" (click)="errorMessage = ''"><i class="bi bi-x-lg"></i></button>
+    </div>
+    <div *ngIf="successMessage" class="sl-alert sl-alert-success">
+      <i class="bi bi-check-circle-fill"></i>
+      <span>{{ successMessage }}</span>
+      <button class="sl-alert-close" (click)="successMessage = ''"><i class="bi bi-x-lg"></i></button>
+    </div>
+
+    <!-- Stat cards -->
+    <div class="sl-stats">
+      <div class="sl-stat-card" [class.active]="statusFilter==='ALL'" (click)="statusFilter='ALL'; applyFilters()">
+        <div class="sl-stat-num">{{ counts.total }}</div>
+        <div class="sl-stat-label">Total</div>
+      </div>
+      <div class="sl-stat-card" [class.active]="statusFilter==='DRAFT'" (click)="statusFilter='DRAFT'; applyFilters()">
+        <div class="sl-stat-num">{{ counts.draft }}</div>
+        <div class="sl-stat-label">Draft</div>
+      </div>
+      <div class="sl-stat-card" [class.active]="statusFilter==='SUBMITTED'" (click)="statusFilter='SUBMITTED'; applyFilters()">
+        <div class="sl-stat-num">{{ counts.submitted }}</div>
+        <div class="sl-stat-label">Pending Approval</div>
+      </div>
+      <div class="sl-stat-card" [class.active]="statusFilter==='APPROVED'" (click)="statusFilter='APPROVED'; applyFilters()">
+        <div class="sl-stat-num">{{ counts.approved }}</div>
+        <div class="sl-stat-label">Approved</div>
+      </div>
+      <div class="sl-stat-card" [class.active]="statusFilter==='REJECTED'" (click)="statusFilter='REJECTED'; applyFilters()">
+        <div class="sl-stat-num">{{ counts.rejected }}</div>
+        <div class="sl-stat-label">Rejected</div>
+      </div>
+    </div>
+
+    <!-- Filter bar -->
+    <div class="sl-filter-bar">
+      <div class="sl-search-wrap">
+        <i class="bi bi-search sl-search-icon"></i>
+        <input type="text" class="sl-input sl-search-input" placeholder="Search by SES number, PO number, or supplier…"
+               [(ngModel)]="searchText" (input)="applyFilters()" />
+      </div>
+      <select class="sl-input sl-status-select" [(ngModel)]="statusFilter" (change)="applyFilters()">
+        <option value="ALL">All Statuses</option>
+        <option value="DRAFT">Draft</option>
+        <option value="SUBMITTED">Pending Approval</option>
+        <option value="APPROVED">Approved</option>
+        <option value="REJECTED">Rejected</option>
+      </select>
+    </div>
+
+    <div *ngIf="isLoading" class="sl-loading"><i class="bi bi-arrow-repeat spin me-2"></i>Loading…</div>
+
+    <!-- Table -->
+    <div class="sl-table-wrap" *ngIf="!isLoading">
+      <table class="sl-table">
+        <thead>
+          <tr>
+            <th>SES Number</th>
+            <th>PO Number</th>
+            <th>Supplier</th>
+            <th>Frequency</th>
+            <th>Period</th>
+            <th>Service Value</th>
+            <th>Status</th>
+            <th style="width:110px;">Action</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let s of filteredSES" (click)="openDetail(s)" class="sl-row-clickable">
+            <td class="fw-bold">
+              {{ s.sesNumber }}
+              <i *ngIf="s.hasAdditionalItems" class="bi bi-tools text-warning ms-1"
+                 title="Has an additional items/spares quote"></i>
+            </td>
+            <td>{{ s.poNumber }}</td>
+            <td>{{ s.supplierName || '—' }}</td>
+            <td>{{ s.serviceFrequency }}</td>
+            <td>{{ s.servicePeriodFrom | date:'dd MMM yy' }} – {{ s.servicePeriodTo | date:'dd MMM yy' }}</td>
+            <td>{{ s.totalServiceValue | currency:'INR':'symbol':'1.2-2' }}</td>
+            <td><span class="sl-badge" [ngClass]="statusBadgeClass(s.status)">{{ statusLabel(s.status) }}</span></td>
+            <td><button class="btn-sl-view" (click)="$event.stopPropagation(); openDetail(s)">View</button></td>
+          </tr>
+          <tr *ngIf="filteredSES.length === 0">
+            <td colspan="8" class="sl-empty">
+              <i class="bi bi-inbox me-2"></i>No Service Entry Sheets found.
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- ═══════════════ DETAIL MODAL ═══════════════ -->
+  <div class="sl-modal-backdrop" *ngIf="isDetailModalOpen" (click)="closeDetail()">
+    <div class="sl-modal sl-modal-lg" (click)="$event.stopPropagation()">
+      <div class="sl-modal-header">
+        <div>
+          <div class="sl-modal-title">{{ selectedSES?.sesNumber }}</div>
+          <span class="sl-badge" [ngClass]="statusBadgeClass(selectedSES?.status)">{{ statusLabel(selectedSES?.status) }}</span>
+        </div>
+        <button class="sl-modal-close" (click)="closeDetail()"><i class="bi bi-x-lg"></i></button>
+      </div>
+
+      <div class="sl-modal-body" *ngIf="selectedSES">
+        <div class="sl-kv-grid">
+          <div class="sl-kv"><span class="k">PO Number</span><span class="v">{{ selectedSES.poNumber }}</span></div>
+          <div class="sl-kv"><span class="k">Supplier</span><span class="v">{{ selectedSES.supplierName || '—' }}</span></div>
+          <div class="sl-kv"><span class="k">Frequency</span><span class="v">{{ selectedSES.serviceFrequency }}</span></div>
+          <div class="sl-kv"><span class="k">Service Period</span>
+            <span class="v">{{ selectedSES.servicePeriodFrom | date:'dd MMM yyyy' }} – {{ selectedSES.servicePeriodTo | date:'dd MMM yyyy' }}</span>
+          </div>
+          <div class="sl-kv">
+            <span class="k">Submitted By</span>
+            <span class="v">{{ selectedSES.submittedByName || '—' }}<small class="text-muted" *ngIf="selectedSES.submittedByRole"> ({{ selectedSES.submittedByRole === 'SUPPLIER' ? 'Supplier' : 'Buyer' }})</small></span>
+          </div>
+          <div class="sl-kv"><span class="k">Total Service Value</span><span class="v strong">{{ selectedSES.totalServiceValue | currency:'INR':'symbol':'1.2-2' }}</span></div>
+        </div>
+
+        <div class="sl-remarks-box" *ngIf="selectedSES.remarks">
+          <span class="k">Remarks</span>
+          <p>{{ selectedSES.remarks }}</p>
+        </div>
+
+        <div class="sl-remarks-box sl-remarks-rejected" *ngIf="selectedSES.status === 'REJECTED'">
+          <span class="k"><i class="bi bi-arrow-repeat me-1"></i>Sent back for resubmission by {{ selectedSES.rejectedByName }}</span>
+          <p>{{ selectedSES.rejectionRemarks }}</p>
+          <button class="btn-sl-primary mt-2" (click)="editAndResubmit(selectedSES)">
+            <i class="bi bi-pencil-square me-1"></i> Edit &amp; Resubmit
+          </button>
+        </div>
+
+        <div class="sl-remarks-box sl-remarks-rejected" *ngIf="selectedSES.status === 'DECLINED'">
+          <span class="k"><i class="bi bi-x-circle-fill me-1"></i>Rejected and closed by {{ selectedSES.rejectedByName }}</span>
+          <p>{{ selectedSES.rejectionRemarks }}</p>
+          <p class="text-muted small mb-0">This Service Entry Sheet is closed and cannot be edited or resubmitted.</p>
+        </div>
+
+        <div class="sl-remarks-box sl-remarks-approved" *ngIf="selectedSES.status === 'APPROVED'">
+          <span class="k"><i class="bi bi-check-circle-fill me-1"></i>Approved by {{ selectedSES.approvedByName }}</span>
+          <p>{{ selectedSES.approvedAt | date:'dd MMM yyyy, h:mm a' }}</p>
+        </div>
+
+        <div class="sl-line-items-title">Line Items</div>
+        <div class="sl-table-wrap">
+          <table class="sl-table sl-table-compact">
+            <thead>
+              <tr>
+                <th>#</th><th>Description</th><th>UOM</th><th>PO Qty</th><th>PO Rate</th>
+                <th>Completed?</th><th>Completed Qty</th><th>Line Value</th><th>Remarks</th><th>Attachments</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let li of selectedSES.lineItems">
+                <td>{{ li.itemOrder }}</td>
+                <td>{{ li.itemDescription }}</td>
+                <td>{{ li.uom }}</td>
+                <td>{{ li.poQuantity }}</td>
+                <td>{{ li.poUnitRate | currency:'INR':'symbol':'1.2-2' }}</td>
+                <td class="text-center">
+                  <i class="bi" [ngClass]="li.serviceCompleted ? 'bi-check-circle-fill text-success' : 'bi-dash-circle text-muted'"></i>
+                </td>
+                <td>{{ li.completedQuantity }}</td>
+                <td class="fw-bold">{{ li.lineValue | currency:'INR':'symbol':'1.2-2' }}</td>
+                <td>{{ li.remarks || '—' }}</td>
+                <td class="sl-attach-cell">
+                  <div class="sl-attach-list">
+                    <a *ngFor="let att of (lineItemAttachmentsMap[li.id] || [])"
+                       [href]="getLineItemAttachmentDownloadUrl(att.id)" target="_blank"
+                       class="sl-attach-chip" [title]="att.filename">
+                      <i class="bi bi-paperclip"></i>{{ att.filename }}
+                    </a>
+                  </div>
+                  <input type="file" multiple hidden #liFileInput (change)="onLineItemAttachmentSelected($event, li.id)" />
+                  <button type="button" class="btn-sl-attach" [disabled]="isUploadingAttachment"
+                          (click)="liFileInput.click()" title="Add attachment">
+                    <i class="bi bi-paperclip"></i> Add
+                  </button>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <!-- Additional Items / Spares Quote — a separate decision from the SES itself -->
+        <ng-container *ngIf="selectedSES.hasAdditionalItems">
+          <div class="sl-line-items-title mt-4">
+            Additional Items / Spares Quote
+            <span class="sl-badge ms-2"
+                  [ngClass]="selectedSES.additionalItemsStatus === 'APPROVED' ? 'badge-approved'
+                             : selectedSES.additionalItemsStatus === 'REJECTED' ? 'badge-rejected'
+                             : 'badge-submitted'">
+              {{ selectedSES.additionalItemsStatus || 'PENDING' }}
+            </span>
+          </div>
+          <div class="sl-table-wrap">
+            <table class="sl-table sl-table-compact">
+              <thead>
+                <tr><th>#</th><th>Description</th><th>UOM</th><th>Qty</th><th>Rate</th><th>Line Total</th><th>Remarks</th><th>Attachments</th></tr>
+              </thead>
+              <tbody>
+                <tr *ngFor="let ai of selectedSES.additionalItems">
+                  <td>{{ ai.itemOrder }}</td>
+                  <td>{{ ai.itemDescription }}</td>
+                  <td>{{ ai.uom }}</td>
+                  <td>{{ ai.quantity }}</td>
+                  <td>{{ ai.unitRate | currency:'INR':'symbol':'1.2-2' }}</td>
+                  <td class="fw-bold">{{ ai.lineTotal | currency:'INR':'symbol':'1.2-2' }}</td>
+                  <td>{{ ai.remarks || '—' }}</td>
+                  <td class="sl-attach-cell">
+                    <div class="sl-attach-list">
+                      <a *ngFor="let att of (additionalItemAttachmentsMap[ai.id] || [])"
+                         [href]="getAdditionalItemAttachmentDownloadUrl(att.id)" target="_blank"
+                         class="sl-attach-chip" [title]="att.filename">
+                        <i class="bi bi-paperclip"></i>{{ att.filename }}
+                      </a>
+                    </div>
+                    <input type="file" multiple hidden #aiFileInput (change)="onAdditionalItemAttachmentSelected($event, ai.id)" />
+                    <button type="button" class="btn-sl-attach" [disabled]="isUploadingAttachment"
+                            (click)="aiFileInput.click()" title="Add attachment">
+                      <i class="bi bi-paperclip"></i> Add
+                    </button>
+                  </td>
+                </tr>
+              </tbody>
+              <tfoot>
+                <tr>
+                  <td colspan="5" class="text-end fw-bold">Total Additional Items Quote</td>
+                  <td class="fw-bold">{{ selectedSES.additionalItemsTotal | currency:'INR':'symbol':'1.2-2' }}</td>
+                  <td></td>
+                  <td></td>
+                </tr>
+              </tfoot>
+            </table>
+          </div>
+
+          <div class="sl-remarks-box sl-remarks-approved" *ngIf="selectedSES.additionalItemsStatus === 'APPROVED'">
+            <span class="k"><i class="bi bi-check-circle-fill me-1"></i>Approved by {{ selectedSES.additionalItemsApprovedByName }}</span>
+            <p>Follow-up PO created: <strong>{{ selectedSES.followUpPoNumber }}</strong></p>
+          </div>
+          <div class="sl-remarks-box sl-remarks-rejected" *ngIf="selectedSES.additionalItemsStatus === 'DECLINED'">
+            <span class="k"><i class="bi bi-x-circle-fill me-1"></i>Quote rejected by {{ selectedSES.additionalItemsRejectedByName }}</span>
+            <p>{{ selectedSES.additionalItemsRejectionRemarks }}</p>
+            <p class="text-muted small mb-0">This quote is closed and cannot be revised or resubmitted.</p>
+          </div>
+
+          <div class="sl-remarks-box sl-remarks-rejected" *ngIf="selectedSES.additionalItemsStatus === 'REJECTED'">
+            <span class="k"><i class="bi bi-arrow-repeat me-1"></i>Sent back for resubmission by {{ selectedSES.additionalItemsRejectedByName }}</span>
+            <p>{{ selectedSES.additionalItemsRejectionRemarks }}</p>
+            <button class="btn-sl-primary mt-2" (click)="editAndResubmit(selectedSES)">
+              <i class="bi bi-pencil-square me-1"></i> Edit &amp; Resubmit Quote
+            </button>
+          </div>
+
+          <div class="d-flex justify-content-end gap-2 mt-2 flex-wrap" *ngIf="selectedSES.additionalItemsStatus === 'PENDING' && !isSupplierMode">
+            <button class="btn-sl-warning" [disabled]="isPerformingAction" (click)="openActionModal('reject', 'additionalItems')">
+              <i class="bi bi-arrow-repeat me-1"></i> Send Back for Resubmission
+            </button>
+            <button class="btn-sl-danger" [disabled]="isPerformingAction" (click)="openActionModal('decline', 'additionalItems')"
+                    title="Permanently reject this quote — it cannot be revised or resubmitted">
+              <i class="bi bi-x-circle me-1"></i> Reject
+            </button>
+            <button class="btn-sl-success" [disabled]="isPerformingAction" (click)="openActionModal('approve', 'additionalItems')">
+              <i class="bi bi-check-lg me-1"></i> Approve Quote
+            </button>
+          </div>
+          <div class="text-muted small mt-2" *ngIf="selectedSES.additionalItemsStatus === 'PENDING' && isSupplierMode">
+            <i class="bi bi-hourglass-split me-1"></i>Waiting for the buyer to review this quote.
+          </div>
+        </ng-container>
+
+        <!-- General attachments for the whole SES — site photos, signed paperwork, etc. -->
+        <div class="sl-line-items-title mt-4">General Attachments</div>
+        <div class="sl-attach-list sl-attach-list-block">
+          <a *ngFor="let att of commonAttachments"
+             [href]="getCommonAttachmentDownloadUrl(att.id)" target="_blank"
+             class="sl-attach-chip" [title]="att.filename">
+            <i class="bi bi-paperclip"></i>{{ att.filename }}
+            <small class="text-muted ms-1" *ngIf="att.uploadedByName">— {{ att.uploadedByName }}</small>
+          </a>
+          <span class="text-muted small" *ngIf="commonAttachments.length === 0">No general attachments yet.</span>
+        </div>
+        <input type="file" multiple hidden #commonFileInput (change)="onCommonAttachmentSelected($event)" />
+        <button type="button" class="btn-sl-attach mt-2" [disabled]="isUploadingAttachment"
+                (click)="commonFileInput.click()">
+          <i class="bi bi-paperclip"></i> Add Attachment(s)
+        </button>
+      </div>
+
+      <div class="sl-modal-footer" *ngIf="selectedSES">
+        <button class="btn-sl-secondary" (click)="closeDetail()">Close</button>
+        <button *ngIf="selectedSES.status === 'DRAFT'" class="btn-sl-primary"
+                [disabled]="isPerformingAction" (click)="submitSES(selectedSES)">
+          <i class="bi bi-send-check me-1"></i> Submit for Approval
+        </button>
+        <ng-container *ngIf="selectedSES.status === 'SUBMITTED' && !isSupplierMode">
+          <button class="btn-sl-warning" [disabled]="isPerformingAction" (click)="openActionModal('reject')">
+            <i class="bi bi-arrow-repeat me-1"></i> Send Back for Resubmission
+          </button>
+          <button class="btn-sl-danger" [disabled]="isPerformingAction" (click)="openActionModal('decline')"
+                  title="Permanently reject and close this Service Entry Sheet — it cannot be resubmitted">
+            <i class="bi bi-x-circle me-1"></i> Reject
+          </button>
+          <button class="btn-sl-success" [disabled]="isPerformingAction" (click)="openActionModal('approve')">
+            <i class="bi bi-check-lg me-1"></i> Approve
+          </button>
+        </ng-container>
+        <div *ngIf="selectedSES.status === 'SUBMITTED' && isSupplierMode" class="text-muted small">
+          <i class="bi bi-hourglass-split me-1"></i>Waiting for the buyer to review and approve.
+        </div>
+        <button *ngIf="selectedSES.status === 'APPROVED' && !isSupplierMode && !selectedSesHasReview"
+                class="btn-sl-primary" (click)="openRatingModal(selectedSES)">
+          <i class="bi bi-star me-1"></i> Rate This Visit
+        </button>
+        <span *ngIf="selectedSES.status === 'APPROVED' && !isSupplierMode && selectedSesHasReview" class="text-success small">
+          <i class="bi bi-check-circle-fill me-1"></i>Performance reviewed
+        </span>
+
+        <!-- Service Report — supplier files it once the SES is approved; buyer downloads it. -->
+        <button *ngIf="selectedSES.status === 'APPROVED' && isSupplierMode && !selectedSesHasReport"
+                class="btn-sl-primary" (click)="openReportModal(selectedSES)">
+          <i class="bi bi-file-earmark-text me-1"></i> Submit Service Report
+        </button>
+        <span *ngIf="selectedSES.status === 'APPROVED' && isSupplierMode && selectedSesHasReport" class="text-success small">
+          <i class="bi bi-check-circle-fill me-1"></i>Service report submitted
+        </span>
+        <a *ngIf="selectedSES.status === 'APPROVED' && !isSupplierMode && selectedSesHasReport && selectedSesReportId"
+           class="btn-sl-secondary" [href]="getServiceReportPdfUrl(selectedSesReportId)" target="_blank">
+          <i class="bi bi-file-earmark-pdf me-1"></i> Download Service Report
+        </a>
+        <span *ngIf="selectedSES.status === 'APPROVED' && !isSupplierMode && !selectedSesHasReport" class="text-muted small">
+          <i class="bi bi-hourglass-split me-1"></i>Waiting for the supplier's service report.
+        </span>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════ SUBMIT SERVICE REPORT MODAL ═══════════════ -->
+  <div class="sl-modal-backdrop sl-modal-backdrop-top" *ngIf="showReportModal" (click)="closeReportModal()">
+    <div class="sl-modal sl-modal-lg" (click)="$event.stopPropagation()">
+      <div class="sl-modal-header">
+        <div class="sl-modal-title">
+          <i class="bi bi-file-earmark-text me-1"></i>Submit Service Report
+        </div>
+        <button class="sl-modal-close" (click)="closeReportModal()"><i class="bi bi-x-lg"></i></button>
+      </div>
+      <div class="sl-modal-body">
+        <p class="text-muted small mb-3">
+          A formal write-up of this visit for <strong>{{ reportTargetSes?.sesNumber }}</strong> — the buyer/RFQ-creator
+          will receive this as a downloadable PDF.
+        </p>
+
+        <!-- ── Customer / Site details ── -->
+        <div class="sl-kv-grid mb-2">
+          <div>
+            <label class="sl-label">Customer Name</label>
+            <input type="text" class="sl-input" [(ngModel)]="reportForm.customerContactName" placeholder="Mr / Mrs …" />
+          </div>
+          <div>
+            <label class="sl-label">Reported By</label>
+            <input type="text" class="sl-input" [(ngModel)]="reportForm.reportedBy" />
+          </div>
+        </div>
+
+        <label class="sl-label">Address</label>
+        <input type="text" class="sl-input mb-2" [(ngModel)]="reportForm.serviceAddress" placeholder="Site address" />
+
+        <div class="sl-kv-grid mb-2">
+          <div>
+            <label class="sl-label">City</label>
+            <input type="text" class="sl-input" [(ngModel)]="reportForm.customerCity" />
+          </div>
+          <div>
+            <label class="sl-label">State</label>
+            <input type="text" class="sl-input" [(ngModel)]="reportForm.customerState" />
+          </div>
+          <div>
+            <label class="sl-label">Zip Code</label>
+            <input type="text" class="sl-input" [(ngModel)]="reportForm.customerZipCode" />
+          </div>
+        </div>
+
+        <div class="sl-kv-grid mb-2">
+          <div>
+            <label class="sl-label">Status of Call</label>
+            <select class="sl-input" [(ngModel)]="reportForm.callType">
+              <option value="">— Select —</option>
+              <option value="WARRANTY">Warranty</option>
+              <option value="AMC">AMC</option>
+              <option value="OTHER">Other</option>
+            </select>
+          </div>
+          <div>
+            <label class="sl-label">Instruction From</label>
+            <input type="text" class="sl-input" [(ngModel)]="reportForm.instructionFromName" placeholder="Name" />
+          </div>
+          <div>
+            <label class="sl-label">Instruction Date</label>
+            <input type="date" class="sl-input" [(ngModel)]="reportForm.instructionDate" />
+          </div>
+        </div>
+
+        <label class="sl-label">Nature Of Problem</label>
+        <textarea class="sl-input mb-2" rows="3" placeholder="Detail of the problem, possible solutions, and expert recommendation/cost…"
+                  [(ngModel)]="reportForm.natureOfProblem"></textarea>
+
+        <!-- ── Equipment ── -->
+        <div class="sl-kv-grid mb-2">
+          <div>
+            <label class="sl-label">System Down?</label>
+            <select class="sl-input" [(ngModel)]="reportForm.systemDown">
+              <option [ngValue]="null">— Select —</option>
+              <option [ngValue]="true">Yes</option>
+              <option [ngValue]="false">No</option>
+            </select>
+          </div>
+          <div>
+            <label class="sl-label">Equipment Type</label>
+            <input type="text" class="sl-input" [(ngModel)]="reportForm.equipmentType" />
+          </div>
+        </div>
+        <div class="sl-kv-grid mb-2">
+          <div>
+            <label class="sl-label">Make</label>
+            <input type="text" class="sl-input" [(ngModel)]="reportForm.equipmentMake" />
+          </div>
+          <div>
+            <label class="sl-label">Model</label>
+            <input type="text" class="sl-input" [(ngModel)]="reportForm.equipmentModel" />
+          </div>
+          <div>
+            <label class="sl-label">Serial No.</label>
+            <input type="text" class="sl-input" [(ngModel)]="reportForm.equipmentSerialNo" />
+          </div>
+        </div>
+
+        <!-- ── Machines / parts serviced ── -->
+        <label class="sl-label">
+          Machines / Parts Serviced
+          <small class="text-muted">(no cost fields — this report is a record of work, not a bill)</small>
+        </label>
+        <div class="sl-table-wrap mb-2">
+          <table class="sl-table sl-table-compact">
+            <thead>
+              <tr><th>Date</th><th>Machine Name</th><th>Part Name</th><th></th></tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let row of reportDetailRows; let i = index">
+                <td><input type="date" class="sl-input sl-input-sm" [(ngModel)]="row.serviceDate" /></td>
+                <td><input type="text" class="sl-input sl-input-sm" [(ngModel)]="row.machineName" /></td>
+                <td><input type="text" class="sl-input sl-input-sm" [(ngModel)]="row.partName" /></td>
+                <td>
+                  <button type="button" class="btn btn-sm btn-link text-danger p-0" (click)="removeReportDetailRow(i)" title="Remove row">
+                    <i class="bi bi-trash"></i>
+                  </button>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <button type="button" class="btn btn-sm btn-outline-secondary mb-3" (click)="addReportDetailRow()">
+          <i class="bi bi-plus-lg me-1"></i>Add Row
+        </button>
+
+        <p class="text-muted small mb-3">
+          <i class="bi bi-info-circle me-1"></i>
+          The services performed and the spare parts used are pulled automatically from this Service
+          Entry Sheet onto the report — you do not need to retype them here.
+        </p>
+
+        <label class="sl-label">Work Performed <span class="req">*</span></label>
+        <textarea class="sl-input mb-2" rows="3" placeholder="Diagnosis, steps taken, repairs made…"
+                  [(ngModel)]="reportForm.workPerformed"></textarea>
+
+        <div class="sl-kv-grid mb-2">
+          <div>
+            <label class="sl-label">Issue Solved? <span class="req">*</span></label>
+            <select class="sl-input" [(ngModel)]="reportForm.resolutionStatus">
+              <option value="">— Select —</option>
+              <option value="RESOLVED">Resolved</option>
+              <option value="PARTIALLY_RESOLVED">Partially resolved</option>
+              <option value="NOT_RESOLVED">Not resolved</option>
+            </select>
+          </div>
+        </div>
+
+        <label class="sl-label">Brief Note</label>
+        <textarea class="sl-input mb-2" rows="2"
+                  placeholder="Short summary of the outcome for the customer…"
+                  [(ngModel)]="reportForm.briefNote"></textarea>
+
+        <label class="sl-label">Recommendations</label>
+        <textarea class="sl-input mb-2" rows="2" [(ngModel)]="reportForm.recommendations"></textarea>
+
+        <div class="sl-kv-grid mb-2">
+          <div>
+            <label class="sl-label">Customer Signature Name</label>
+            <input type="text" class="sl-input" [(ngModel)]="reportForm.customerSignatureName" placeholder="Who acknowledged the visit" />
+          </div>
+          <div>
+            <label class="sl-label">Customer Signature Title</label>
+            <input type="text" class="sl-input" [(ngModel)]="reportForm.customerSignatureTitle" placeholder="e.g. Plant Manager" />
+          </div>
+        </div>
+
+        <label class="sl-label">Photos <small class="text-muted">(before/after, proof of work)</small></label>
+        <div class="sl-attach-list sl-attach-list-block mb-2">
+          <span *ngFor="let p of reportPhotos; let i = index" class="sl-attach-chip">
+            <i class="bi bi-image"></i>{{ p.file.name }}
+            <button type="button" class="btn btn-sm btn-link text-danger p-0 ms-1" (click)="removeReportPhoto(i)" title="Remove">
+              <i class="bi bi-x-lg"></i>
+            </button>
+          </span>
+          <span class="text-muted small" *ngIf="reportPhotos.length === 0">No photos added yet.</span>
+        </div>
+        <input type="file" multiple accept="image/*" hidden #reportPhotoInput (change)="onReportPhotoSelected($event)" />
+        <button type="button" class="btn-sl-attach" (click)="reportPhotoInput.click()">
+          <i class="bi bi-paperclip"></i> Add Photos
+        </button>
+      </div>
+      <div class="sl-modal-footer">
+        <button class="btn-sl-secondary" [disabled]="isSavingReport" (click)="closeReportModal()">Cancel</button>
+        <button class="btn-sl-primary" [disabled]="isSavingReport" (click)="submitServiceReportForm()">
+          <span *ngIf="!isSavingReport"><i class="bi bi-send-check me-1"></i>Submit Report</span>
+          <span *ngIf="isSavingReport"><i class="bi bi-arrow-repeat spin me-1"></i>Submitting…</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════ RATE THIS VISIT MODAL ═══════════════ -->
+  <div class="sl-modal-backdrop sl-modal-backdrop-top" *ngIf="showRatingModal" (click)="skipRating()">
+    <div class="sl-modal sl-modal-sm" (click)="$event.stopPropagation()">
+      <div class="sl-modal-header">
+        <div class="sl-modal-title">
+          <i class="bi bi-star-fill text-warning me-1"></i>Rate This Service Visit
+        </div>
+        <button class="sl-modal-close" (click)="skipRating()"><i class="bi bi-x-lg"></i></button>
+      </div>
+      <div class="sl-modal-body">
+        <p class="text-muted small mb-3">
+          Optional — rate {{ ratingTargetSes?.supplierName || 'the supplier' }}'s performance on
+          <strong>{{ ratingTargetSes?.sesNumber }}</strong>. This is just for your own records; it doesn't affect the SES.
+        </p>
+
+        <div *ngFor="let m of ratingScores; let i = index" class="d-flex align-items-center gap-2 mb-2">
+          <input *ngIf="!m.isStandard" type="text" class="sl-input" style="flex:1;" placeholder="Metric name"
+                 [(ngModel)]="m.metricName" />
+          <span *ngIf="m.isStandard" style="flex:1;" class="small fw-semibold">{{ m.metricName }}</span>
+          <span class="star-rating">
+            <i *ngFor="let n of [1,2,3,4,5]" class="bi"
+               [ngClass]="n <= m.score ? 'bi-star-fill text-warning' : 'bi-star text-muted'"
+               style="cursor:pointer; font-size:16px;"
+               (click)="setRatingScore(i, n)"></i>
+          </span>
+          <button *ngIf="!m.isStandard" type="button" class="btn btn-sm btn-link text-danger p-0"
+                  (click)="removeRatingMetric(i)" title="Remove"><i class="bi bi-x-lg"></i></button>
+        </div>
+
+        <button type="button" class="btn btn-sm btn-outline-secondary mt-1" (click)="addCustomRatingMetric()">
+          <i class="bi bi-plus-lg me-1"></i>Add Custom Metric
+        </button>
+
+        <label class="sl-label mt-3">Remarks (optional)</label>
+        <textarea class="sl-input" rows="2" placeholder="Any notes about this visit…" [(ngModel)]="ratingRemarks"></textarea>
+      </div>
+      <div class="sl-modal-footer">
+        <button class="btn-sl-secondary" [disabled]="isSavingRating" (click)="skipRating()">Skip for Now</button>
+        <button class="btn-sl-primary" [disabled]="isSavingRating" (click)="submitRating()">
+          <span *ngIf="!isSavingRating"><i class="bi bi-check-lg me-1"></i>Save Review</span>
+          <span *ngIf="isSavingRating"><i class="bi bi-arrow-repeat spin me-1"></i>Saving…</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════ APPROVE / REJECT CONFIRM MODAL ═══════════════ -->
+  <div class="sl-modal-backdrop sl-modal-backdrop-top" *ngIf="isActionModalOpen" (click)="closeActionModal()">
+    <div class="sl-modal sl-modal-sm" (click)="$event.stopPropagation()">
+      <div class="sl-modal-header">
+        <div class="sl-modal-title">
+          <ng-container *ngIf="pendingActionTarget === 'additionalItems'">
+            <span *ngIf="pendingAction === 'approve'">Approve Additional Items Quote</span>
+            <span *ngIf="pendingAction === 'reject'">Send Back Additional Items Quote for Resubmission</span>
+            <span *ngIf="pendingAction === 'decline'">Reject Additional Items Quote</span>
+          </ng-container>
+          <ng-container *ngIf="pendingActionTarget === 'ses'">
+            <span *ngIf="pendingAction === 'approve'">Approve Service Entry Sheet</span>
+            <span *ngIf="pendingAction === 'reject'">Send Back Service Entry Sheet for Resubmission</span>
+            <span *ngIf="pendingAction === 'decline'">Reject Service Entry Sheet</span>
+          </ng-container>
+        </div>
+        <button class="sl-modal-close" (click)="closeActionModal()"><i class="bi bi-x-lg"></i></button>
+      </div>
+      <div class="sl-modal-body">
+        <ng-container *ngIf="pendingActionTarget === 'ses'">
+          <p *ngIf="pendingAction === 'approve'">This will unlock invoice approval for this PO once an invoice is submitted.</p>
+          <p *ngIf="pendingAction === 'reject'">State what needs to change. The submitter will see this and can edit and resubmit — this does not permanently close the Service Entry Sheet.</p>
+          <p *ngIf="pendingAction === 'decline'" class="text-danger fw-semibold">
+            <i class="bi bi-exclamation-triangle-fill me-1"></i>
+            This permanently rejects and closes the Service Entry Sheet. It cannot be edited or resubmitted.
+            Use "Send Back for Resubmission" instead if the supplier should be able to fix and resend it.
+          </p>
+        </ng-container>
+        <ng-container *ngIf="pendingActionTarget === 'additionalItems'">
+          <p *ngIf="pendingAction === 'approve'">This will create a brand-new follow-up Purchase Order for exactly these items. The original PO is not affected.</p>
+          <p *ngIf="pendingAction === 'reject'">State what needs to change. The submitter can revise and resubmit just this quote — the Service Entry Sheet itself is not affected.</p>
+          <p *ngIf="pendingAction === 'decline'" class="text-danger fw-semibold">
+            <i class="bi bi-exclamation-triangle-fill me-1"></i>
+            This permanently rejects the spares quote — it cannot be revised or resubmitted.
+            The Service Entry Sheet itself is not affected.
+          </p>
+        </ng-container>
+        <label class="sl-label" *ngIf="pendingAction !== 'approve'">
+          {{ pendingAction === 'decline' ? 'Reason' : 'Remarks' }} <span class="req">*</span>
+        </label>
+        <textarea *ngIf="pendingAction !== 'approve'" class="sl-input" rows="3"
+                  [placeholder]="pendingAction === 'decline' ? 'Why is this being rejected outright?' : 'e.g. Cost too high for this item…'"
+                  [(ngModel)]="actionRemarks"></textarea>
+      </div>
+      <div class="sl-modal-footer">
+        <button class="btn-sl-secondary" (click)="closeActionModal()">Cancel</button>
+        <button [class]="pendingAction === 'approve' ? 'btn-sl-success' : (pendingAction === 'decline' ? 'btn-sl-danger' : 'btn-sl-warning')"
+                [disabled]="isPerformingAction" (click)="confirmAction()">
+          <span *ngIf="!isPerformingAction">
+            {{ pendingAction === 'approve' ? 'Confirm Approve'
+               : pendingAction === 'decline' ? 'Reject Permanently' : 'Send Back for Resubmission' }}
+          </span>
+          <span *ngIf="isPerformingAction"><i class="bi bi-arrow-repeat spin me-1"></i> Please wait…</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+</div>

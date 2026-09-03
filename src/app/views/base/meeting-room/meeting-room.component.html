@@ -1,0 +1,199 @@
+<!-- ============================================================
+     Meeting Room — Full-screen video conference
+============================================================ -->
+
+<!-- Loading -->
+<div *ngIf="isLoading" class="mr-loading">
+  <div class="mr-loading-inner">
+    <div class="mr-loader"></div>
+    <h5 class="mt-4 text-white fw-semibold">Joining meeting…</h5>
+    <p class="text-white-50" style="font-size:0.85rem">Initialising camera and microphone…</p>
+  </div>
+</div>
+
+<!-- Access denied -->
+<div *ngIf="!isLoading && error" class="mr-loading">
+  <div class="mr-loading-inner text-center">
+    <div class="mr-error-icon"><i class="bi bi-shield-x"></i></div>
+    <h5 class="mt-3 text-danger fw-semibold">{{ error }}</h5>
+    <button class="btn btn-outline-light btn-sm mt-3" (click)="meetingLeft.emit()">
+      <i class="bi bi-arrow-left me-1"></i>Go Back
+    </button>
+  </div>
+</div>
+
+<!-- ═══════════════════════ MAIN ROOM ══════════════════════════ -->
+<div *ngIf="!isLoading && !error" class="mr-room">
+
+  <!-- ── Top bar ── -->
+  <div class="mr-topbar">
+    <div class="mr-topbar-left">
+      <div class="mr-room-icon"><i class="bi bi-camera-video-fill"></i></div>
+      <div>
+        <div class="mr-room-title">{{ meeting?.title || 'Meeting' }}</div>
+        <div class="mr-room-sub" *ngIf="meeting?.rfqNumber">RFQ: {{ meeting?.rfqNumber }}</div>
+      </div>
+    </div>
+    <div class="mr-topbar-center">
+      <div class="mr-timer">
+        <i class="bi bi-clock me-1"></i>{{ timerDisplay }}
+      </div>
+    </div>
+    <div class="mr-topbar-right">
+      <div class="mr-status-dot" [class.connected]="(meetingService.isConnected$ | async)"></div>
+      <span class="mr-status-label">{{ (meetingService.isConnected$ | async) ? 'Connected' : 'Connecting…' }}</span>
+    </div>
+  </div>
+
+  <!-- ── Video grid + sidebar ── -->
+  <div class="mr-body">
+
+    <!-- Video area -->
+    <div class="mr-video-area">
+
+      <!-- Remote videos container (dynamically populated) -->
+      <div class="mr-remote-grid" #remoteVideosWrap>
+        <!-- Remote video elements are injected via DOM by the component -->
+        <div *ngIf="peers.size === 0" class="mr-waiting">
+          <i class="bi bi-person-plus" style="font-size:3rem;opacity:0.3;"></i>
+          <p class="mt-3" style="font-size:0.9rem;opacity:0.6;">Waiting for others to join…</p>
+        </div>
+      </div>
+
+      <!-- Local video (self-view) -->
+      <div class="mr-local-wrap">
+        <video #localVideo autoplay muted playsinline class="mr-local-video"
+               [class.hidden]="isVideoOff"></video>
+        <div *ngIf="isVideoOff" class="mr-video-avatar">
+          <i class="bi bi-person-fill"></i>
+        </div>
+        <div class="mr-local-label">You{{ isMuted ? ' 🔇' : '' }}</div>
+        <div *ngIf="isScreenSharing" class="mr-screen-badge">
+          <i class="bi bi-display me-1"></i>Sharing
+        </div>
+      </div>
+    </div>
+
+    <!-- Sidebar (participants / chat) -->
+    <div class="mr-sidebar" *ngIf="isChatOpen">
+      <!-- Sidebar tabs -->
+      <div class="mr-sidebar-tabs">
+        <button class="mr-stab" [class.active]="activeTab === 'participants'"
+                (click)="setTab('participants')">
+          <i class="bi bi-people me-1"></i>People
+          <span class="badge bg-secondary ms-1" style="font-size:0.65rem">
+            {{ participants.length }}
+          </span>
+        </button>
+        <button class="mr-stab" [class.active]="activeTab === 'chat'"
+                (click)="setTab('chat')">
+          <i class="bi bi-chat-left-text me-1"></i>Chat
+          <span *ngIf="unreadChat > 0" class="badge bg-danger ms-1"
+                style="font-size:0.65rem">{{ unreadChat }}</span>
+        </button>
+      </div>
+
+      <!-- Participants tab -->
+      <div *ngIf="activeTab === 'participants'" class="mr-participants">
+        <div *ngFor="let p of participants" class="mr-participant">
+          <div class="mr-p-avatar">{{ p.userName.charAt(0).toUpperCase() }}</div>
+          <div class="mr-p-info">
+            <div class="mr-p-name">{{ p.userName }}</div>
+          </div>
+          <div class="mr-p-icons">
+            <i class="bi" [class.bi-mic-fill]="!p.muted" [class.bi-mic-mute-fill]="p.muted"
+               [class.text-danger]="p.muted" style="font-size:0.85rem;"></i>
+            <i class="bi ms-1" [class.bi-camera-video-fill]="!p.videoOff"
+               [class.bi-camera-video-off-fill]="p.videoOff"
+               [class.text-danger]="p.videoOff" style="font-size:0.85rem;"></i>
+          </div>
+        </div>
+      </div>
+
+      <!-- Chat tab -->
+      <div *ngIf="activeTab === 'chat'" class="mr-chat-body">
+        <div class="mr-chat-messages" #chatMessagesWrap>
+          <div *ngIf="chatMessages.length === 0" class="mr-chat-empty">
+            <i class="bi bi-chat-left-dots" style="font-size:1.8rem;opacity:0.3;"></i>
+            <p class="mt-2" style="font-size:0.8rem;opacity:0.5;">No messages yet</p>
+          </div>
+          <div *ngFor="let msg of chatMessages"
+               class="mr-chat-bubble"
+               [class.mine]="isMe(msg.senderId)"
+               [class.theirs]="!isMe(msg.senderId)">
+            <div *ngIf="!isMe(msg.senderId)" class="mr-chat-sender">{{ msg.senderName }}</div>
+            <div class="mr-chat-text">{{ msg.content }}</div>
+            <div class="mr-chat-time">{{ formatTime(msg.sentAt) }}</div>
+          </div>
+        </div>
+        <div class="mr-chat-input-wrap">
+          <input class="mr-chat-input" type="text"
+                 placeholder="Message…" [(ngModel)]="newChatMessage"
+                 (keydown)="onChatKeyDown($event)" maxlength="500">
+          <button class="mr-chat-send" (click)="sendChatMessage()"
+                  [disabled]="!newChatMessage.trim()">
+            <i class="bi bi-send-fill"></i>
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Bottom control bar ── -->
+  <div class="mr-controls">
+    <!-- Mute / Unmute -->
+    <div class="mr-ctrl-wrap">
+      <button class="mr-ctrl-btn" [class.active]="isMuted" (click)="toggleMute()"
+              [title]="isMuted ? 'Unmute' : 'Mute'">
+        <i class="bi" [class.bi-mic-fill]="!isMuted" [class.bi-mic-mute-fill]="isMuted"></i>
+      </button>
+      <span class="mr-ctrl-label">{{ isMuted ? 'Unmute' : 'Mute' }}</span>
+    </div>
+
+    <!-- Video on/off -->
+    <div class="mr-ctrl-wrap">
+      <button class="mr-ctrl-btn" [class.active]="isVideoOff" (click)="toggleVideo()"
+              [title]="isVideoOff ? 'Start video' : 'Stop video'">
+        <i class="bi" [class.bi-camera-video-fill]="!isVideoOff"
+           [class.bi-camera-video-off-fill]="isVideoOff"></i>
+      </button>
+      <span class="mr-ctrl-label">{{ isVideoOff ? 'Start Video' : 'Stop Video' }}</span>
+    </div>
+
+    <!-- Screen share -->
+    <div class="mr-ctrl-wrap">
+      <button class="mr-ctrl-btn" [class.sharing]="isScreenSharing" (click)="toggleScreenShare()"
+              title="Share screen">
+        <i class="bi bi-display"></i>
+      </button>
+      <span class="mr-ctrl-label">{{ isScreenSharing ? 'Stop Share' : 'Share Screen' }}</span>
+    </div>
+
+    <!-- Chat toggle -->
+    <div class="mr-ctrl-wrap">
+      <button class="mr-ctrl-btn" [class.active]="isChatOpen" (click)="isChatOpen = !isChatOpen"
+              title="Toggle panel">
+        <i class="bi bi-layout-sidebar-reverse"></i>
+        <span *ngIf="unreadChat > 0 && !isChatOpen"
+              class="mr-ctrl-badge">{{ unreadChat }}</span>
+      </button>
+      <span class="mr-ctrl-label">Panel</span>
+    </div>
+
+    <!-- End / Leave -->
+    <div class="mr-ctrl-wrap" *ngIf="isHost">
+      <button class="mr-ctrl-btn end-btn" (click)="endMeetingForAll()" title="End meeting for all">
+        <i class="bi bi-telephone-x-fill"></i>
+      </button>
+      <span class="mr-ctrl-label">End All</span>
+    </div>
+
+    <div class="mr-ctrl-wrap">
+      <button class="mr-ctrl-btn leave-btn" (click)="leave()" title="Leave meeting">
+        <i class="bi bi-box-arrow-right"></i>
+      </button>
+      <span class="mr-ctrl-label">Leave</span>
+    </div>
+  </div>
+
+</div>

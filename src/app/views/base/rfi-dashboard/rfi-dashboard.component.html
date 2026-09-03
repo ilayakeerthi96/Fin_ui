@@ -1,0 +1,69 @@
+<c-container class="mt-4" fluid>
+  <c-row class="mb-4">
+    <c-col xs="12">
+      <c-card class="border-0 shadow-lg">
+        <div class="rfi-header">
+          <c-card-body class="p-4 d-flex justify-content-between align-items-center flex-wrap gap-3">
+            <div>
+              <h3 class="text-white mb-1 fw-bold">
+                <i class="bi bi-question-circle me-2"></i>
+                RFI Dashboard
+              </h3>
+              <p class="text-white mb-0 opacity-90">Requests for Information you've sent to suppliers.</p>
+            </div>
+            <button cButton color="light" (click)="createRfi()">
+              <i class="bi bi-plus-lg me-1"></i> Create RFI
+            </button>
+          </c-card-body>
+        </div>
+      </c-card>
+    </c-col>
+  </c-row>
+
+  <c-row *ngIf="isLoading">
+    <c-col xs="12" class="text-center py-5">
+      <div class="spinner-border text-primary" role="status"></div>
+      <p class="text-muted mt-3">Loading RFIs...</p>
+    </c-col>
+  </c-row>
+
+  <c-row *ngIf="!isLoading && rows.length === 0">
+    <c-col xs="12">
+      <c-card class="border-0 shadow-sm">
+        <c-card-body class="text-center py-5">
+          <p class="text-muted mb-3">You haven't created any RFIs yet.</p>
+          <button cButton color="primary" (click)="createRfi()">
+            <i class="bi bi-plus-lg me-1"></i> Create Your First RFI
+          </button>
+        </c-card-body>
+      </c-card>
+    </c-col>
+  </c-row>
+
+  <c-row *ngFor="let row of rows" class="mb-3">
+    <c-col xs="12">
+      <c-card class="border-0 shadow-sm">
+        <c-card-body class="d-flex justify-content-between align-items-center flex-wrap gap-3">
+          <div>
+            <div class="d-flex align-items-center gap-2 mb-1">
+              <strong>{{ row.rfi.title }}</strong>
+              <c-badge [color]="row.rfi.status === 'CLOSED' ? 'secondary' : 'success'">{{ row.rfi.status }}</c-badge>
+            </div>
+            <div class="text-muted small">
+              {{ row.respondedCount }} of {{ row.invitedCount }} suppliers responded
+              <span *ngIf="row.rfi.dueDate"> &middot; Due {{ row.rfi.dueDate }}</span>
+            </div>
+          </div>
+          <div class="d-flex gap-2">
+            <button cButton color="primary" variant="outline" size="sm" (click)="viewResponses(row.rfi.id)">
+              <i class="bi bi-eye me-1"></i> View Responses
+            </button>
+            <button *ngIf="row.rfi.status !== 'CLOSED'" cButton color="danger" variant="outline" size="sm" (click)="closeRfi(row)">
+              Close RFI
+            </button>
+          </div>
+        </c-card-body>
+      </c-card>
+    </c-col>
+  </c-row>
+</c-container>

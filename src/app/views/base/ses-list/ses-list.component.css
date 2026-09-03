@@ -1,0 +1,157 @@
+.sl-page { background: #f4f6fb; min-height: 100vh; padding-bottom: 40px; }
+
+.sl-topbar {
+  display: flex; align-items: center; gap: 16px; background: #fff;
+  padding: 16px 24px; border-bottom: 1px solid #e5e9f2; position: sticky; top: 0; z-index: 20;
+}
+.topbar-title { display: flex; align-items: center; gap: 12px; font-size: 22px; color: #4338ca; }
+.topbar-title-main { font-size: 18px; font-weight: 800; color: #1e293b; }
+.topbar-title-sub { font-size: 13px; color: #64748b; font-weight: 500; }
+.topbar-spacer { flex: 1; }
+
+.sl-body { max-width: 1280px; margin: 0 auto; padding: 24px; }
+
+.sl-alert {
+  display: flex; align-items: center; gap: 10px; border-radius: 10px; padding: 12px 16px;
+  margin-bottom: 18px; font-weight: 600; font-size: 14px;
+}
+.sl-alert-danger  { background: #fef2f2; color: #b91c1c; border: 1px solid #fecaca; }
+.sl-alert-success { background: #f0fdf4; color: #15803d; border: 1px solid #bbf7d0; }
+.sl-alert-close { margin-left: auto; background: none; border: none; color: inherit; cursor: pointer; }
+
+/* ── Stat cards ── */
+.sl-stats { display: grid; grid-template-columns: repeat(5, 1fr); gap: 14px; margin-bottom: 18px; }
+.sl-stat-card {
+  background: #fff; border-radius: 12px; padding: 16px; text-align: center; cursor: pointer;
+  border: 2px solid transparent; box-shadow: 0 1px 3px rgba(15,23,42,.06);
+}
+.sl-stat-card.active { border-color: #4338ca; background: #eef2ff; }
+.sl-stat-num { font-size: 24px; font-weight: 800; color: #1e293b; }
+.sl-stat-label { font-size: 12px; color: #64748b; font-weight: 600; margin-top: 2px; }
+
+/* ── Filter bar ── */
+.sl-filter-bar { display: flex; gap: 12px; margin-bottom: 16px; }
+.sl-search-wrap { position: relative; flex: 1; }
+.sl-search-icon { position: absolute; left: 14px; top: 50%; transform: translateY(-50%); color: #94a3b8; }
+.sl-search-input { padding-left: 38px !important; }
+.sl-status-select { width: 220px; }
+.sl-input {
+  border: 1px solid #d7dcea; border-radius: 8px; padding: 9px 12px; font-size: 13.5px;
+  width: 100%; color: #1e293b; background: #fff;
+}
+.sl-input:focus { outline: none; border-color: #6366f1; box-shadow: 0 0 0 3px rgba(99,102,241,.12); }
+.sl-input-sm { padding: 5px 8px; font-size: 12.5px; min-width: 90px; }
+
+.sl-loading { text-align: center; padding: 40px; color: #64748b; font-weight: 600; }
+
+/* ── Table ── */
+.sl-table-wrap { background: #fff; border: 1px solid #eef1f8; border-radius: 12px; overflow-x: auto; }
+.sl-table { width: 100%; border-collapse: collapse; font-size: 13.5px; min-width: 800px; }
+.sl-table thead th {
+  background: #f8fafc; color: #475569; font-weight: 700; font-size: 11.5px; text-transform: uppercase;
+  letter-spacing: .02em; padding: 12px; text-align: left; border-bottom: 1px solid #eef1f8; white-space: nowrap;
+}
+.sl-table tbody td { padding: 12px; border-bottom: 1px solid #f1f5f9; }
+.sl-row-clickable { cursor: pointer; }
+.sl-row-clickable:hover { background: #f8fafc; }
+.sl-empty { text-align: center; padding: 40px; color: #94a3b8; }
+.fw-bold { font-weight: 700; }
+.text-center { text-align: center; }
+.text-success { color: #16a34a; }
+.text-muted { color: #cbd5e1; }
+
+.sl-table-compact th, .sl-table-compact td { padding: 8px 10px; font-size: 12.5px; }
+
+/* ── Badges ── */
+.sl-badge { display: inline-block; padding: 4px 11px; border-radius: 999px; font-weight: 700; font-size: 11.5px; }
+.badge-draft     { background: #f1f5f9; color: #475569; }
+.badge-submitted { background: #fef3c7; color: #92400e; }
+.badge-approved  { background: #dcfce7; color: #15803d; }
+.badge-rejected  { background: #fee2e2; color: #b91c1c; }
+/* "Sent back for resubmission" — amber, deliberately not the same red as a permanent reject. */
+.badge-sentback  { background: #ffedd5; color: #c2410c; }
+
+/* ── Buttons ── */
+.btn-sl-primary, .btn-sl-secondary, .btn-sl-success, .btn-sl-danger, .btn-sl-warning, .btn-sl-view {
+  border-radius: 8px; padding: 9px 18px; font-weight: 700; font-size: 13.5px; cursor: pointer; border: none;
+}
+/* Send-back-for-resubmission — amber, so it reads as recoverable next to the red permanent Reject. */
+.btn-sl-warning { background: #ea580c; color: #fff; }
+.btn-sl-primary   { background: linear-gradient(135deg,#4f46e5,#4338ca); color: #fff; }
+.btn-sl-secondary { background: #fff; border: 1px solid #d7dcea; color: #334155; }
+a.btn-sl-secondary { display: inline-block; text-decoration: none; }
+.btn-sl-success   { background: #16a34a; color: #fff; }
+.btn-sl-danger    { background: #dc2626; color: #fff; }
+.btn-sl-view      { background: #eef2ff; color: #4338ca; padding: 5px 12px; font-size: 12.5px; }
+button:disabled { opacity: .6; cursor: not-allowed; }
+
+/* ── Modals (plain overlay — matches this app's established pattern for reliably-visible modals) ── */
+.sl-modal-backdrop {
+  position: fixed; inset: 0; background: rgba(15,23,42,.55); z-index: 1000;
+  display: flex; align-items: center; justify-content: center; padding: 20px;
+}
+.sl-modal-backdrop-top { z-index: 1100; }
+.sl-modal { background: #fff; border-radius: 14px; width: 100%; max-width: 560px; max-height: 90vh; display: flex; flex-direction: column; }
+.sl-modal-lg { max-width: 920px; }
+.sl-modal-sm { max-width: 460px; }
+.sl-modal-header {
+  display: flex; align-items: center; justify-content: space-between; padding: 18px 22px;
+  border-bottom: 1px solid #eef1f8;
+}
+.sl-modal-title { font-size: 16.5px; font-weight: 800; color: #1e293b; margin-bottom: 6px; }
+.sl-modal-close { border: none; background: none; font-size: 18px; color: #94a3b8; cursor: pointer; }
+.sl-modal-body { padding: 20px 22px; overflow-y: auto; }
+.sl-modal-footer { display: flex; justify-content: flex-end; gap: 10px; padding: 16px 22px; border-top: 1px solid #eef1f8; }
+
+.sl-kv-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 14px; margin-bottom: 16px; }
+.sl-kv { display: flex; flex-direction: column; gap: 3px; }
+.sl-kv .k { font-size: 11px; color: #94a3b8; font-weight: 700; text-transform: uppercase; letter-spacing: .03em; }
+.sl-kv .v { font-size: 14px; color: #1e293b; font-weight: 600; }
+.sl-kv .v.strong { color: #16a34a; font-weight: 800; }
+
+.sl-remarks-box { background: #f8fafc; border-radius: 10px; padding: 12px 14px; margin-bottom: 16px; }
+.sl-remarks-box .k { font-size: 12px; font-weight: 700; color: #475569; }
+.sl-remarks-box p { margin: 4px 0 0; font-size: 13.5px; color: #334155; }
+.sl-remarks-rejected { background: #fef2f2; }
+.sl-remarks-rejected .k { color: #b91c1c; }
+.sl-remarks-approved { background: #f0fdf4; }
+.sl-remarks-approved .k { color: #15803d; }
+
+.sl-line-items-title { font-size: 13.5px; font-weight: 800; color: #1e293b; margin-bottom: 10px; }
+.sl-label { font-size: 12.5px; font-weight: 700; color: #475569; display: block; margin-bottom: 6px; }
+.req { color: #dc2626; }
+textarea.sl-input { resize: vertical; margin-top: 4px; }
+
+.spin { display: inline-block; animation: sl-spin 1s linear infinite; }
+@keyframes sl-spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+
+/* ── Attachments (common + per-line-item + per-additional-item) ── */
+.sl-attach-cell { min-width: 150px; }
+.sl-attach-list { display: flex; flex-direction: column; gap: 4px; margin-bottom: 4px; }
+.sl-attach-list-block { flex-direction: row; flex-wrap: wrap; gap: 8px; }
+.sl-attach-chip {
+  display: inline-flex; align-items: center; gap: 4px; font-size: 12px; color: #4338ca;
+  background: #eef2ff; border-radius: 6px; padding: 3px 8px; text-decoration: none; max-width: 220px;
+}
+.sl-attach-chip:hover { background: #e0e7ff; text-decoration: underline; }
+.sl-attach-chip i { font-size: 11px; }
+.btn-sl-attach {
+  border: 1px dashed #c7d2fe; background: #fff; color: #4338ca; border-radius: 7px;
+  padding: 4px 10px; font-size: 12px; font-weight: 700; cursor: pointer;
+}
+.btn-sl-attach:hover { background: #eef2ff; }
+
+@media (prefers-color-scheme: dark) {
+  .sl-page { background: #0f172a; }
+  .sl-topbar, .sl-stat-card, .sl-table-wrap, .sl-modal { background: #1e293b; border-color: #334155; }
+  .topbar-title-main, .sl-stat-num, .sl-kv .v, .sl-modal-title { color: #e2e8f0; }
+  .sl-input { background: #0f172a; border-color: #334155; color: #e2e8f0; }
+  .sl-table thead th { background: #0f172a; color: #94a3b8; }
+  .sl-table tbody td { border-color: #334155; }
+  .sl-row-clickable:hover { background: #0f172a; }
+  .sl-remarks-box { background: #0f172a; }
+  .sl-attach-chip { background: #1e293b; color: #a5b4fc; }
+  .sl-attach-chip:hover { background: #263143; }
+  .btn-sl-attach { background: #0f172a; border-color: #334155; color: #a5b4fc; }
+  .btn-sl-attach:hover { background: #1e293b; }
+}

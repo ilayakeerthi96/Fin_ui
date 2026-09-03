@@ -1,0 +1,486 @@
+<div class="cap-page">
+
+  <button class="btn-cap-back" (click)="goBack()"><i class="bi bi-arrow-left me-1"></i>Back to Corrective Action Plans</button>
+
+  <!-- Fixed to the viewport, not the page — visible immediately no matter where you've scrolled to,
+       without yanking you back to the top of the page. Hidden while a modal is open, since that
+       modal's own alert (pinned above its scrollable body) is the one that should show then. -->
+  <div class="cap-toast" *ngIf="(errorMessage && !anyModalOpen) || successMessage">
+    <div class="cap-alert cap-toast-msg" *ngIf="errorMessage && !anyModalOpen">
+      <span>{{ errorMessage }}</span>
+      <button class="cap-toast-close" (click)="errorMessage = ''" aria-label="Dismiss"><i class="bi bi-x"></i></button>
+    </div>
+    <div class="cap-success cap-toast-msg" *ngIf="successMessage">
+      <span>{{ successMessage }}</span>
+      <button class="cap-toast-close" (click)="successMessage = ''" aria-label="Dismiss"><i class="bi bi-x"></i></button>
+    </div>
+  </div>
+  <div class="cap-loading" *ngIf="isLoading"><i class="bi bi-arrow-repeat spin me-2"></i>Loading…</div>
+
+  <ng-container *ngIf="!isLoading && cap">
+
+    <!-- ═══════════════ HEADER ═══════════════ -->
+    <div class="cap-topbar">
+      <div>
+        <div class="cap-title">{{ cap.capNumber }}</div>
+        <div class="cap-subtitle">{{ cap.itemDescription || 'No item specified' }}</div>
+      </div>
+      <div class="cap-header-badges">
+        <span class="cap-sev" [ngClass]="severityClass(cap.severity)">{{ cap.severity }}</span>
+        <span class="cap-badge" [ngClass]="statusClass(cap.status)">{{ statusLabel(cap.status) }}</span>
+      </div>
+    </div>
+
+    <!-- ═══════════════ DISPOSITION — what's happening to the goods, decided first ═══════════════ -->
+    <div class="cap-card cap-disposition-card">
+      <div class="cap-card-title">Disposition</div>
+      <div class="cap-disposition-tag">{{ dispositionLabel(cap.disposition) }}</div>
+
+      <!-- REJECT / REJECT & REPLACE — goods are physically going back -->
+      <ng-container *ngIf="isReturnDisposition">
+        <div class="cap-form-grid" style="margin-top:14px;">
+          <div>
+            <label class="cap-label">Packed By</label>
+            <input type="text" class="cap-input" [(ngModel)]="dispositionForm.returnPackedBy" [disabled]="!canEdit" placeholder="Who is packing the return" />
+          </div>
+          <div>
+            <label class="cap-label">In-Charge</label>
+            <input type="text" class="cap-input" [(ngModel)]="dispositionForm.returnInChargeName" [disabled]="!canEdit" placeholder="Who is accountable for the return" />
+          </div>
+        </div>
+        <button class="btn-cap-primary" style="margin-top:12px;" *ngIf="canEdit" (click)="saveDispositionDetails()" [disabled]="isSavingDisposition">
+          {{ isSavingDisposition ? 'Saving…' : 'Save' }}
+        </button>
+      </ng-container>
+
+      <!-- ACCEPT WITH DEVIATION — kept and used despite the known issue -->
+      <ng-container *ngIf="isAcceptWithDeviation">
+        <p class="cap-hint" style="margin-top:14px;">Kept and used despite the known issue — a quality
+          decision, not a payment one.</p>
+        <label class="cap-checkbox-row">
+          <input type="checkbox" [(ngModel)]="dispositionForm.internalCorrectionRequired" [disabled]="!canEdit" />
+          <span>Requires internal correction — our own team provides the fix, not the supplier</span>
+        </label>
+        <button class="btn-cap-primary" style="margin-top:12px;" *ngIf="canEdit" (click)="saveDispositionDetails()" [disabled]="isSavingDisposition">
+          {{ isSavingDisposition ? 'Saving…' : 'Save' }}
+        </button>
+      </ng-container>
+
+      <div class="cap-owner-badge">
+        <i class="bi bi-person-check me-1"></i>Corrective Action owner: <strong>{{ correctiveActionOwnerLabel }}</strong>
+      </div>
+    </div>
+
+    <!-- ═══════════════ IDENTIFICATION ═══════════════ -->
+    <div class="cap-card">
+      <div class="cap-card-title">Identification</div>
+      <div class="cap-detail-grid">
+        <div><span class="cap-field-label">Customer</span><span class="cap-field-value">{{ cap.buyerCompanyName }}</span></div>
+        <div><span class="cap-field-label">Supplier</span><span class="cap-field-value">{{ cap.supplierCompanyName }}</span></div>
+        <div><span class="cap-field-label">Department</span><span class="cap-field-value">{{ cap.department || '—' }}</span></div>
+        <div><span class="cap-field-label">Item</span><span class="cap-field-value">{{ cap.itemDescription || '—' }} <span *ngIf="cap.itemCode">({{ cap.itemCode }})</span></span></div>
+        <div><span class="cap-field-label">PO Number</span><span class="cap-field-value">{{ cap.poNumber || '—' }}</span></div>
+        <div><span class="cap-field-label">GRN Number</span><span class="cap-field-value">{{ cap.grnNumber || '—' }}</span></div>
+        <div><span class="cap-field-label">Personnel Involved</span><span class="cap-field-value">{{ cap.personnelInvolved || '—' }}</span></div>
+        <div><span class="cap-field-label">Raised By</span><span class="cap-field-value">{{ cap.raisedByName || '—' }} — {{ cap.raisedAt | date:'dd MMM yyyy' }}</span></div>
+        <div><span class="cap-field-label">Assigned Owner</span><span class="cap-field-value">{{ cap.assignedOwner || '—' }}</span></div>
+        <div><span class="cap-field-label">Target Close Date</span><span class="cap-field-value">{{ cap.targetCloseDate ? (cap.targetCloseDate | date:'dd MMM yyyy') : '—' }}</span></div>
+      </div>
+    </div>
+
+    <!-- ═══════════════ THE PROBLEM ═══════════════ -->
+    <div class="cap-card">
+      <div class="cap-card-title">The Quality Issue</div>
+      <div class="cap-field-label">Problem Description</div>
+      <p class="cap-para">{{ cap.problemDescription }}</p>
+      <div class="cap-detail-grid" style="margin-top:10px;">
+        <div><span class="cap-field-label">When Detected</span><span class="cap-field-value">{{ cap.whenDetected ? (cap.whenDetected | date:'dd MMM yyyy') : '—' }}</span></div>
+        <div><span class="cap-field-label">When Introduced</span><span class="cap-field-value">{{ cap.whenIntroduced ? (cap.whenIntroduced | date:'dd MMM yyyy') : '—' }}</span></div>
+      </div>
+      <div class="cap-immediate-box" *ngIf="cap.immediateCorrection">
+        <div class="cap-field-label">Immediate Correction <span class="cap-not-fix-tag">not the corrective action</span></div>
+        <p class="cap-para">{{ cap.immediateCorrection }}</p>
+      </div>
+    </div>
+
+    <!-- ═══════════════ ROOT CAUSE ═══════════════ -->
+    <div class="cap-card">
+      <div class="cap-card-title">Root Cause Analysis</div>
+
+      <ng-container *ngIf="cap.rootCause && !(canManage && canEdit)">
+        <p class="cap-para">{{ cap.rootCause }}</p>
+        <div class="cap-detail-grid">
+          <div><span class="cap-field-label">Category</span><span class="cap-field-value">{{ cap.rootCauseCategory || '—' }}</span></div>
+          <div><span class="cap-field-label">Recorded By</span><span class="cap-field-value">{{ cap.rootCauseRecordedBy || '—' }}</span></div>
+        </div>
+      </ng-container>
+
+      <ng-container *ngIf="canManage && canEdit">
+        <p class="cap-hint" *ngIf="!cap.rootCause">Why did this actually happen — not just what happened. Required before any corrective action can be added.</p>
+        <div class="cap-form-grid">
+          <div class="cap-span-2">
+            <label class="cap-label">Root Cause</label>
+            <textarea class="cap-textarea" rows="3" [(ngModel)]="rootCauseForm.rootCause"
+              placeholder="e.g. Insufficient packaging — single-wall carton with no internal cushioning allowed housings to crack in transit."></textarea>
+          </div>
+          <div>
+            <label class="cap-label">Category</label>
+            <select class="cap-input" [(ngModel)]="rootCauseForm.rootCauseCategory">
+              <option value="">Select…</option>
+              <option value="Packaging">Packaging</option>
+              <option value="Manufacturing">Manufacturing</option>
+              <option value="Transportation">Transportation</option>
+              <option value="Design">Design</option>
+              <option value="Manpower / Training">Manpower / Training</option>
+              <option value="Process">Process</option>
+              <option value="Supplier Material">Supplier Material</option>
+              <option value="Other">Other</option>
+            </select>
+          </div>
+        </div>
+        <button class="btn-cap-primary" style="margin-top:12px;" (click)="saveRootCause()" [disabled]="isSavingRootCause">
+          {{ isSavingRootCause ? 'Saving…' : (cap.rootCause ? 'Update Root Cause' : 'Save Root Cause') }}
+        </button>
+      </ng-container>
+
+      <p class="cap-hint" *ngIf="!cap.rootCause && !canManage">Root cause analysis is in progress.</p>
+    </div>
+
+    <!-- ═══════════════ CORRECTIVE ACTIONS ═══════════════ -->
+    <div class="cap-card">
+      <div class="cap-card-head-row">
+        <div class="cap-card-title">Corrective Actions</div>
+        <button class="btn-cap-secondary" *ngIf="canEditActions" (click)="openAddActionModal()">
+          <i class="bi bi-plus-lg me-1"></i>Add Action
+        </button>
+      </div>
+
+      <div class="cap-empty-inline" *ngIf="!cap.actions?.length">
+        No corrective actions defined yet. Replacing the product is not the corrective action —
+        add what will actually stop this from recurring.
+        <span *ngIf="!canEditActions"> This CAP expects the {{ correctiveActionOwnerLabel }} to add these.</span>
+      </div>
+
+      <div class="cap-action-row" *ngFor="let a of cap.actions">
+        <div class="cap-action-main">
+          <div class="cap-action-item">{{ a.actionItem }}</div>
+          <div class="cap-action-meta">
+            <span *ngIf="a.actionCategory">{{ a.actionCategory }} · </span>
+            Owner: <strong>{{ a.assignedTo }}</strong> ·
+            Due: {{ a.targetDate | date:'dd MMM yyyy' }}
+            <span class="cap-overdue-flag" *ngIf="a.overdue" title="Past due date"><i class="bi bi-exclamation-circle"></i> Overdue</span>
+          </div>
+          <div class="cap-action-meta" *ngIf="a.resourcesRequired">Resources: {{ a.resourcesRequired }}</div>
+          <div class="cap-action-meta" *ngIf="a.approach">Approach: {{ a.approach }}</div>
+          <div class="cap-action-meta" *ngIf="a.remarks">Remarks: {{ a.remarks }}</div>
+          <div class="cap-action-meta cap-not-implemented" *ngIf="a.status === 'NOT_IMPLEMENTED'">
+            Not implemented — {{ a.notImplementedReason }}
+          </div>
+          <div class="cap-action-meta cap-completed-by" *ngIf="a.status === 'COMPLETED' && a.completedBy">
+            <i class="bi bi-check-circle me-1"></i>Completed by <strong>{{ a.completedBy }}</strong>
+            <span *ngIf="a.completedDate"> on {{ a.completedDate | date:'dd MMM yyyy' }}</span>
+          </div>
+
+          <div class="cap-evidence-list" *ngIf="evidenceForAction(a.id).length">
+            <span class="cap-evidence-chip" *ngFor="let e of evidenceForAction(a.id)" (click)="downloadEvidence(e.id)">
+              <i class="bi bi-paperclip"></i> {{ e.filename }}
+            </span>
+          </div>
+          <button class="btn-cap-link" *ngIf="canEdit" (click)="openEvidenceModal(a.id)">
+            <i class="bi bi-paperclip me-1"></i>Attach evidence
+          </button>
+        </div>
+
+        <div class="cap-action-status">
+          <select class="cap-input" [ngModel]="a.status" (ngModelChange)="onActionStatusChange(a, $event)" [disabled]="!canEditActions">
+            <option *ngFor="let s of ACTION_STATUSES" [value]="s">{{ actionStatusLabel(s) }}</option>
+          </select>
+
+          <div class="cap-not-implemented-box" *ngIf="a._pendingStatus === 'NOT_IMPLEMENTED'">
+            <textarea class="cap-textarea" rows="2" placeholder="Why wasn't this implemented?"
+              [(ngModel)]="pendingNotImplementedReason[a.id]"></textarea>
+            <button class="btn-cap-secondary" (click)="submitNotImplemented(a)">Confirm</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ═══════════════ RE-INSPECTION — logged, never a gate ═══════════════ -->
+    <div class="cap-card" *ngIf="reinspectionExpected">
+      <div class="cap-card-title">Re-inspection</div>
+      <p class="cap-hint">The item was corrected internally, or a replacement arrived from the
+        supplier — Quality should look it over. This is a record only; it doesn't block anything else.</p>
+
+      <div class="cap-detail-grid" *ngIf="cap.reinspectionDate || cap.reinspectionBy">
+        <div><span class="cap-field-label">Inspected By</span><span class="cap-field-value">{{ cap.reinspectionBy || '—' }}</span></div>
+        <div><span class="cap-field-label">Date</span><span class="cap-field-value">{{ cap.reinspectionDate ? (cap.reinspectionDate | date:'dd MMM yyyy') : '—' }}</span></div>
+        <div><span class="cap-field-label">Result</span>
+          <span class="cap-field-value" [class.cap-effective]="cap.reinspectionApproved === true" [class.cap-not-effective]="cap.reinspectionApproved === false">
+            {{ cap.reinspectionApproved === true ? 'Approved' : (cap.reinspectionApproved === false ? 'Not Approved' : 'Not yet recorded') }}
+          </span>
+        </div>
+        <div class="cap-span-2" *ngIf="cap.reinspectionRemarks"><span class="cap-field-label">Remarks</span><span class="cap-field-value">{{ cap.reinspectionRemarks }}</span></div>
+      </div>
+
+      <ng-container *ngIf="canManage && canEdit">
+        <div class="cap-form-grid" style="margin-top:14px;">
+          <div>
+            <label class="cap-label">Inspected By</label>
+            <input type="text" class="cap-input" [(ngModel)]="reinspectionForm.reinspectionBy" />
+          </div>
+          <div>
+            <label class="cap-label">Date</label>
+            <input type="date" class="cap-input" [(ngModel)]="reinspectionForm.reinspectionDate" [max]="todayIso" />
+          </div>
+          <div>
+            <label class="cap-label">Result</label>
+            <select class="cap-input" [(ngModel)]="reinspectionForm.reinspectionApproved">
+              <option [ngValue]="null">Not yet recorded</option>
+              <option [ngValue]="true">Approved</option>
+              <option [ngValue]="false">Not Approved</option>
+            </select>
+          </div>
+          <div class="cap-span-2">
+            <label class="cap-label">Remarks</label>
+            <textarea class="cap-textarea" rows="2" [(ngModel)]="reinspectionForm.reinspectionRemarks"></textarea>
+          </div>
+        </div>
+        <button class="btn-cap-primary" style="margin-top:10px;" (click)="saveReinspection()" [disabled]="isSavingReinspection">
+          {{ isSavingReinspection ? 'Saving…' : 'Record Re-inspection' }}
+        </button>
+      </ng-container>
+    </div>
+
+    <!-- ═══════════════ EVIDENCE (CAP-level) ═══════════════ -->
+    <div class="cap-card">
+      <div class="cap-card-head-row">
+        <div class="cap-card-title">Supporting Evidence</div>
+        <button class="btn-cap-secondary" *ngIf="canEdit" (click)="openEvidenceModal(null)">
+          <i class="bi bi-upload me-1"></i>Upload Evidence
+        </button>
+      </div>
+      <div class="cap-empty-inline" *ngIf="!capLevelEvidence.length">No CAP-level evidence uploaded.</div>
+      <div class="cap-evidence-list" *ngIf="capLevelEvidence.length">
+        <span class="cap-evidence-chip" *ngFor="let e of capLevelEvidence" (click)="downloadEvidence(e.id)">
+          <i class="bi bi-paperclip"></i> {{ e.filename }} <span class="cap-evidence-by">— {{ e.uploadedByName }}</span>
+        </span>
+      </div>
+    </div>
+
+    <!-- ═══════════════ VERIFICATION & CLOSURE ═══════════════ -->
+    <div class="cap-card">
+      <div class="cap-card-title">Effectiveness Verification &amp; Closure</div>
+
+      <div class="cap-detail-grid" *ngIf="cap.effectivenessResult && cap.effectivenessResult !== 'PENDING'">
+        <div><span class="cap-field-label">Result</span>
+          <span class="cap-field-value" [class.cap-effective]="cap.effectivenessResult==='EFFECTIVE'" [class.cap-not-effective]="cap.effectivenessResult==='NOT_EFFECTIVE'">
+            {{ cap.effectivenessResult === 'EFFECTIVE' ? 'Effective' : 'Not Effective' }}
+          </span>
+        </div>
+        <div><span class="cap-field-label">Checked On</span><span class="cap-field-value">{{ cap.effectivenessCheckDate | date:'dd MMM yyyy' }}</span></div>
+        <div><span class="cap-field-label">Verified By</span><span class="cap-field-value">{{ cap.effectivenessVerifiedBy || '—' }}</span></div>
+        <div class="cap-span-2"><span class="cap-field-label">Remarks</span><span class="cap-field-value">{{ cap.effectivenessRemarks }}</span></div>
+      </div>
+
+      <div class="cap-closure-box" *ngIf="cap.status === 'CLOSED'">
+        <div class="cap-field-label">Closure Remarks</div>
+        <p class="cap-para">{{ cap.closureRemarks }}</p>
+        <div class="cap-detail-grid">
+          <div><span class="cap-field-label">Closed By</span><span class="cap-field-value">{{ cap.closedBy }}</span></div>
+          <div><span class="cap-field-label">Closed On</span><span class="cap-field-value">{{ cap.actualCloseDate | date:'dd MMM yyyy' }}</span></div>
+        </div>
+      </div>
+
+      <p class="cap-reopen-note" *ngIf="cap.reopenCount > 0">
+        <i class="bi bi-arrow-repeat me-1"></i>Reopened {{ cap.reopenCount }} time(s). Latest reason: {{ cap.reopenReason }}
+      </p>
+
+      <div class="cap-lifecycle-actions" *ngIf="canManage">
+        <button class="btn-cap-primary"
+                *ngIf="(cap.status === 'ACTION_PLANNED' || cap.status === 'IN_PROGRESS' || cap.status === 'REOPENED')"
+                [disabled]="!allActionsSettled || isSubmittingVerification"
+                (click)="submitForVerification()"
+                title="Every action must be Completed or Not Implemented first">
+          {{ isSubmittingVerification ? 'Submitting…' : 'Submit for Verification' }}
+        </button>
+        <span class="cap-hint" *ngIf="(cap.status === 'ACTION_PLANNED' || cap.status === 'IN_PROGRESS' || cap.status === 'REOPENED') && !allActionsSettled">
+          Complete every action (or mark it Not Implemented) before submitting for verification.
+        </span>
+
+        <button class="btn-cap-primary" *ngIf="cap.status === 'PENDING_VERIFICATION'" (click)="openVerifyModal()">
+          Verify Effectiveness
+        </button>
+        <button class="btn-cap-primary" *ngIf="cap.status === 'PENDING_VERIFICATION' && cap.effectivenessResult === 'EFFECTIVE'" (click)="openCloseModal()">
+          Close CAP
+        </button>
+        <button class="btn-cap-secondary" *ngIf="cap.status === 'CLOSED'" (click)="openReopenModal()">
+          <i class="bi bi-arrow-repeat me-1"></i>Reopen (Recurrence)
+        </button>
+      </div>
+    </div>
+
+  </ng-container>
+
+  <!-- ═══════════════ ADD ACTION MODAL ═══════════════ -->
+  <div class="cap-modal-backdrop" *ngIf="showAddActionModal" (click)="closeAddActionModal()">
+    <div class="cap-modal" (click)="$event.stopPropagation()">
+      <div class="cap-modal-header">
+        <div class="cap-modal-title">Add Corrective Action</div>
+        <button class="cap-modal-close" (click)="closeAddActionModal()"><i class="bi bi-x-lg"></i></button>
+      </div>
+      <div class="cap-modal-alert-slot" *ngIf="errorMessage">
+        <div class="cap-alert">{{ errorMessage }}</div>
+      </div>
+      <div class="cap-modal-body">
+        <div class="cap-form-grid">
+          <div class="cap-span-2">
+            <label class="cap-label">Action Item *</label>
+            <textarea class="cap-textarea" rows="2" [(ngModel)]="actionForm.actionItem"
+              placeholder="e.g. Switch to double-wall corrugated cartons with foam corner inserts for this item family."></textarea>
+          </div>
+          <div>
+            <label class="cap-label">Category</label>
+            <input type="text" class="cap-input" [(ngModel)]="actionForm.actionCategory" placeholder="Process Improvement / Training / Tool Introduction…" />
+          </div>
+          <div>
+            <label class="cap-label">Assigned To *</label>
+            <input type="text" class="cap-input" [(ngModel)]="actionForm.assignedTo" placeholder="Person or team" />
+          </div>
+          <div>
+            <label class="cap-label">Start Date</label>
+            <input type="date" class="cap-input" [(ngModel)]="actionForm.startDate" />
+          </div>
+          <div>
+            <label class="cap-label">Target Date *</label>
+            <input type="date" class="cap-input" [(ngModel)]="actionForm.targetDate" />
+          </div>
+          <div>
+            <label class="cap-label">Approach</label>
+            <select class="cap-input" [(ngModel)]="actionForm.approach">
+              <option value="">Select…</option>
+              <option value="Pilot">Pilot</option>
+              <option value="Specific area">Apply to specific area</option>
+              <option value="Organization-wide">Apply across the organization</option>
+            </select>
+          </div>
+          <div>
+            <label class="cap-label">Resources / Support Required</label>
+            <input type="text" class="cap-input" [(ngModel)]="actionForm.resourcesRequired" />
+          </div>
+          <div class="cap-span-2">
+            <label class="cap-label">Remarks</label>
+            <textarea class="cap-textarea" rows="2" [(ngModel)]="actionForm.remarks"></textarea>
+          </div>
+        </div>
+      </div>
+      <div class="cap-modal-footer">
+        <button class="btn-cap-secondary" (click)="closeAddActionModal()">Cancel</button>
+        <button class="btn-cap-primary" (click)="submitAddAction()" [disabled]="isSavingAction">
+          {{ isSavingAction ? 'Adding…' : 'Add Action' }}
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════ EVIDENCE UPLOAD MODAL ═══════════════ -->
+  <div class="cap-modal-backdrop" *ngIf="showEvidenceModal" (click)="closeEvidenceModal()">
+    <div class="cap-modal cap-modal-sm" (click)="$event.stopPropagation()">
+      <div class="cap-modal-header">
+        <div class="cap-modal-title">Upload Evidence</div>
+        <button class="cap-modal-close" (click)="closeEvidenceModal()"><i class="bi bi-x-lg"></i></button>
+      </div>
+      <div class="cap-modal-alert-slot" *ngIf="errorMessage">
+        <div class="cap-alert">{{ errorMessage }}</div>
+      </div>
+      <div class="cap-modal-body">
+        <label class="cap-label">File</label>
+        <input type="file" class="cap-input" (change)="onEvidenceFileSelected($event)" />
+        <label class="cap-label" style="margin-top:12px;">Description</label>
+        <input type="text" class="cap-input" [(ngModel)]="evidenceDescription" placeholder="e.g. Revised carton design" />
+      </div>
+      <div class="cap-modal-footer">
+        <button class="btn-cap-secondary" (click)="closeEvidenceModal()">Cancel</button>
+        <button class="btn-cap-primary" (click)="uploadEvidence()" [disabled]="isUploadingEvidence">
+          {{ isUploadingEvidence ? 'Uploading…' : 'Upload' }}
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════ VERIFY EFFECTIVENESS MODAL ═══════════════ -->
+  <div class="cap-modal-backdrop" *ngIf="showVerifyModal" (click)="closeVerifyModal()">
+    <div class="cap-modal cap-modal-sm" (click)="$event.stopPropagation()">
+      <div class="cap-modal-header">
+        <div class="cap-modal-title">Verify Effectiveness</div>
+        <button class="cap-modal-close" (click)="closeVerifyModal()"><i class="bi bi-x-lg"></i></button>
+      </div>
+      <div class="cap-modal-alert-slot" *ngIf="errorMessage">
+        <div class="cap-alert">{{ errorMessage }}</div>
+      </div>
+      <div class="cap-modal-body">
+        <p class="cap-hint">Has enough time passed to confirm the corrective action actually stopped the problem recurring?</p>
+        <label class="cap-label">Result</label>
+        <select class="cap-input" [(ngModel)]="verifyForm.result">
+          <option value="EFFECTIVE">Effective — problem has not recurred</option>
+          <option value="NOT_EFFECTIVE">Not Effective — problem recurred</option>
+        </select>
+        <label class="cap-label" style="margin-top:12px;">Remarks *</label>
+        <textarea class="cap-textarea" rows="3" [(ngModel)]="verifyForm.remarks"
+          placeholder="e.g. No further cracks reported across the next 3 shipments."></textarea>
+      </div>
+      <div class="cap-modal-footer">
+        <button class="btn-cap-secondary" (click)="closeVerifyModal()">Cancel</button>
+        <button class="btn-cap-primary" (click)="submitVerify()" [disabled]="isVerifying">
+          {{ isVerifying ? 'Saving…' : 'Save Verification' }}
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════ CLOSE MODAL ═══════════════ -->
+  <div class="cap-modal-backdrop" *ngIf="showCloseModal" (click)="closeCloseModal()">
+    <div class="cap-modal cap-modal-sm" (click)="$event.stopPropagation()">
+      <div class="cap-modal-header">
+        <div class="cap-modal-title">Close CAP</div>
+        <button class="cap-modal-close" (click)="closeCloseModal()"><i class="bi bi-x-lg"></i></button>
+      </div>
+      <div class="cap-modal-alert-slot" *ngIf="errorMessage">
+        <div class="cap-alert">{{ errorMessage }}</div>
+      </div>
+      <div class="cap-modal-body">
+        <label class="cap-label">Closure Remarks *</label>
+        <textarea class="cap-textarea" rows="3" [(ngModel)]="closureRemarks"></textarea>
+      </div>
+      <div class="cap-modal-footer">
+        <button class="btn-cap-secondary" (click)="closeCloseModal()">Cancel</button>
+        <button class="btn-cap-primary" (click)="submitClose()" [disabled]="isClosingCap">
+          {{ isClosingCap ? 'Closing…' : 'Close CAP' }}
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════ REOPEN MODAL ═══════════════ -->
+  <div class="cap-modal-backdrop" *ngIf="showReopenModal" (click)="closeReopenModal()">
+    <div class="cap-modal cap-modal-sm" (click)="$event.stopPropagation()">
+      <div class="cap-modal-header">
+        <div class="cap-modal-title">Reopen CAP</div>
+        <button class="cap-modal-close" (click)="closeReopenModal()"><i class="bi bi-x-lg"></i></button>
+      </div>
+      <div class="cap-modal-alert-slot" *ngIf="errorMessage">
+        <div class="cap-alert">{{ errorMessage }}</div>
+      </div>
+      <div class="cap-modal-body">
+        <label class="cap-label">Reason *</label>
+        <textarea class="cap-textarea" rows="3" [(ngModel)]="reopenReason" placeholder="e.g. Same defect reported again by the customer."></textarea>
+      </div>
+      <div class="cap-modal-footer">
+        <button class="btn-cap-secondary" (click)="closeReopenModal()">Cancel</button>
+        <button class="btn-cap-primary" (click)="submitReopen()" [disabled]="isReopeningCap">
+          {{ isReopeningCap ? 'Reopening…' : 'Reopen' }}
+        </button>
+      </div>
+    </div>
+  </div>
+
+</div>

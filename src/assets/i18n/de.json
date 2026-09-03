@@ -1,0 +1,23 @@
+{
+  "HEADER_SYSTEM_TITLE": "LIEFERANTENMANAGEMENTSYSTEM",
+  "HEADER_CHANGE_PASSWORD": "Passwort Ändern",
+  "HEADER_LOGOUT": "Abmelden",
+  "HEADER_CONFIRM_LOGOUT_TITLE": "Abmeldung Bestätigen",
+  "HEADER_CONFIRM_LOGOUT_MESSAGE": "Möchten Sie sich wirklich abmelden?",
+  "HEADER_LOGOUT_YES": "Ja, Abmelden",
+  "HEADER_LOGOUT_NO": "Nein, Bleiben",
+  "HEADER_LANGUAGE": "Sprache",
+
+  "LOGIN_WELCOME_BACK": "Willkommen Zurück",
+  "LOGIN_SIGN_IN_SUBTITLE": "Melden Sie sich bei Ihrem Konto an",
+  "LOGIN_EMAIL_PLACEHOLDER": "E-Mail-Adresse",
+  "LOGIN_EMAIL_REQUIRED": "E-Mail ist erforderlich.",
+  "LOGIN_EMAIL_INVALID": "Bitte geben Sie eine gültige E-Mail-Adresse ein.",
+  "LOGIN_PASSWORD_PLACEHOLDER": "Passwort",
+  "LOGIN_PASSWORD_REQUIRED": "Passwort ist erforderlich.",
+  "LOGIN_SIGN_IN_BUTTON": "Anmelden",
+  "LOGIN_SIGNING_IN": "Anmeldung läuft...",
+  "LOGIN_SUPPLIER_PROMPT": "Sind Sie ein Lieferant und möchten mit uns zusammenarbeiten?",
+  "LOGIN_REGISTER_BUTTON": "Als Lieferant Registrieren",
+  "LOGIN_FOOTER_RIGHTS": "Alle Rechte Vorbehalten."
+}

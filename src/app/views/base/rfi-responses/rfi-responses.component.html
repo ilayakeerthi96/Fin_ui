@@ -1,0 +1,63 @@
+<c-container class="mt-4" fluid>
+  <c-row class="mb-4">
+    <c-col xs="12">
+      <c-card class="border-0 shadow-lg">
+        <div class="rfi-header">
+          <c-card-body class="p-4">
+            <h3 class="text-white mb-1 fw-bold">
+              <i class="bi bi-clipboard-data me-2"></i>
+              RFI Responses
+            </h3>
+            <p class="text-white mb-0 opacity-90">RFI #{{ rfiId }}</p>
+          </c-card-body>
+        </div>
+      </c-card>
+    </c-col>
+  </c-row>
+
+  <c-row *ngIf="isLoading">
+    <c-col xs="12" class="text-center py-5">
+      <div class="spinner-border text-primary" role="status"></div>
+      <p class="text-muted mt-3">Loading responses...</p>
+    </c-col>
+  </c-row>
+
+  <c-row *ngIf="!isLoading && loadError">
+    <c-col xs="12">
+      <div class="alert alert-warning">{{ loadError }}</div>
+      <button cButton color="secondary" (click)="goBack()"><i class="bi bi-arrow-left me-1"></i> Back</button>
+    </c-col>
+  </c-row>
+
+  <ng-container *ngIf="!isLoading && !loadError">
+    <c-row *ngFor="let supplier of suppliers" class="mb-3">
+      <c-col xs="12">
+        <c-card class="border-0 shadow-sm">
+          <c-card-body>
+            <div class="d-flex justify-content-between align-items-center mb-3">
+              <strong>{{ supplier.companyName }}</strong>
+              <c-badge [color]="supplier.status === 'RESPONDED' ? 'success' : 'secondary'">
+                {{ supplier.status === 'RESPONDED' ? 'Responded' : 'Awaiting Response' }}
+              </c-badge>
+            </div>
+
+            <div *ngIf="supplier.status !== 'RESPONDED'" class="text-muted small">No response submitted yet.</div>
+
+            <div *ngIf="supplier.status === 'RESPONDED'">
+              <div *ngFor="let q of questions" class="py-2 border-bottom">
+                <div class="small text-muted">{{ q.questionText }}</div>
+                <div class="fw-semibold">{{ getAnswer(supplier, q.id) }}</div>
+              </div>
+            </div>
+          </c-card-body>
+        </c-card>
+      </c-col>
+    </c-row>
+
+    <c-row>
+      <c-col xs="12" class="mb-5">
+        <button cButton color="secondary" (click)="goBack()"><i class="bi bi-arrow-left me-1"></i> Back to RFI Dashboard</button>
+      </c-col>
+    </c-row>
+  </ng-container>
+</c-container>

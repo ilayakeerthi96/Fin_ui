@@ -1,0 +1,7 @@
+{
+  "version": 3,
+  "sources": ["src/app/shared/message-dialog/message-dialog.component.css"],
+  "sourcesContent": [".dialog-container {\r\n    display: flex;\r\n    flex-direction: column;\r\n    align-items: center;\r\n    text-align: center;\r\n    padding: 20px;\r\n  }\r\n  \r\n  .dialog-icon {\r\n    font-size: 50px;\r\n    margin-bottom: 10px;\r\n  }\r\n  \r\n  .success {\r\n    color: #4CAF50; /* Green */\r\n  }\r\n  \r\n  .error {\r\n    color: #F44336; /* Red */\r\n  }\r\n  \r\n  .warning {\r\n    color: #FFC107; /* Yellow */\r\n  }\r\n  \r\n  .info {\r\n    color: #2196F3; /* Blue */\r\n  }\r\n  \r\n  .dialog-title {\r\n    font-size: 20px;\r\n    font-weight: bold;\r\n    margin-bottom: 10px;\r\n  }\r\n  \r\n  .dialog-message p {\r\n    font-size: 16px;\r\n    margin: 10px 0;\r\n  }\r\n  \r\n  .dialog-button {\r\n    background-color: #1976D2;\r\n    color: white;\r\n    font-weight: bold;\r\n    padding: 8px 16px;\r\n    border-radius: 4px;\r\n  }\r\n  \r\n  .dialog-button:hover {\r\n    background-color: #1565C0;\r\n  }\r\n  "],
+  "mappings": ";AAAA,CAAC;AACG,WAAS;AACT,kBAAgB;AAChB,eAAa;AACb,cAAY;AACZ,WAAS;AACX;AAEA,CAAC;AACC,aAAW;AACX,iBAAe;AACjB;AAEA,CAAC;AACC,SAAO;AACT;AAEA,CAAC;AACC,SAAO;AACT;AAEA,CAAC;AACC,SAAO;AACT;AAEA,CAAC;AACC,SAAO;AACT;AAEA,CAAC;AACC,aAAW;AACX,eAAa;AACb,iBAAe;AACjB;AAEA,CAAC,eAAe;AACd,aAAW;AACX,UAAQ,KAAK;AACf;AAEA,CAAC;AACC,oBAAkB;AAClB,SAAO;AACP,eAAa;AACb,WAAS,IAAI;AACb,iBAAe;AACjB;AAEA,CARC,aAQa;AACZ,oBAAkB;AACpB;",
+  "names": []
+}

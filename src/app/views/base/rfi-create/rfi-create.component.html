@@ -1,0 +1,190 @@
+<c-container class="mt-4" fluid>
+  <c-row class="mb-4">
+    <c-col xs="12">
+      <c-card class="border-0 shadow-lg">
+        <div class="rfi-header">
+          <c-card-body class="p-4">
+            <h3 class="text-white mb-1 fw-bold">
+              <i class="bi bi-question-circle me-2"></i>
+              Create RFI (Request for Information)
+            </h3>
+            <p class="text-white mb-0 opacity-90">
+              Gather information from suppliers before running a formal RFQ - no pricing, just answers.
+            </p>
+          </c-card-body>
+        </div>
+      </c-card>
+    </c-col>
+  </c-row>
+
+  <c-row class="mb-3">
+    <c-col xs="12">
+      <c-card class="border-0 shadow-sm">
+        <c-card-body>
+          <label class="form-label small fw-bold mb-2">What is this RFI for?</label>
+          <div class="mode-toggle mb-2">
+            <button type="button" class="mode-btn" [class.active]="rfiMode === 'new'" (click)="setMode('new')">
+              <i class="bi bi-file-earmark-plus me-1"></i> New RFI
+              <div class="mode-sub">Ask a fresh pool of suppliers for information (pick department + suppliers)</div>
+            </button>
+            <button type="button" class="mode-btn" [class.active]="rfiMode === 'existing'" (click)="setMode('existing')">
+              <i class="bi bi-arrow-repeat me-1"></i> For an Existing RFQ
+              <div class="mode-sub">Ask a clarifying question to the suppliers already invited to an RFQ you've raised</div>
+            </button>
+          </div>
+
+          <div *ngIf="rfiMode === 'existing'" class="mt-3">
+            <label class="form-label small fw-bold">Select RFQ <span class="text-danger">*</span></label>
+            <select class="form-select" [(ngModel)]="selectedRfqId" (ngModelChange)="onRfqSelected()" [disabled]="isLoadingRfqs">
+              <option [ngValue]="null">-- {{ isLoadingRfqs ? 'Loading your RFQs...' : 'Select an RFQ' }} --</option>
+              <option *ngFor="let rfq of buyerRfqs" [ngValue]="rfq.id">
+                #{{ rfq.rfqNumber }} — {{ rfq.rfqTitle }} ({{ rfq.status }})
+              </option>
+            </select>
+            <div *ngIf="!isLoadingRfqs && buyerRfqs.length === 0" class="text-muted small mt-1">
+              You haven't raised any RFQs yet.
+            </div>
+
+            <div *ngIf="isLoadingRfqDetail" class="text-muted small mt-2">
+              <span class="spinner-border spinner-border-sm me-1"></span> Loading RFQ details...
+            </div>
+
+            <div *ngIf="selectedRfq && !isLoadingRfqDetail" class="mt-3 p-3 border rounded" style="background:#f8f9fa;">
+              <div class="small text-muted mb-1">Suppliers invited to this RFQ — the RFI will be sent to all of them:</div>
+              <div class="d-flex flex-wrap gap-2">
+                <span *ngFor="let s of rfqSuppliers" class="supplier-chip">{{ s.companyName }}</span>
+                <span *ngIf="rfqSuppliers.length === 0" class="text-muted small">No suppliers were invited to this RFQ.</span>
+              </div>
+            </div>
+          </div>
+        </c-card-body>
+      </c-card>
+    </c-col>
+  </c-row>
+
+  <c-row class="mb-3">
+    <c-col xs="12">
+      <c-card class="border-0 shadow-sm">
+        <c-card-body>
+          <div class="row g-3">
+            <div class="col-md-8">
+              <label class="form-label small fw-bold">Title <span class="text-danger">*</span></label>
+              <input type="text" class="form-control" [(ngModel)]="title" placeholder="e.g., Capability assessment for packaging suppliers" />
+            </div>
+            <div class="col-md-4">
+              <label class="form-label small fw-bold">Response Due Date</label>
+              <input type="date" class="form-control" [(ngModel)]="dueDate" />
+            </div>
+            <div class="col-12">
+              <label class="form-label small fw-bold">Description</label>
+              <textarea class="form-control" rows="2" [(ngModel)]="description"
+                placeholder="Give suppliers context on why you're gathering this information"></textarea>
+            </div>
+          </div>
+        </c-card-body>
+      </c-card>
+    </c-col>
+  </c-row>
+
+  <c-row class="mb-3">
+    <c-col xs="12">
+      <c-card class="border-0 shadow-sm">
+        <c-card-body>
+          <div class="d-flex justify-content-between align-items-center mb-3">
+            <label class="form-label small fw-bold mb-0">Questions</label>
+            <button cButton color="dark" variant="outline" size="sm" (click)="addQuestion()">
+              <i class="bi bi-plus-lg me-1"></i> Add Question
+            </button>
+          </div>
+
+          <div *ngFor="let q of questions; let i = index" class="d-flex align-items-start gap-2 mb-2">
+            <span class="q-index">{{ i + 1 }}</span>
+            <input type="text" class="form-control" [(ngModel)]="q.questionText"
+              placeholder="e.g., What is your current manufacturing capacity per month?" />
+            <div class="form-check mt-2 text-nowrap">
+              <input type="checkbox" class="form-check-input" [id]="'mandatory-' + q.key" [(ngModel)]="q.isMandatory" />
+              <label class="form-check-label small" [for]="'mandatory-' + q.key">Required</label>
+            </div>
+            <button class="btn btn-sm btn-light text-danger" (click)="removeQuestion(q.key)" title="Remove">
+              <i class="bi bi-trash"></i>
+            </button>
+          </div>
+        </c-card-body>
+      </c-card>
+    </c-col>
+  </c-row>
+
+  <c-row class="mb-3" *ngIf="rfiMode === 'new'">
+    <c-col xs="12">
+      <c-card class="border-0 shadow-sm">
+        <c-card-body>
+          <label class="form-label small fw-bold mb-0">Invite Suppliers <span class="text-danger">*</span></label>
+
+          <div class="mb-3">
+            <label class="form-label small mb-1">Step 1 — Select Department</label>
+            <select class="form-select" [(ngModel)]="selectedDepartment" (ngModelChange)="onDepartmentChange()">
+              <option value="">-- Select a department --</option>
+              <option *ngFor="let dept of filteredDepartments" [value]="dept">{{ dept }}</option>
+            </select>
+            <div class="text-muted small mt-1" *ngIf="buyerCompanyType">
+              <i class="bi bi-funnel me-1"></i>
+              Departments shown are relevant to your <strong>{{ buyerCompanyType }}</strong> company type.
+            </div>
+          </div>
+
+          <ng-container *ngIf="selectedDepartment">
+            <div class="d-flex justify-content-between align-items-center mb-2 flex-wrap gap-2">
+              <label class="form-label small mb-0">Step 2 — Select Suppliers in {{ selectedDepartment }}</label>
+              <div class="d-flex gap-2">
+                <button cButton color="secondary" variant="outline" size="sm" (click)="selectAllSuppliers()">Select All</button>
+                <button cButton color="secondary" variant="outline" size="sm" (click)="deselectAllSuppliers()">Clear</button>
+              </div>
+            </div>
+            <input type="text" class="form-control mb-2" placeholder="Search suppliers..." [(ngModel)]="supplierSearch" />
+
+            <div class="supplier-list border rounded">
+              <div *ngFor="let s of filteredSuppliers" class="supplier-row" [class.selected]="isSupplierSelected(s.id)"
+                (click)="toggleSupplier(s.id)">
+                <input type="checkbox" [checked]="isSupplierSelected(s.id)" (click)="$event.stopPropagation()" (change)="toggleSupplier(s.id)" />
+                <div>
+                  <div class="fw-semibold small">{{ s.companyName }}</div>
+                  <div class="text-muted" style="font-size: 11px;">{{ s.contactPersonName }}</div>
+                </div>
+              </div>
+              <div *ngIf="filteredSuppliers.length === 0" class="text-muted small p-3 text-center">No suppliers in this department.</div>
+            </div>
+
+            <div *ngIf="selectedSupplierIds.length > 0" class="mt-2 d-flex flex-wrap gap-2">
+              <span *ngFor="let id of selectedSupplierIds" class="supplier-chip">
+                {{ getSupplierName(id) }}
+                <i class="bi bi-x ms-1" (click)="toggleSupplier(id)"></i>
+              </span>
+            </div>
+          </ng-container>
+
+          <div *ngIf="!selectedDepartment" class="text-muted small p-3 text-center border rounded">
+            Select a department above to see its suppliers.
+          </div>
+        </c-card-body>
+      </c-card>
+    </c-col>
+  </c-row>
+
+  <c-row *ngIf="errorMessage" class="mb-3">
+    <c-col xs="12">
+      <c-alert color="danger">{{ errorMessage }}</c-alert>
+    </c-col>
+  </c-row>
+
+  <c-row>
+    <c-col xs="12" class="d-flex justify-content-between mb-5">
+      <button cButton color="secondary" (click)="goBack()" [disabled]="isSubmitting">
+        <i class="bi bi-arrow-left me-1"></i> Cancel
+      </button>
+      <button cButton color="success" (click)="submit()" [disabled]="isSubmitting">
+        <span *ngIf="isSubmitting" class="spinner-border spinner-border-sm me-2"></span>
+        {{ isSubmitting ? 'Sending...' : 'Send RFI to Suppliers' }}
+      </button>
+    </c-col>
+  </c-row>
+</c-container>

@@ -1,0 +1,396 @@
+<div class="ses-page">
+
+  <div class="ses-topbar">
+    <button class="topbar-back-btn" (click)="cancel()">
+      <i class="bi bi-arrow-left"></i> Back
+    </button>
+    <div class="topbar-title">
+      <i class="bi bi-clipboard-check"></i>
+      <div>
+        <div class="topbar-title-main">
+          {{ !isEditMode ? 'Create Service Entry Sheet' : (sesEditableFully ? 'Edit & Resubmit Service Entry Sheet' : 'Revise Additional Items Quote') }}
+        </div>
+        <div class="topbar-title-sub">
+          {{ !isEditMode ? 'Confirm the service delivered for a Service PO before invoice approval'
+             : (sesEditableFully ? 'Make your changes and resubmit for buyer review'
+                                  : 'The Service Entry Sheet itself stays approved — only this quote is being revised') }}
+        </div>
+      </div>
+    </div>
+    <div class="topbar-spacer"></div>
+  </div>
+
+  <div class="ses-body">
+
+    <div *ngIf="errorMessage" class="ses-alert ses-alert-danger">
+      <i class="bi bi-exclamation-triangle-fill"></i>
+      <span>{{ errorMessage }}</span>
+      <button class="ses-alert-close" (click)="errorMessage = ''"><i class="bi bi-x-lg"></i></button>
+    </div>
+    <div *ngIf="successMessage" class="ses-alert ses-alert-success">
+      <i class="bi bi-check-circle-fill"></i>
+      <span>{{ successMessage }}</span>
+    </div>
+
+    <!-- SECTION 1 — SELECT SERVICE PO -->
+    <div class="ses-section">
+      <div class="ses-section-header">
+        <div class="ses-section-icon indigo"><i class="bi bi-file-earmark-text"></i></div>
+        <div>
+          <div class="ses-section-title">Service Purchase Order</div>
+          <div class="ses-section-sub">Only Service-type POs are shown here</div>
+        </div>
+        <span *ngIf="selectedPO" class="po-selected-chip">
+          <i class="bi bi-patch-check-fill me-1"></i>{{ selectedPO.poNumber }}
+        </span>
+      </div>
+
+      <div class="po-search-row" *ngIf="!isEditMode">
+        <div class="po-search-wrap">
+          <i class="bi bi-search po-search-icon"></i>
+          <input
+            type="text"
+            class="ses-input po-search-input"
+            placeholder="Search by PO number or supplier…"
+            [(ngModel)]="poSearch"
+            (input)="filterPOs()"
+            (focus)="filterPOs(); poDropdownOpen = true"
+            (click)="filterPOs(); poDropdownOpen = true" />
+          <button *ngIf="poSearch" class="po-search-clear" (click)="poSearch=''; filterPOs()">
+            <i class="bi bi-x-circle-fill"></i>
+          </button>
+
+          <div class="po-dropdown" *ngIf="poDropdownOpen && filteredPOs.length > 0">
+            <div
+              *ngFor="let po of filteredPOs"
+              class="po-dropdown-item"
+              (mousedown)="selectPO(po); poDropdownOpen = false">
+              <div class="po-dd-left">
+                <span class="po-dd-number">{{ po.poNumber }}</span>
+                <span class="po-dd-supplier">{{ getSupplierName(po) }}</span>
+              </div>
+              <div class="po-dd-right">
+                <span class="po-dd-items">{{ po.lineItems?.length || po.items?.length || 0 }} items</span>
+                <span class="po-dd-amount">{{ po.totalAmount | currency:'INR':'symbol':'1.0-0' }}</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="po-dropdown" *ngIf="poDropdownOpen && filteredPOs.length === 0">
+            <div class="po-dd-empty"><i class="bi bi-inbox me-2"></i>No Service POs found</div>
+          </div>
+        </div>
+
+        <div *ngIf="poLoading" class="po-loading-hint">
+          <i class="bi bi-arrow-repeat spin me-1"></i> Loading POs…
+        </div>
+      </div>
+
+      <div *ngIf="!isEditMode && !poLoading && servicePOs.length === 0" class="ses-empty-hint">
+        <i class="bi bi-info-circle me-2"></i>
+        No Service-type Purchase Orders found {{ isSupplierMode ? 'for your account' : 'for your company' }}. Service Entry Sheets only apply to POs
+        where <strong>PO / Business Type</strong> was set to <strong>Service</strong> during PO negotiation.
+      </div>
+
+      <div *ngIf="isEditMode && poLoading" class="ses-empty-hint">
+        <i class="bi bi-arrow-repeat spin me-2"></i>Loading Service Entry Sheet…
+      </div>
+
+      <div *ngIf="selectedPO" class="po-summary-bar">
+        <div class="po-sum-item">
+          <span class="po-sum-label">Supplier</span>
+          <span class="po-sum-val">{{ getSupplierName(selectedPO) }}</span>
+        </div>
+        <div class="po-sum-divider" *ngIf="!isEditMode"></div>
+        <div class="po-sum-item" *ngIf="!isEditMode">
+          <span class="po-sum-label">PO Date</span>
+          <span class="po-sum-val">{{ selectedPO.poDate | date:'dd MMM yyyy' }}</span>
+        </div>
+        <div class="po-sum-divider"></div>
+        <div class="po-sum-item">
+          <span class="po-sum-label">Total Value</span>
+          <span class="po-sum-val strong">{{ selectedPO.totalAmount | currency:'INR':'symbol':'1.2-2' }}</span>
+        </div>
+        <div class="po-sum-divider" *ngIf="!isEditMode"></div>
+        <div class="po-sum-item" *ngIf="!isEditMode">
+          <span class="po-sum-label">Status</span>
+          <span class="po-sum-status">{{ selectedPO.status }}</span>
+        </div>
+        <button class="po-sum-change" (click)="clearPO()" *ngIf="!isEditMode">
+          <i class="bi bi-x me-1"></i>Clear
+        </button>
+      </div>
+    </div>
+
+    <!-- SECTION 2 — SERVICE PERIOD -->
+    <div class="ses-section" *ngIf="selectedPO">
+      <div class="ses-section-header">
+        <div class="ses-section-icon teal"><i class="bi bi-calendar-range"></i></div>
+        <div>
+          <div class="ses-section-title">Service Period</div>
+          <div class="ses-section-sub">
+            {{ (isEditMode && !sesEditableFully) ? 'Locked — this Service Entry Sheet is already approved' : 'The billing period this entry sheet covers' }}
+          </div>
+        </div>
+      </div>
+
+      <div class="form-grid">
+        <div class="ses-field">
+          <label class="ses-label">Frequency <span class="req">*</span></label>
+          <select class="ses-input" [(ngModel)]="ses.serviceFrequency" [disabled]="isEditMode && !sesEditableFully">
+            <option *ngFor="let f of frequencyOptions" [value]="f.value">{{ f.label }}</option>
+          </select>
+        </div>
+
+        <div class="ses-field">
+          <label class="ses-label">Period From <span class="req">*</span></label>
+          <input type="date" class="ses-input" [(ngModel)]="ses.servicePeriodFrom" [disabled]="isEditMode && !sesEditableFully" />
+        </div>
+
+        <div class="ses-field">
+          <label class="ses-label">Period To <span class="req">*</span></label>
+          <input type="date" class="ses-input" [(ngModel)]="ses.servicePeriodTo" [disabled]="isEditMode && !sesEditableFully" />
+        </div>
+
+        <div class="ses-field">
+          <label class="ses-label">Submitted By <span class="req">*</span></label>
+          <input type="text" class="ses-input" placeholder="Your name" [(ngModel)]="ses.submittedByName" [disabled]="isEditMode && !sesEditableFully" />
+        </div>
+
+        <div class="ses-field ses-field-wide">
+          <label class="ses-label">Remarks</label>
+          <textarea class="ses-input" rows="2" placeholder="Any notes about this period's service delivery…" [(ngModel)]="ses.remarks" [disabled]="isEditMode && !sesEditableFully"></textarea>
+        </div>
+      </div>
+    </div>
+
+    <!-- SECTION 3 — LINE ITEMS -->
+    <div class="ses-section" *ngIf="selectedPO">
+      <div class="ses-section-header">
+        <div class="ses-section-icon green"><i class="bi bi-list-check"></i></div>
+        <div>
+          <div class="ses-section-title">Service Line Items</div>
+          <div class="ses-section-sub">
+            {{ (isEditMode && !sesEditableFully) ? 'Locked — this Service Entry Sheet is already approved' : 'Tick each item that was completed for this period' }}
+          </div>
+        </div>
+      </div>
+
+      <div class="ses-table-wrap">
+        <table class="ses-table">
+          <thead>
+            <tr>
+              <th style="width:40px;">#</th>
+              <th>Item / Service Description</th>
+              <th style="width:90px;">UOM</th>
+              <th style="width:100px;">PO Qty</th>
+              <th style="width:120px;">PO Rate</th>
+              <th style="width:90px;">Completed?</th>
+              <th style="width:120px;">Completed Qty</th>
+              <th style="width:130px;">Line Value</th>
+              <th>Remarks</th>
+              <th style="width:160px;">Attachments</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let li of lineItems; let i = index" [class.row-completed]="li.serviceCompleted">
+              <td>{{ li.itemOrder || i + 1 }}</td>
+              <td>{{ li.itemDescription }}</td>
+              <td>{{ li.uom }}</td>
+              <td>{{ li.poQuantity }}</td>
+              <td>{{ li.poUnitRate | currency:'INR':'symbol':'1.2-2' }}</td>
+              <td class="text-center">
+                <input type="checkbox" class="ses-checkbox" [(ngModel)]="li.serviceCompleted" [disabled]="isEditMode && !sesEditableFully" />
+              </td>
+              <td>
+                <input type="number" class="ses-input ses-input-sm" min="0"
+                       [disabled]="!li.serviceCompleted || (isEditMode && !sesEditableFully)"
+                       [(ngModel)]="li.completedQuantity" />
+              </td>
+              <td class="line-value-cell">
+                {{ (li.serviceCompleted ? (li.completedQuantity || 0) * (li.poUnitRate || 0) : 0) | currency:'INR':'symbol':'1.2-2' }}
+              </td>
+              <td>
+                <input type="text" class="ses-input ses-input-sm" placeholder="Optional"
+                       [(ngModel)]="li.remarks" [disabled]="isEditMode && !sesEditableFully" />
+              </td>
+              <td class="ses-attach-cell">
+                <ng-container *ngIf="li.id; else saveFirstLi">
+                  <div class="ses-attach-list">
+                    <a *ngFor="let att of (lineItemAttachmentsMap[li.id] || [])"
+                       [href]="getLineItemAttachmentDownloadUrl(att.id)" target="_blank"
+                       class="ses-attach-chip" [title]="att.filename">
+                      <i class="bi bi-paperclip"></i>{{ att.filename }}
+                    </a>
+                  </div>
+                  <input type="file" multiple hidden #liFileInput (change)="onLineItemAttachmentSelected($event, li.id)" />
+                  <button type="button" class="btn-ses-attach" [disabled]="isUploadingAttachment" (click)="liFileInput.click()">
+                    <i class="bi bi-paperclip"></i> Add
+                  </button>
+                </ng-container>
+                <ng-template #saveFirstLi>
+                  <small class="text-muted">Save first to attach files</small>
+                </ng-template>
+              </td>
+            </tr>
+          </tbody>
+          <tfoot>
+            <tr>
+              <td colspan="7" class="text-end fw-bold">Total Service Value (this period)</td>
+              <td class="fw-bold line-value-cell">{{ totalServiceValue | currency:'INR':'symbol':'1.2-2' }}</td>
+              <td></td>
+              <td></td>
+            </tr>
+          </tfoot>
+        </table>
+      </div>
+    </div>
+
+    <!-- SECTION 4 — ADDITIONAL ITEMS / SPARES QUOTE (optional) -->
+    <div class="ses-section" *ngIf="selectedPO">
+      <div class="ses-section-header">
+        <div class="ses-section-icon amber"><i class="bi bi-tools"></i></div>
+        <div>
+          <div class="ses-section-title">Additional Items / Spares Needed?</div>
+          <div class="ses-section-sub">If you need to change spares or need extra money for this visit, quote it here for the buyer to review separately</div>
+        </div>
+        <label class="ses-toggle">
+          <input type="checkbox" [(ngModel)]="hasAdditionalItems" (change)="onToggleAdditionalItems()" />
+          <span class="ses-toggle-track"><span class="ses-toggle-thumb"></span></span>
+        </label>
+      </div>
+
+      <div class="p-3" *ngIf="hasAdditionalItems">
+        <div class="ses-table-wrap">
+          <table class="ses-table">
+            <thead>
+              <tr>
+                <th style="width:40px;">#</th>
+                <th>Item / Spare Part Description</th>
+                <th style="width:90px;">UOM</th>
+                <th style="width:100px;">Qty</th>
+                <th style="width:130px;">Rate</th>
+                <th style="width:130px;">Line Total</th>
+                <th>Remarks</th>
+                <th style="width:160px;">Attachments</th>
+                <th style="width:50px;"></th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let ai of additionalItems; let i = index">
+                <td>{{ i + 1 }}</td>
+                <td>
+                  <input type="text" class="ses-input ses-input-sm" placeholder="e.g. Compressor belt"
+                         [(ngModel)]="ai.itemDescription" />
+                </td>
+                <td>
+                  <input type="text" class="ses-input ses-input-sm" placeholder="Nos"
+                         [(ngModel)]="ai.uom" />
+                </td>
+                <td>
+                  <input type="number" class="ses-input ses-input-sm" min="0"
+                         [(ngModel)]="ai.quantity" />
+                </td>
+                <td>
+                  <input type="number" class="ses-input ses-input-sm" min="0"
+                         [(ngModel)]="ai.unitRate" />
+                </td>
+                <td class="line-value-cell">
+                  {{ ((ai.quantity || 0) * (ai.unitRate || 0)) | currency:'INR':'symbol':'1.2-2' }}
+                </td>
+                <td>
+                  <input type="text" class="ses-input ses-input-sm" placeholder="Optional"
+                         [(ngModel)]="ai.remarks" />
+                </td>
+                <td class="ses-attach-cell">
+                  <ng-container *ngIf="ai.id; else saveFirstAi">
+                    <div class="ses-attach-list">
+                      <a *ngFor="let att of (additionalItemAttachmentsMap[ai.id] || [])"
+                         [href]="getAdditionalItemAttachmentDownloadUrl(att.id)" target="_blank"
+                         class="ses-attach-chip" [title]="att.filename">
+                        <i class="bi bi-paperclip"></i>{{ att.filename }}
+                      </a>
+                    </div>
+                    <input type="file" multiple hidden #aiFileInput (change)="onAdditionalItemAttachmentSelected($event, ai.id)" />
+                    <button type="button" class="btn-ses-attach" [disabled]="isUploadingAttachment" (click)="aiFileInput.click()">
+                      <i class="bi bi-paperclip"></i> Add
+                    </button>
+                  </ng-container>
+                  <ng-template #saveFirstAi>
+                    <small class="text-muted">Save first to attach files</small>
+                  </ng-template>
+                </td>
+                <td class="text-center">
+                  <button type="button" class="ses-row-remove" (click)="removeAdditionalItem(i)" title="Remove item">
+                    <i class="bi bi-trash"></i>
+                  </button>
+                </td>
+              </tr>
+            </tbody>
+            <tfoot>
+              <tr>
+                <td colspan="5" class="text-end fw-bold">Total Additional Items Quote</td>
+                <td class="fw-bold line-value-cell">{{ additionalItemsTotal | currency:'INR':'symbol':'1.2-2' }}</td>
+                <td colspan="3"></td>
+              </tr>
+            </tfoot>
+          </table>
+        </div>
+        <button type="button" class="btn-ses-add mt-2" (click)="addAdditionalItem()">
+          <i class="bi bi-plus-circle me-1"></i>Add Item
+        </button>
+        <p class="text-muted small mb-0 mt-2">
+          <i class="bi bi-info-circle me-1"></i>The buyer reviews and approves/rejects this quote separately from the Service Entry Sheet itself. Approving it raises a brand-new Purchase Order for just these items.
+        </p>
+      </div>
+    </div>
+
+    <!-- SECTION 5 — GENERAL ATTACHMENTS -->
+    <div class="ses-section" *ngIf="selectedPO">
+      <div class="ses-section-header">
+        <div class="ses-section-icon indigo"><i class="bi bi-paperclip"></i></div>
+        <div>
+          <div class="ses-section-title">General Attachments</div>
+          <div class="ses-section-sub">Site photos, signed paperwork, or anything else for the whole visit</div>
+        </div>
+      </div>
+      <div class="p-3">
+        <ng-container *ngIf="isEditMode; else saveFirstCommon">
+          <div class="ses-attach-list ses-attach-list-block">
+            <a *ngFor="let att of commonAttachments"
+               [href]="getCommonAttachmentDownloadUrl(att.id)" target="_blank"
+               class="ses-attach-chip" [title]="att.filename">
+              <i class="bi bi-paperclip"></i>{{ att.filename }}
+            </a>
+            <span class="text-muted small" *ngIf="commonAttachments.length === 0">No general attachments yet.</span>
+          </div>
+          <input type="file" multiple hidden #commonFileInput (change)="onCommonAttachmentSelected($event)" />
+          <button type="button" class="btn-ses-attach mt-2" [disabled]="isUploadingAttachment" (click)="commonFileInput.click()">
+            <i class="bi bi-paperclip"></i> Add Attachment(s)
+          </button>
+        </ng-container>
+        <ng-template #saveFirstCommon>
+          <p class="text-muted small mb-0">
+            <i class="bi bi-info-circle me-1"></i>Save this Service Entry Sheet first (as a draft or submitted) — you'll
+            be able to attach files here and to individual items once you reopen it from "Service Entry Sheets".
+          </p>
+        </ng-template>
+      </div>
+    </div>
+
+    <!-- ACTIONS -->
+    <div class="ses-actions" *ngIf="selectedPO">
+      <button class="btn-ses-secondary" [disabled]="isSubmitting" (click)="submitSES(true)" *ngIf="!isEditMode || sesEditableFully">
+        <i class="bi bi-save me-1"></i> Save as Draft
+      </button>
+      <button class="btn-ses-primary" [disabled]="isSubmitting" (click)="submitSES(false)">
+        <span *ngIf="!isSubmitting">
+          <i class="bi bi-send-check me-1"></i>
+          {{ !isEditMode ? 'Submit for Approval' : (sesEditableFully ? 'Resubmit for Approval' : 'Resubmit Quote') }}
+        </span>
+        <span *ngIf="isSubmitting"><i class="bi bi-arrow-repeat spin me-1"></i> Submitting…</span>
+      </button>
+    </div>
+
+  </div>
+</div>

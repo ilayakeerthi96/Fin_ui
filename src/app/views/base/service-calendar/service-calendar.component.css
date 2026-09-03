@@ -1,0 +1,219 @@
+.sc-page { padding: 22px; background: #f6f8fc; min-height: 100vh; }
+
+/* ── Top bar ── */
+.sc-topbar {
+  background: #fff; border: 1px solid #e6eaf3; border-radius: 14px; padding: 18px 22px;
+  display: flex; align-items: center; justify-content: space-between; gap: 20px;
+  flex-wrap: wrap; margin-bottom: 16px;
+}
+.topbar-title-main { font-size: 18px; font-weight: 800; color: #1e293b; }
+.topbar-sub { font-size: 13px; color: #64748b; margin-top: 3px; }
+.sc-topbar-controls { display: flex; gap: 14px; flex-wrap: wrap; }
+.sc-label { font-size: 11px; font-weight: 700; color: #94a3b8; text-transform: uppercase; letter-spacing: .03em; display: block; margin-bottom: 4px; }
+.sc-input {
+  border: 1px solid #d7dcea; border-radius: 8px; padding: 8px 12px; font-size: 13.5px;
+  color: #1e293b; background: #fff; min-width: 190px;
+}
+.sc-input:focus { outline: none; border-color: #6366f1; box-shadow: 0 0 0 3px rgba(99,102,241,.12); }
+.btn-sc-multiyear {
+  background: #fff; border: 1px solid #d7dcea; color: #334155;
+  border-radius: 8px; padding: 8px 14px; font-weight: 700; font-size: 13px;
+  cursor: pointer; white-space: nowrap; height: 37px;
+}
+.btn-sc-multiyear:hover { background: #f1f4fa; }
+.btn-sc-multiyear:disabled { opacity: .6; cursor: not-allowed; }
+
+/* ── Alerts ── */
+.sc-alert {
+  border-radius: 10px; padding: 11px 16px; margin-bottom: 14px; font-size: 13.5px;
+  display: flex; align-items: center; position: relative;
+}
+.sc-alert-error   { background: #fef2f2; color: #b91c1c; border: 1px solid #fecaca; }
+.sc-alert-success { background: #f0fdf4; color: #15803d; border: 1px solid #bbf7d0; }
+.sc-alert-close { position: absolute; right: 12px; background: none; border: none; cursor: pointer; color: inherit; opacity: .7; }
+
+/* ── Service contract context (frequency + scope of work) ── */
+.sc-context {
+  background: #fff; border: 1px solid #e6eaf3; border-left: 4px solid #6366f1;
+  border-radius: 12px; padding: 14px 18px; margin-bottom: 14px;
+  display: flex; align-items: flex-start; justify-content: space-between; gap: 18px; flex-wrap: wrap;
+}
+.sc-context-main { display: flex; gap: 28px; flex-wrap: wrap; flex: 1; min-width: 0; }
+.sc-context-block { min-width: 0; }
+.sc-context-scope { flex: 1; min-width: 240px; }
+.sc-context-label {
+  font-size: 11px; font-weight: 700; color: #94a3b8;
+  text-transform: uppercase; letter-spacing: .03em; margin-bottom: 5px;
+}
+.sc-context-value { font-size: 13.5px; font-weight: 700; color: #1e293b; }
+.sc-context-muted { font-weight: 500; color: #94a3b8; font-size: 12.5px; }
+.sc-scope-chip {
+  display: inline-block; background: #eef2ff; color: #4338ca; border-radius: 6px;
+  padding: 3px 10px; font-size: 12px; font-weight: 600; margin: 0 6px 5px 0;
+}
+.btn-sc-plan {
+  background: linear-gradient(135deg,#6366f1,#4338ca); color: #fff; border: none;
+  border-radius: 8px; padding: 9px 16px; font-weight: 700; font-size: 13px;
+  cursor: pointer; white-space: nowrap;
+}
+.btn-sc-plan:disabled { opacity: .6; cursor: not-allowed; }
+
+/* ── Yearly status cards ── */
+.sc-stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 12px; margin-bottom: 16px; }
+.sc-stat-card { background: #fff; border: 1px solid #e6eaf3; border-radius: 12px; padding: 14px 16px; }
+.sc-stat-label { font-size: 11px; font-weight: 700; color: #94a3b8; text-transform: uppercase; letter-spacing: .03em; }
+.sc-stat-num { font-size: 24px; font-weight: 800; color: #1e293b; margin-top: 4px; }
+.sc-stat-done .sc-stat-num      { color: #15803d; }
+.sc-stat-missed .sc-stat-num    { color: #b91c1c; }
+.sc-stat-unplanned .sc-stat-num { color: #c2410c; }
+.sc-stat-adherence .sc-stat-num { color: #4338ca; }
+
+/* ── Legend ── */
+.sc-legend {
+  display: flex; align-items: center; gap: 16px; flex-wrap: wrap;
+  background: #fff; border: 1px solid #e6eaf3; border-radius: 12px;
+  padding: 10px 16px; margin-bottom: 14px; font-size: 12.5px; color: #475569;
+}
+.sc-legend-item { display: inline-flex; align-items: center; gap: 6px; font-weight: 600; }
+.sc-swatch { width: 14px; height: 14px; border-radius: 4px; border: 1px solid #d7dcea; display: inline-block; }
+.sc-swatch.sc-done      { background: #dcfce7; border-color: #86efac; }
+.sc-swatch.sc-missed    { background: #fee2e2; border-color: #fca5a5; }
+.sc-swatch.sc-unplanned { background: #ffedd5; border-color: #fdba74; }
+.sc-swatch.sc-empty     { background: #fff; }
+.sc-legend-note { color: #64748b; font-size: 12px; margin-left: auto; max-width: 520px; }
+
+/* ── Grid ── */
+.sc-table-wrap { background: #fff; border: 1px solid #e6eaf3; border-radius: 12px; overflow: auto; max-height: 70vh; }
+.sc-table { width: 100%; border-collapse: separate; border-spacing: 0; }
+.sc-table thead th {
+  background: #f8fafc; color: #475569; font-size: 11.5px; font-weight: 800;
+  text-align: center; padding: 10px 8px; border-bottom: 1px solid #e6eaf3;
+  position: sticky; top: 0; z-index: 3; white-space: nowrap;
+}
+.sc-table thead tr.sc-freq-row th {
+  top: 38px; font-size: 10.5px; font-weight: 600; font-style: italic;
+  color: #94a3b8; background: #fbfcfe; text-transform: none; z-index: 2;
+}
+.sc-auto-col { color: #4338ca; }
+.sc-auto-icon { font-size: 9px; margin-left: 3px; color: #6366f1; }
+
+.sc-month-col {
+  position: sticky; left: 0; background: #f8fafc; z-index: 4;
+  text-align: left !important; min-width: 110px; border-right: 1px solid #e6eaf3;
+}
+.sc-table thead th.sc-month-col { z-index: 5; }
+.sc-month-name { font-weight: 700; color: #1e293b; font-size: 12.5px; }
+
+.sc-table tbody td {
+  border-bottom: 1px solid #eef1f8; border-right: 1px solid #f1f5f9;
+  padding: 0; text-align: center; height: 42px; min-width: 108px;
+}
+.sc-cell-inner {
+  display: flex; align-items: center; justify-content: center; gap: 5px;
+  height: 100%; padding: 6px 8px; font-size: 12px; min-height: 42px;
+}
+.sc-clickable { cursor: pointer; }
+.sc-clickable:hover { outline: 2px solid #c7d2fe; outline-offset: -2px; }
+
+/* Cell states */
+.sc-cell.sc-done      { background: #dcfce7; }
+.sc-cell.sc-missed    { background: #fee2e2; }
+.sc-cell.sc-unplanned { background: #ffedd5; }
+.sc-cell.sc-empty     { background: #fff; }
+
+.sc-tick { font-weight: 800; color: #15803d; font-size: 13px; }
+.sc-cell.sc-missed .sc-tick { color: #b91c1c; }
+.sc-actual { color: #15803d; display: inline-flex; align-items: center; gap: 2px; font-size: 12px; }
+.sc-cell.sc-unplanned .sc-actual { color: #c2410c; }
+.sc-count { font-weight: 800; font-size: 10.5px; }
+.sc-text { font-size: 11px; color: #334155; font-weight: 600; line-height: 1.25; }
+.sc-empty-dash { color: #cbd5e1; }
+
+.sc-cell-input {
+  width: 100%; height: 100%; border: 2px solid #6366f1; border-radius: 4px;
+  padding: 4px 6px; font-size: 11.5px; color: #1e293b; background: #fff;
+}
+.sc-cell-input:focus { outline: none; }
+
+/* Actual-tick is its own click target (drill-down), separate from the cell's plan toggle. */
+.sc-actual-clickable { cursor: pointer; border-radius: 4px; padding: 1px 3px; }
+.sc-actual-clickable:hover { background: rgba(15,23,42,.10); }
+
+/* ── Drill-down modal ── */
+.sc-modal-backdrop {
+  position: fixed; inset: 0; background: rgba(15,23,42,.55); z-index: 1100;
+  display: flex; align-items: center; justify-content: center; padding: 20px;
+}
+.sc-modal { background: #fff; border-radius: 14px; width: 100%; max-width: 620px; max-height: 88vh; display: flex; flex-direction: column; }
+.sc-modal-header {
+  display: flex; align-items: flex-start; justify-content: space-between;
+  padding: 18px 22px; border-bottom: 1px solid #eef1f8;
+}
+.sc-modal-title { font-size: 16.5px; font-weight: 800; color: #1e293b; }
+.sc-modal-sub { font-size: 12.5px; color: #64748b; margin-top: 2px; }
+.sc-modal-close { border: none; background: none; font-size: 18px; color: #94a3b8; cursor: pointer; }
+.sc-modal-body { padding: 16px 22px; overflow-y: auto; }
+.sc-modal-footer { display: flex; justify-content: flex-end; padding: 14px 22px; border-top: 1px solid #eef1f8; }
+.btn-sc-secondary {
+  background: #fff; border: 1px solid #d7dcea; color: #334155;
+  border-radius: 8px; padding: 8px 18px; font-weight: 700; font-size: 13.5px; cursor: pointer;
+}
+
+.sc-record { border: 1px solid #e6eaf3; border-radius: 10px; padding: 12px 14px; margin-bottom: 10px; }
+.sc-record-head { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-bottom: 6px; }
+.sc-record-index {
+  background: #4338ca; color: #fff; border-radius: 999px; width: 20px; height: 20px;
+  display: inline-flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 800;
+}
+.sc-record-ref { font-weight: 800; color: #1e293b; font-size: 13.5px; }
+.sc-record-status {
+  background: #eef2ff; color: #4338ca; border-radius: 999px;
+  padding: 2px 9px; font-size: 10.5px; font-weight: 700;
+}
+.sc-record-date { font-size: 12.5px; color: #334155; margin-bottom: 8px; }
+.sc-record-fields { width: 100%; border-collapse: collapse; }
+.sc-record-fields td { padding: 3px 0; font-size: 12px; vertical-align: top; }
+.sc-field-label { color: #94a3b8; font-weight: 700; width: 150px; }
+.sc-field-value { color: #1e293b; }
+
+.sc-note { margin-top: 12px; font-size: 12px; color: #64748b; }
+.sc-loading { text-align: center; padding: 40px; color: #64748b; font-weight: 600; }
+.sc-empty-state { text-align: center; padding: 50px; color: #94a3b8; }
+.sc-empty-state i { font-size: 40px; display: block; margin-bottom: 10px; }
+
+.spin { display: inline-block; animation: sc-spin 1s linear infinite; }
+@keyframes sc-spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+
+@media (prefers-color-scheme: dark) {
+  .sc-page { background: #0f172a; }
+  .sc-topbar, .sc-stat-card, .sc-legend, .sc-table-wrap, .sc-context { background: #1e293b; border-color: #334155; }
+  .sc-context { border-left-color: #6366f1; }
+  .sc-context-value { color: #e2e8f0; }
+  .sc-scope-chip { background: #0f172a; color: #a5b4fc; }
+  .topbar-title-main, .sc-stat-num, .sc-month-name { color: #e2e8f0; }
+  .sc-input { background: #0f172a; border-color: #334155; color: #e2e8f0; }
+  .btn-sc-multiyear { background: #0f172a; border-color: #334155; color: #e2e8f0; }
+  .btn-sc-multiyear:hover { background: #1e293b; }
+  .sc-table thead th { background: #0f172a; color: #94a3b8; border-color: #334155; }
+  .sc-table thead tr.sc-freq-row th { background: #16213a; }
+  .sc-month-col { background: #0f172a; border-color: #334155; }
+  .sc-table tbody td { border-color: #334155; }
+  .sc-cell.sc-empty { background: #1e293b; }
+  .sc-cell.sc-done      { background: #14532d; }
+  .sc-cell.sc-missed    { background: #4c1d1d; }
+  .sc-cell.sc-unplanned { background: #4a2a10; }
+  .sc-tick { color: #86efac; }
+  .sc-cell.sc-missed .sc-tick { color: #fca5a5; }
+  .sc-actual { color: #86efac; }
+  .sc-cell.sc-unplanned .sc-actual { color: #fdba74; }
+  .sc-text { color: #cbd5e1; }
+  .sc-cell-input { background: #0f172a; color: #e2e8f0; }
+  .sc-modal { background: #1e293b; }
+  .sc-modal-header, .sc-modal-footer { border-color: #334155; }
+  .sc-modal-title, .sc-record-ref, .sc-field-value { color: #e2e8f0; }
+  .sc-record { border-color: #334155; }
+  .sc-record-date { color: #cbd5e1; }
+  .sc-record-status { background: #0f172a; color: #a5b4fc; }
+  .btn-sc-secondary { background: #0f172a; border-color: #334155; color: #e2e8f0; }
+  .sc-actual-clickable:hover { background: rgba(226,232,240,.15); }
+}

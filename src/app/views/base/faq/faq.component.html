@@ -1,0 +1,153 @@
+<div class="faq-page">
+
+  <!-- ═══════════════ TOP BAR ═══════════════ -->
+  <div class="faq-topbar">
+    <div>
+      <div class="topbar-title-main">
+        <i class="bi bi-question-circle me-2"></i>Q&amp;A Library
+      </div>
+      <div class="topbar-sub">
+        {{ canManage
+           ? 'Raise and answer questions here — published entries are visible to every RFQ creator and supplier'
+           : 'Answers published by your administrator' }}
+      </div>
+    </div>
+    <div class="faq-topbar-actions">
+      <span class="faq-pending-chip" *ngIf="canManage && pendingCount > 0">
+        <i class="bi bi-inbox me-1"></i>{{ pendingCount }} awaiting an answer
+      </span>
+      <button class="btn-faq-primary" *ngIf="canManage" (click)="openCreate()">
+        <i class="bi bi-plus-lg me-1"></i>Raise a Question
+      </button>
+      <span class="faq-readonly-chip" *ngIf="!canManage">
+        <i class="bi bi-eye me-1"></i>View only
+      </span>
+    </div>
+  </div>
+
+  <div class="faq-alert faq-alert-error" *ngIf="errorMessage">
+    <i class="bi bi-exclamation-triangle me-2"></i>{{ errorMessage }}
+    <button class="faq-alert-close" (click)="errorMessage = ''"><i class="bi bi-x-lg"></i></button>
+  </div>
+  <div class="faq-alert faq-alert-success" *ngIf="successMessage">
+    <i class="bi bi-check-circle me-2"></i>{{ successMessage }}
+    <button class="faq-alert-close" (click)="successMessage = ''"><i class="bi bi-x-lg"></i></button>
+  </div>
+
+  <!-- ═══════════════ FILTERS ═══════════════ -->
+  <div class="faq-filters">
+    <div class="faq-search-wrap">
+      <i class="bi bi-search faq-search-icon"></i>
+      <input type="text" class="faq-input faq-search-input" placeholder="Search questions and answers…"
+             [(ngModel)]="searchText" />
+    </div>
+    <select class="faq-input" [(ngModel)]="categoryFilter">
+      <option value="ALL">All categories</option>
+      <option *ngFor="let c of categories" [value]="c">{{ c }}</option>
+    </select>
+    <select class="faq-input" [(ngModel)]="statusFilter" *ngIf="canManage">
+      <option value="ALL">All statuses</option>
+      <option value="PENDING">Awaiting answer</option>
+      <option value="ANSWERED">Answered</option>
+    </select>
+  </div>
+
+  <div class="faq-loading" *ngIf="isLoading">
+    <i class="bi bi-arrow-repeat spin me-2"></i>Loading…
+  </div>
+
+  <!-- ═══════════════ LIST ═══════════════ -->
+  <div class="faq-list" *ngIf="!isLoading">
+    <div class="faq-item" *ngFor="let e of filteredEntries"
+         [class.faq-item-pending]="e.status === 'PENDING'">
+
+      <div class="faq-q-row" (click)="toggle(e.id)">
+        <div class="faq-q-main">
+          <i class="bi" [ngClass]="expanded[e.id] ? 'bi-chevron-down' : 'bi-chevron-right'"></i>
+          <span class="faq-q-text">{{ e.question }}</span>
+        </div>
+        <div class="faq-q-meta">
+          <span class="faq-badge faq-badge-cat" *ngIf="e.category">{{ e.category }}</span>
+          <span class="faq-badge faq-badge-pending" *ngIf="canManage && e.status === 'PENDING'">Awaiting answer</span>
+          <span class="faq-badge faq-badge-draft" *ngIf="canManage && e.status === 'ANSWERED' && !e.isPublished">
+            Not published
+          </span>
+          <span class="faq-badge faq-badge-live" *ngIf="canManage && e.isPublished">Published</span>
+        </div>
+      </div>
+
+      <div class="faq-a-body" *ngIf="expanded[e.id]">
+        <p class="faq-a-text" *ngIf="e.answer">{{ e.answer }}</p>
+        <p class="faq-a-text faq-a-empty" *ngIf="!e.answer">
+          <i class="bi bi-hourglass-split me-1"></i>No answer yet — use Answer to write one.
+        </p>
+
+        <div class="faq-a-meta">
+          <span *ngIf="e.answeredByName"><i class="bi bi-patch-check me-1"></i>Answered by {{ e.answeredByName }}</span>
+          <span *ngIf="e.answeredAt">{{ e.answeredAt | date:'dd MMM yyyy' }}</span>
+        </div>
+
+        <div class="faq-actions" *ngIf="canManage">
+          <button class="btn-faq-sm" (click)="openEdit(e)">
+            <i class="bi bi-pencil me-1"></i>{{ e.answer ? 'Edit' : 'Answer' }}
+          </button>
+          <button class="btn-faq-sm" (click)="togglePublish(e)">
+            <i class="bi" [ngClass]="e.isPublished ? 'bi-eye-slash' : 'bi-megaphone'"></i>
+            {{ e.isPublished ? 'Unpublish' : 'Publish to library' }}
+          </button>
+          <button class="btn-faq-sm btn-faq-danger" (click)="deleteEntry(e)">
+            <i class="bi bi-trash me-1"></i>Delete
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <div class="faq-empty-state" *ngIf="filteredEntries.length === 0">
+      <i class="bi bi-inbox"></i>
+      <p *ngIf="entries.length === 0">
+        {{ canManage
+           ? 'No Q&A entries yet. Raise your first question so RFQ creators and suppliers stop asking the same thing twice.'
+           : 'Nothing has been published yet. Your administrator maintains this library.' }}
+      </p>
+      <p *ngIf="entries.length > 0">Nothing matches those filters.</p>
+    </div>
+  </div>
+
+  <!-- ═══════════════ ADMIN: RAISE / EDIT MODAL ═══════════════ -->
+  <div class="faq-modal-backdrop" *ngIf="showEntryModal && canManage" (click)="closeEntryModal()">
+    <div class="faq-modal" (click)="$event.stopPropagation()">
+      <div class="faq-modal-header">
+        <div class="faq-modal-title">{{ editingId ? 'Edit Q&A Entry' : 'Raise a Question' }}</div>
+        <button class="faq-modal-close" (click)="closeEntryModal()"><i class="bi bi-x-lg"></i></button>
+      </div>
+      <div class="faq-modal-body">
+        <label class="faq-label">Category</label>
+        <input type="text" class="faq-input w-100 mb-3" [(ngModel)]="entryForm.category"
+               placeholder="e.g. Invoicing, Service Reports, Payments" />
+
+        <label class="faq-label">Question <span class="req">*</span></label>
+        <textarea class="faq-input w-100 mb-3" rows="2" [(ngModel)]="entryForm.question"
+                  placeholder="e.g. When do I need to submit a service report?"></textarea>
+
+        <label class="faq-label">Answer</label>
+        <textarea class="faq-input w-100 mb-3" rows="5" [(ngModel)]="entryForm.answer"
+                  placeholder="The answer RFQ creators and suppliers will read…"></textarea>
+
+        <div class="form-check">
+          <input type="checkbox" class="form-check-input" id="faqPublish" [(ngModel)]="entryForm.isPublished" />
+          <label class="form-check-label" for="faqPublish">
+            Publish to the library — every RFQ creator and supplier can read this
+          </label>
+        </div>
+      </div>
+      <div class="faq-modal-footer">
+        <button class="btn-faq-secondary" [disabled]="isSavingEntry" (click)="closeEntryModal()">Cancel</button>
+        <button class="btn-faq-primary" [disabled]="isSavingEntry" (click)="saveEntry()">
+          <span *ngIf="!isSavingEntry"><i class="bi bi-check-lg me-1"></i>Save</span>
+          <span *ngIf="isSavingEntry"><i class="bi bi-arrow-repeat spin me-1"></i>Saving…</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+</div>

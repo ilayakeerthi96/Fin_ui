@@ -1,0 +1,85 @@
+<c-container class="mt-4" fluid>
+  <c-row class="mb-4">
+    <c-col xs="12">
+      <c-card class="border-0 shadow-lg">
+        <div class="contract-header">
+          <c-card-body class="p-4">
+            <h3 class="text-white mb-1 fw-bold">
+              <i class="bi bi-file-earmark-text me-2"></i>
+              Create Contract (MSA)
+            </h3>
+            <p class="text-white mb-0 opacity-90">Master Service Agreement for {{ supplierName }} — generated before the Purchase Order.</p>
+          </c-card-body>
+        </div>
+      </c-card>
+    </c-col>
+  </c-row>
+
+  <c-row *ngIf="isLoading">
+    <c-col xs="12" class="text-center py-5">
+      <div class="spinner-border text-primary" role="status"></div>
+    </c-col>
+  </c-row>
+
+  <ng-container *ngIf="!isLoading">
+    <c-row class="mb-3">
+      <c-col xs="12">
+        <c-card class="border-0 shadow-sm">
+          <c-card-body>
+            <h6 class="fw-bold mb-3">Consultant (Supplier) Party Details</h6>
+            <div class="row g-3">
+              <div class="col-md-6">
+                <label class="form-label small fw-bold">Company Name <span class="text-danger">*</span></label>
+                <input type="text" class="form-control" [(ngModel)]="consultantCompanyName" />
+              </div>
+              <div class="col-md-6">
+                <label class="form-label small fw-bold">CIN / Registration Number</label>
+                <input type="text" class="form-control" [(ngModel)]="consultantCin" />
+              </div>
+              <div class="col-12">
+                <label class="form-label small fw-bold">Registered Office Address</label>
+                <textarea class="form-control" rows="2" [(ngModel)]="consultantAddress"></textarea>
+              </div>
+              <div class="col-md-4">
+                <label class="form-label small fw-bold">Agreement Date</label>
+                <input type="date" class="form-control" [(ngModel)]="agreementDate" />
+              </div>
+              <div class="col-md-4">
+                <label class="form-label small fw-bold">Expiry Date <span class="text-muted fw-normal">(optional)</span></label>
+                <input type="date" class="form-control" [(ngModel)]="expiryDate" />
+              </div>
+            </div>
+            <div class="alert alert-warning mt-3 mb-0 py-2 small" *ngIf="expiryDate">
+              <i class="bi bi-bell me-1"></i>
+              A reminder email will be sent automatically 30 days before this contract expires.
+            </div>
+            <div class="alert alert-info mt-3 mb-0 py-2 small">
+              <i class="bi bi-info-circle me-1"></i>
+              The Client (your company) party details are filled automatically from your organization's registered profile.
+              The rest of the agreement — Services, Confidentiality, Payment Terms, Termination, etc. — uses your organization's
+              standard MSA template.
+            </div>
+          </c-card-body>
+        </c-card>
+      </c-col>
+    </c-row>
+
+    <c-row *ngIf="errorMessage" class="mb-3">
+      <c-col xs="12">
+        <c-alert color="danger">{{ errorMessage }}</c-alert>
+      </c-col>
+    </c-row>
+
+    <c-row>
+      <c-col xs="12" class="d-flex justify-content-between mb-5">
+        <button cButton color="secondary" (click)="goBack()" [disabled]="isSubmitting">
+          <i class="bi bi-arrow-left me-1"></i> Cancel
+        </button>
+        <button cButton color="success" (click)="submit()" [disabled]="isSubmitting">
+          <span *ngIf="isSubmitting" class="spinner-border spinner-border-sm me-2"></span>
+          {{ isSubmitting ? 'Creating...' : 'Create Contract Draft' }}
+        </button>
+      </c-col>
+    </c-row>
+  </ng-container>
+</c-container>

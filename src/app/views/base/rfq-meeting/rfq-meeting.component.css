@@ -1,0 +1,178 @@
+/* ============================================================
+   RFQ Meeting Modal — Full-screen professional overlay
+============================================================ */
+
+/* Full viewport overlay — sits above the chat panel */
+.meeting-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 2000;
+  display: flex;
+  flex-direction: column;
+  background: #1a1a2e;
+  animation: meetingFadeIn 0.25s ease;
+}
+
+@keyframes meetingFadeIn {
+  from { opacity: 0; transform: scale(0.97); }
+  to   { opacity: 1; transform: scale(1); }
+}
+
+/* ── Header bar ── */
+.meeting-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 20px;
+  background: linear-gradient(90deg, #0d1b2a 0%, #1a3a5c 100%);
+  border-bottom: 1px solid rgba(255,255,255,0.08);
+  flex-shrink: 0;
+  z-index: 1;
+}
+
+.meeting-header-left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.meeting-icon-wrap {
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #1a73e8, #0d47a1);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1rem;
+  color: #fff;
+  flex-shrink: 0;
+}
+
+.meeting-title {
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: #fff;
+  letter-spacing: 0.02em;
+}
+
+.meeting-subtitle {
+  font-size: 0.72rem;
+  color: rgba(255,255,255,0.55);
+  margin-top: 1px;
+}
+
+.meeting-header-right {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.meeting-link-btn {
+  display: inline-flex;
+  align-items: center;
+  font-size: 0.78rem;
+  color: rgba(255,255,255,0.7);
+  text-decoration: none;
+  padding: 5px 12px;
+  border-radius: 20px;
+  border: 1px solid rgba(255,255,255,0.2);
+  transition: all 0.2s;
+}
+.meeting-link-btn:hover {
+  color: #fff;
+  border-color: rgba(255,255,255,0.5);
+  background: rgba(255,255,255,0.08);
+}
+
+.meeting-close-btn {
+  display: inline-flex;
+  align-items: center;
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: #fff;
+  background: #c62828;
+  border: none;
+  padding: 6px 16px;
+  border-radius: 20px;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+.meeting-close-btn:hover {
+  background: #b71c1c;
+}
+
+/* ── Loading / Error state ── */
+.meeting-loading {
+  position: absolute;
+  inset: 56px 0 0 0;  /* below header */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #1a1a2e;
+  z-index: 2;
+}
+
+.meeting-loading-inner {
+  text-align: center;
+  color: #fff;
+}
+
+/* Spinner ring */
+.meeting-loader-ring {
+  width: 72px;
+  height: 72px;
+  border-radius: 50%;
+  border: 4px solid rgba(255,255,255,0.12);
+  border-top-color: #1a73e8;
+  animation: spin 0.9s linear infinite;
+  margin: 0 auto;
+  position: relative;
+}
+
+.meeting-loading-icon {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  font-size: 1.6rem;
+  color: #1a73e8;
+  /* sits inside the ring */
+  margin-top: -36px;
+  margin-left: -36px;
+  width: 72px;
+  height: 72px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+.meeting-error-icon {
+  font-size: 3rem;
+  color: #ef5350;
+}
+
+/* ── Jitsi wrapper ── */
+.jitsi-wrap {
+  flex: 1;
+  overflow: hidden;
+  position: relative;
+}
+
+.jitsi-wrap.hidden {
+  display: none;
+}
+
+.jitsi-container {
+  width: 100%;
+  height: 100%;
+}
+
+/* Remove Jitsi's own iframe border */
+.jitsi-container iframe {
+  border: none !important;
+}

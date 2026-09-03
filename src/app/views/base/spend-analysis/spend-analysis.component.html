@@ -1,0 +1,348 @@
+<div class="sa-page">
+
+  <!-- ═══════════════ TOP BAR ═══════════════ -->
+  <div class="sa-topbar">
+    <div>
+      <div class="topbar-title-main"><i class="bi bi-pie-chart me-2"></i>{{ pageTitle }}</div>
+      <div class="topbar-sub">
+        {{ pageSubtitle }} — {{ (isAllTimeView || isCustomRangeView) ? financialYear : 'financial year ' + financialYear }}
+      </div>
+    </div>
+    <div>
+      <label class="sa-label">Period</label>
+      <select class="sa-input" [(ngModel)]="fyStartYear" (change)="onYearChange()">
+        <option [ngValue]="ALL_TIME">All Time</option>
+        <option *ngFor="let y of fyOptions" [ngValue]="y">{{ y }}–{{ (y + 1) % 100 }}</option>
+        <option [ngValue]="CUSTOM_RANGE">Custom Range</option>
+      </select>
+    </div>
+    <div class="sa-custom-range" *ngIf="isCustomRangeView">
+      <div>
+        <label class="sa-label">From</label>
+        <input type="date" class="sa-input" [(ngModel)]="customFrom" />
+      </div>
+      <div>
+        <label class="sa-label">To</label>
+        <input type="date" class="sa-input" [(ngModel)]="customTo" />
+      </div>
+      <button class="btn-sa-secondary" (click)="applyCustomRange()">
+        <i class="bi bi-funnel me-1"></i>Apply
+      </button>
+    </div>
+  </div>
+
+  <div class="sa-alert" *ngIf="errorMessage">
+    <i class="bi bi-exclamation-triangle me-2"></i>{{ errorMessage }}
+  </div>
+
+  <div class="sa-loading" *ngIf="isLoading">
+    <i class="bi bi-arrow-repeat spin me-2"></i>Loading spend analysis…
+  </div>
+
+  <ng-container *ngIf="!isLoading && kpis">
+
+    <!-- ═══════════════ KPI TILES ═══════════════ -->
+    <div class="sa-kpis">
+      <div class="sa-kpi" *ngFor="let t of kpiTiles" [class.sa-kpi-primary]="t.primary">
+        <div class="sa-kpi-label">{{ t.label }}</div>
+        <div class="sa-kpi-value">{{ t.value }}</div>
+        <div class="sa-kpi-foot">{{ t.foot }}</div>
+      </div>
+
+      <!-- Spares — clickable, opens a filterable line-item breakdown -->
+      <div class="sa-kpi sa-kpi-clickable" (click)="openSparesModal()"
+           title="Click to see the detailed spares breakdown, filterable by date">
+        <div class="sa-kpi-label">{{ sparesLabel }}</div>
+        <div class="sa-kpi-value">{{ compact(kpis.sparesSpend) }}</div>
+        <div class="sa-kpi-foot"><i class="bi bi-search me-1"></i>Click for detailed breakdown</div>
+      </div>
+    </div>
+
+    <!-- ═══════════════ EMPTY STATE ═══════════════ -->
+    <div class="sa-empty" *ngIf="!hasAnySpend">
+      <i class="bi bi-pie-chart"></i>
+      <p>{{ emptyMessage }}</p>
+      <p class="sa-empty-hint">{{ emptyHint }}</p>
+    </div>
+
+    <!-- ═══════════════ DONUTS ═══════════════ -->
+    <div class="sa-charts" *ngIf="hasAnySpend">
+      <div class="sa-card sa-card-clickable" *ngFor="let d of donuts" (click)="openDonutDetail(d)"
+           title="Click to filter by date and see the detailed breakdown">
+        <div class="sa-card-head">
+          <div class="sa-card-title">{{ d.title }}</div>
+          <div class="sa-card-sub">{{ d.subtitle }}</div>
+        </div>
+
+        <div class="sa-donut-wrap" *ngIf="d.segments.length">
+          <svg viewBox="0 0 100 100" class="sa-donut" role="img"
+               [attr.aria-label]="d.title + ' donut chart'">
+            <path *ngFor="let s of d.segments" [attr.d]="s.path" [attr.fill]="s.color">
+              <title>{{ s.label }} — {{ compact(s.value) }} ({{ s.percent }}%)</title>
+            </path>
+            <text x="50" y="47" class="sa-donut-center-value">{{ compact(d.total) }}</text>
+            <text x="50" y="56" class="sa-donut-center-label">total</text>
+          </svg>
+
+          <!-- Legend doubles as the value list, so identity is never colour-alone -->
+          <ul class="sa-legend">
+            <li *ngFor="let s of d.segments">
+              <span class="sa-swatch" [style.background]="s.color"></span>
+              <span class="sa-legend-label" [title]="s.label">{{ s.label }}</span>
+              <span class="sa-legend-value">{{ compact(s.value) }}</span>
+              <span class="sa-legend-pct">{{ s.percent }}%</span>
+            </li>
+          </ul>
+        </div>
+
+        <div class="sa-card-empty" *ngIf="!d.segments.length">No spend to break down.</div>
+        <div class="sa-card-click-hint" *ngIf="d.segments.length">
+          <i class="bi bi-search me-1"></i>Click for detailed breakdown
+        </div>
+      </div>
+    </div>
+
+    <!-- ═══════════════ MONTHLY TREND ═══════════════ -->
+    <div class="sa-card sa-card-wide" *ngIf="hasAnySpend">
+      <div class="sa-card-head">
+        <div class="sa-card-title">{{ trendTitle }}</div>
+        <div class="sa-card-sub">{{ trendSubtitle }}</div>
+      </div>
+      <div class="sa-bars-wrap">
+        <div class="sa-bars">
+          <div class="sa-bar-col" *ngFor="let m of monthlyTrend"
+               [title]="m.monthLabel + ' ' + m.year + ' — ' + compact(m.value)">
+            <div class="sa-bar-value">{{ m.value > 0 ? compact(m.value) : '' }}</div>
+            <div class="sa-bar-track">
+              <div class="sa-bar-fill" [style.height.%]="barHeightPercent(m.value)"></div>
+            </div>
+            <div class="sa-bar-label">{{ barLabel(m) }}</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ═══════════════ FULL SUPPLIER RANKING (table view) ═══════════════ -->
+    <div class="sa-card sa-card-wide" *ngIf="hasAnySpend">
+      <div class="sa-card-head sa-card-head-row">
+        <div>
+          <div class="sa-card-title">{{ rankingTitle }}</div>
+          <div class="sa-card-sub">{{ rankingSubtitle }}</div>
+        </div>
+        <button class="btn-sa-secondary" (click)="showTable = !showTable">
+          <i class="bi" [ngClass]="showTable ? 'bi-chevron-up' : 'bi-chevron-down'"></i>
+          {{ showTable ? 'Hide' : 'Show' }} full ranking ({{ supplierTable.length }})
+        </button>
+      </div>
+
+      <div class="sa-table-wrap" *ngIf="showTable">
+        <table class="sa-table">
+          <thead>
+            <tr>
+              <th style="width:56px;">#</th>
+              <th>{{ counterpartyColumn }}</th>
+              <th style="width:110px;" class="num">Orders</th>
+              <th style="width:150px;" class="num">{{ valueColumn }}</th>
+              <th style="width:110px;" class="num">Share</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let r of supplierTable">
+              <td>{{ r.rank }}</td>
+              <td class="sa-supplier-name">{{ r.supplierName }}</td>
+              <td class="num">{{ r.poCount }}</td>
+              <td class="num strong">{{ compact(r.value) }}</td>
+              <td class="num">{{ r.percent }}%</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="sa-note" *ngIf="hasAnySpend">
+      <i class="bi bi-info-circle me-1"></i>{{ footNote }}
+    </div>
+
+  </ng-container>
+
+  <!-- ═══════════════ SPARES DRILL-DOWN ═══════════════ -->
+  <div class="sa-modal-backdrop" *ngIf="showSparesModal" (click)="closeSparesModal()">
+    <div class="sa-modal" (click)="$event.stopPropagation()">
+      <div class="sa-modal-header">
+        <div>
+          <div class="sa-modal-title">{{ sparesLabel }} — Detailed Breakdown</div>
+          <div class="sa-modal-sub" *ngIf="sparesData">
+            {{ sparesData.itemCount }} item{{ sparesData.itemCount === 1 ? '' : 's' }} across
+            {{ sparesData.poCount }} order{{ sparesData.poCount === 1 ? '' : 's' }}
+          </div>
+        </div>
+        <button class="sa-modal-close" (click)="closeSparesModal()"><i class="bi bi-x-lg"></i></button>
+      </div>
+
+      <div class="sa-modal-body">
+        <!-- Date filter — defaults to the currently selected period, freely adjustable -->
+        <div class="sa-spares-filter">
+          <div>
+            <label class="sa-label">From</label>
+            <input type="date" class="sa-input" [(ngModel)]="sparesFrom" />
+          </div>
+          <div>
+            <label class="sa-label">To</label>
+            <input type="date" class="sa-input" [(ngModel)]="sparesTo" />
+          </div>
+          <button class="btn-sa-secondary" (click)="applySparesFilter()">
+            <i class="bi bi-funnel me-1"></i>Apply
+          </button>
+          <button class="btn-sa-secondary" (click)="clearSparesFilter()" title="Clear the date filter — show all time">
+            <i class="bi bi-x-circle me-1"></i>Clear
+          </button>
+        </div>
+
+        <div class="sa-loading" *ngIf="isLoadingSpares">
+          <i class="bi bi-arrow-repeat spin me-2"></i>Loading…
+        </div>
+
+        <ng-container *ngIf="!isLoadingSpares && sparesData">
+          <div class="sa-spares-total">
+            <span>Total for this period</span>
+            <strong>{{ compact(sparesData.total) }}</strong>
+          </div>
+
+          <div class="sa-table-wrap" *ngIf="sparesData.items?.length">
+            <table class="sa-table">
+              <thead>
+                <tr>
+                  <th style="width:100px;">Date</th>
+                  <th style="width:120px;">PO Number</th>
+                  <th style="width:120px;">Source SES</th>
+                  <th *ngIf="!isSupplierMode">Supplier</th>
+                  <th *ngIf="isSupplierMode">Customer</th>
+                  <th>Item</th>
+                  <th style="width:70px;" class="num">Qty</th>
+                  <th style="width:110px;" class="num">Unit Rate</th>
+                  <th style="width:120px;" class="num">Line Total</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr *ngFor="let it of sparesData.items">
+                  <td>{{ it.poDate | date:'dd MMM yyyy' }}</td>
+                  <td>{{ it.poNumber }}</td>
+                  <td>{{ it.sourceSesNumber || '—' }}</td>
+                  <td *ngIf="!isSupplierMode">{{ it.supplierName || '—' }}</td>
+                  <td *ngIf="isSupplierMode">{{ it.buyerCompanyName || '—' }}</td>
+                  <td>{{ it.itemDescription }}</td>
+                  <td class="num">{{ it.quantity }} {{ it.uom }}</td>
+                  <td class="num">{{ compact(it.unitRate) }}</td>
+                  <td class="num strong">{{ compact(it.lineTotal) }}</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <div class="sa-empty" *ngIf="!sparesData.items?.length">
+            <i class="bi bi-inbox"></i>
+            <p>No spares purchased in this period.</p>
+            <p class="sa-empty-hint">
+              Spares are the spare parts a supplier quotes on a Service Entry Sheet, which — once
+              approved — become their own follow-up purchase order. Try widening the date filter.
+            </p>
+          </div>
+        </ng-container>
+      </div>
+
+      <div class="sa-modal-footer">
+        <button class="btn-sa-secondary" (click)="closeSparesModal()">Close</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════ DONUT CARD DRILL-DOWN (Supplier/Category/Business Unit/Order Type/Status) ═══════════════ -->
+  <div class="sa-modal-backdrop" *ngIf="showBreakdownModal" (click)="closeBreakdownModal()">
+    <div class="sa-modal" (click)="$event.stopPropagation()">
+      <div class="sa-modal-header">
+        <div>
+          <div class="sa-modal-title">{{ breakdownTitle }} — Detailed Breakdown</div>
+          <div class="sa-modal-sub" *ngIf="breakdownData">
+            {{ breakdownData.poCount }} order{{ breakdownData.poCount === 1 ? '' : 's' }} in this period
+          </div>
+        </div>
+        <button class="sa-modal-close" (click)="closeBreakdownModal()"><i class="bi bi-x-lg"></i></button>
+      </div>
+
+      <div class="sa-modal-body">
+        <!-- Date filter — defaults to the currently selected period, freely adjustable -->
+        <div class="sa-spares-filter">
+          <div>
+            <label class="sa-label">From</label>
+            <input type="date" class="sa-input" [(ngModel)]="breakdownFrom" />
+          </div>
+          <div>
+            <label class="sa-label">To</label>
+            <input type="date" class="sa-input" [(ngModel)]="breakdownTo" />
+          </div>
+          <button class="btn-sa-secondary" (click)="applyBreakdownFilter()">
+            <i class="bi bi-funnel me-1"></i>Apply
+          </button>
+          <button class="btn-sa-secondary" (click)="clearBreakdownFilter()" title="Clear the date filter — show all time">
+            <i class="bi bi-x-circle me-1"></i>Clear
+          </button>
+        </div>
+
+        <div class="sa-loading" *ngIf="isLoadingBreakdown">
+          <i class="bi bi-arrow-repeat spin me-2"></i>Loading…
+        </div>
+
+        <ng-container *ngIf="!isLoadingBreakdown && breakdownData">
+          <div class="sa-spares-total">
+            <span>Total for this period</span>
+            <strong>{{ compact(breakdownData.total) }}</strong>
+          </div>
+
+          <!-- Segment legend for this window — same grouping as the donut, recomputed for the filter -->
+          <ul class="sa-legend sa-legend-modal" *ngIf="breakdownData.segments?.length">
+            <li *ngFor="let s of breakdownData.segments">
+              <span class="sa-legend-label" [title]="s.label">{{ s.label }}</span>
+              <span class="sa-legend-value">{{ compact(s.value) }}</span>
+              <span class="sa-legend-pct">{{ s.percent }}%</span>
+            </li>
+          </ul>
+
+          <div class="sa-table-wrap" *ngIf="breakdownData.items?.length">
+            <table class="sa-table">
+              <thead>
+                <tr>
+                  <th style="width:100px;">Date</th>
+                  <th style="width:120px;">PO Number</th>
+                  <th *ngIf="!isSupplierMode">Supplier</th>
+                  <th *ngIf="isSupplierMode">Customer</th>
+                  <th>{{ breakdownTitle }}</th>
+                  <th style="width:120px;" class="num">Amount</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr *ngFor="let it of breakdownData.items">
+                  <td>{{ it.poDate | date:'dd MMM yyyy' }}</td>
+                  <td>{{ it.poNumber }}</td>
+                  <td>{{ it.counterpartyName || '—' }}</td>
+                  <td>{{ it.dimensionLabel }}</td>
+                  <td class="num strong">{{ compact(it.amount) }}</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <div class="sa-empty" *ngIf="!breakdownData.items?.length">
+            <i class="bi bi-inbox"></i>
+            <p>No orders in this period.</p>
+            <p class="sa-empty-hint">Try widening the date filter.</p>
+          </div>
+        </ng-container>
+      </div>
+
+      <div class="sa-modal-footer">
+        <button class="btn-sa-secondary" (click)="closeBreakdownModal()">Close</button>
+      </div>
+    </div>
+  </div>
+
+</div>

@@ -1,0 +1,219 @@
+.ses-page {
+  background: #f4f6fb;
+  min-height: 100vh;
+  padding-bottom: 40px;
+}
+
+/* ── Top bar ── */
+.ses-topbar {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  background: #fff;
+  padding: 16px 24px;
+  border-bottom: 1px solid #e5e9f2;
+  position: sticky;
+  top: 0;
+  z-index: 20;
+}
+.topbar-back-btn {
+  border: 1px solid #d7dcea;
+  background: #fff;
+  border-radius: 8px;
+  padding: 8px 14px;
+  font-weight: 600;
+  color: #334155;
+  cursor: pointer;
+}
+.topbar-back-btn:hover { background: #f1f4fa; }
+.topbar-title { display: flex; align-items: center; gap: 12px; font-size: 22px; color: #4338ca; }
+.topbar-title-main { font-size: 18px; font-weight: 800; color: #1e293b; }
+.topbar-title-sub { font-size: 13px; color: #64748b; font-weight: 500; }
+.topbar-spacer { flex: 1; }
+
+/* ── Body ── */
+.ses-body { max-width: 1180px; margin: 0 auto; padding: 24px; }
+
+/* ── Alerts ── */
+.ses-alert {
+  display: flex; align-items: center; gap: 10px;
+  border-radius: 10px; padding: 12px 16px; margin-bottom: 18px; font-weight: 600; font-size: 14px;
+}
+.ses-alert-danger  { background: #fef2f2; color: #b91c1c; border: 1px solid #fecaca; }
+.ses-alert-success { background: #f0fdf4; color: #15803d; border: 1px solid #bbf7d0; }
+.ses-alert-close { margin-left: auto; background: none; border: none; color: inherit; cursor: pointer; }
+
+.ses-empty-hint {
+  background: #fffbeb; border: 1px solid #fde68a; color: #92400e;
+  border-radius: 10px; padding: 12px 16px; font-size: 13.5px; margin-top: 8px;
+}
+
+/* ── Sections ── */
+.ses-section {
+  background: #fff; border-radius: 14px; padding: 20px 22px; margin-bottom: 18px;
+  box-shadow: 0 1px 3px rgba(15, 23, 42, .06); border: 1px solid #eef1f8;
+}
+.ses-section-header { display: flex; align-items: center; gap: 12px; margin-bottom: 16px; }
+.ses-section-icon {
+  width: 38px; height: 38px; border-radius: 10px; display: flex; align-items: center; justify-content: center;
+  font-size: 18px; color: #fff; flex-shrink: 0;
+}
+.ses-section-icon.indigo { background: linear-gradient(135deg,#6366f1,#4338ca); }
+.ses-section-icon.teal   { background: linear-gradient(135deg,#14b8a6,#0f766e); }
+.ses-section-icon.green  { background: linear-gradient(135deg,#22c55e,#15803d); }
+.ses-section-icon.amber  { background: linear-gradient(135deg,#f59e0b,#b45309); }
+.ses-section-title { font-size: 15.5px; font-weight: 800; color: #1e293b; }
+.ses-section-sub   { font-size: 12.5px; color: #64748b; font-weight: 500; }
+
+/* ── Toggle switch (Additional Items) ── */
+.ses-toggle { margin-left: auto; display: inline-block; cursor: pointer; }
+.ses-toggle input { position: absolute; opacity: 0; width: 0; height: 0; }
+.ses-toggle-track {
+  display: inline-block; width: 42px; height: 24px; border-radius: 999px;
+  background: #d7dcea; position: relative; transition: background .15s;
+}
+.ses-toggle-thumb {
+  position: absolute; top: 3px; left: 3px; width: 18px; height: 18px; border-radius: 50%;
+  background: #fff; box-shadow: 0 1px 3px rgba(0,0,0,.25); transition: transform .15s;
+}
+.ses-toggle input:checked + .ses-toggle-track { background: #f59e0b; }
+.ses-toggle input:checked + .ses-toggle-track .ses-toggle-thumb { transform: translateX(18px); }
+
+/* ── Additional items row controls ── */
+.ses-row-remove {
+  border: none; background: #fef2f2; color: #dc2626; border-radius: 6px;
+  width: 28px; height: 28px; cursor: pointer; display: inline-flex; align-items: center; justify-content: center;
+}
+.ses-row-remove:hover { background: #fee2e2; }
+.btn-ses-add {
+  border: 1px dashed #d7dcea; background: #fff; color: #4338ca; border-radius: 8px;
+  padding: 7px 14px; font-weight: 700; font-size: 12.5px; cursor: pointer;
+}
+.btn-ses-add:hover { background: #f1f4fa; }
+
+.po-selected-chip {
+  margin-left: auto; background: #ecfdf5; color: #047857; border: 1px solid #a7f3d0;
+  border-radius: 999px; padding: 5px 12px; font-weight: 700; font-size: 12.5px;
+}
+
+/* ── PO search ── */
+.po-search-row { display: flex; align-items: center; gap: 12px; }
+.po-search-wrap { position: relative; flex: 1; }
+.po-search-icon { position: absolute; left: 14px; top: 50%; transform: translateY(-50%); color: #94a3b8; }
+.po-search-input { padding-left: 38px !important; }
+.po-search-clear {
+  position: absolute; right: 10px; top: 50%; transform: translateY(-50%);
+  border: none; background: none; color: #94a3b8; cursor: pointer;
+}
+.po-loading-hint { font-size: 13px; color: #64748b; font-weight: 600; white-space: nowrap; }
+
+.po-dropdown {
+  position: absolute; top: calc(100% + 6px); left: 0; right: 0; z-index: 30;
+  background: #fff; border: 1px solid #e2e8f0; border-radius: 10px;
+  box-shadow: 0 10px 30px rgba(15,23,42,.12); max-height: 320px; overflow-y: auto;
+}
+.po-dropdown-item {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 10px 14px; cursor: pointer; border-bottom: 1px solid #f1f5f9;
+}
+.po-dropdown-item:hover { background: #f8fafc; }
+.po-dd-left { display: flex; flex-direction: column; }
+.po-dd-number { font-weight: 700; color: #1e293b; font-size: 13.5px; }
+.po-dd-supplier { font-size: 12px; color: #64748b; }
+.po-dd-right { display: flex; flex-direction: column; align-items: flex-end; }
+.po-dd-items { font-size: 11.5px; color: #94a3b8; }
+.po-dd-amount { font-weight: 700; color: #16a34a; font-size: 13px; }
+.po-dd-empty { padding: 16px; text-align: center; color: #94a3b8; font-size: 13px; }
+
+.po-summary-bar {
+  display: flex; align-items: center; flex-wrap: wrap; gap: 14px;
+  margin-top: 16px; padding: 12px 16px; background: #f8fafc; border-radius: 10px; border: 1px solid #eef1f8;
+}
+.po-sum-item { display: flex; flex-direction: column; gap: 2px; }
+.po-sum-label { font-size: 11px; color: #94a3b8; font-weight: 700; text-transform: uppercase; letter-spacing: .03em; }
+.po-sum-val { font-size: 13.5px; color: #1e293b; font-weight: 600; }
+.po-sum-val.strong { color: #16a34a; font-weight: 800; }
+.po-sum-status { font-size: 12px; font-weight: 700; color: #4338ca; }
+.po-sum-divider { width: 1px; height: 26px; background: #e2e8f0; }
+.po-sum-change {
+  margin-left: auto; border: 1px solid #fecaca; background: #fff; color: #dc2626;
+  border-radius: 8px; padding: 6px 12px; font-weight: 700; font-size: 12.5px; cursor: pointer;
+}
+.po-sum-change:hover { background: #fef2f2; }
+
+/* ── Form fields ── */
+.form-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 16px; }
+.ses-field { display: flex; flex-direction: column; gap: 6px; }
+.ses-field-wide { grid-column: 1 / -1; }
+.ses-label { font-size: 12.5px; font-weight: 700; color: #475569; }
+.req { color: #dc2626; }
+.ses-input {
+  border: 1px solid #d7dcea; border-radius: 8px; padding: 9px 12px; font-size: 13.5px;
+  width: 100%; color: #1e293b; background: #fff;
+}
+.ses-input:focus { outline: none; border-color: #6366f1; box-shadow: 0 0 0 3px rgba(99,102,241,.12); }
+.ses-input-sm { padding: 6px 8px; font-size: 13px; }
+textarea.ses-input { resize: vertical; }
+
+/* ── Table ── */
+.ses-table-wrap { overflow-x: auto; border: 1px solid #eef1f8; border-radius: 10px; }
+.ses-table { width: 100%; border-collapse: collapse; font-size: 13px; min-width: 900px; }
+.ses-table thead th {
+  background: #f8fafc; color: #475569; font-weight: 700; font-size: 11.5px;
+  text-transform: uppercase; letter-spacing: .02em; padding: 10px 12px; text-align: left;
+  border-bottom: 1px solid #eef1f8; white-space: nowrap;
+}
+.ses-table tbody td { padding: 8px 12px; border-bottom: 1px solid #f1f5f9; vertical-align: middle; }
+.ses-table tbody tr.row-completed { background: #f0fdf4; }
+.ses-table tfoot td { padding: 10px 12px; border-top: 2px solid #e2e8f0; }
+.line-value-cell { font-weight: 700; color: #16a34a; }
+.ses-checkbox { width: 18px; height: 18px; cursor: pointer; }
+.text-center { text-align: center; }
+.text-end { text-align: right; }
+.fw-bold { font-weight: 800; }
+
+/* ── Actions ── */
+.ses-actions { display: flex; justify-content: flex-end; gap: 12px; margin-top: 6px; }
+.btn-ses-secondary, .btn-ses-primary {
+  border-radius: 9px; padding: 11px 22px; font-weight: 700; font-size: 14px; cursor: pointer; border: none;
+}
+.btn-ses-secondary { background: #fff; border: 1px solid #d7dcea; color: #334155; }
+.btn-ses-secondary:hover { background: #f1f4fa; }
+.btn-ses-primary { background: linear-gradient(135deg,#4f46e5,#4338ca); color: #fff; }
+.btn-ses-primary:hover { filter: brightness(1.05); }
+.btn-ses-secondary:disabled, .btn-ses-primary:disabled { opacity: .6; cursor: not-allowed; }
+
+.spin { display: inline-block; animation: ses-spin 1s linear infinite; }
+@keyframes ses-spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+
+/* ── Attachments (per-line-item, per-additional-item, and general) ── */
+.ses-attach-cell { min-width: 150px; }
+.ses-attach-list { display: flex; flex-direction: column; gap: 4px; margin-bottom: 4px; }
+.ses-attach-list-block { flex-direction: row; flex-wrap: wrap; gap: 8px; }
+.ses-attach-chip {
+  display: inline-flex; align-items: center; gap: 4px; font-size: 12px; color: #4338ca;
+  background: #eef2ff; border-radius: 6px; padding: 3px 8px; text-decoration: none; max-width: 220px;
+}
+.ses-attach-chip:hover { background: #e0e7ff; text-decoration: underline; }
+.ses-attach-chip i { font-size: 11px; }
+.btn-ses-attach {
+  border: 1px dashed #c7d2fe; background: #fff; color: #4338ca; border-radius: 7px;
+  padding: 4px 10px; font-size: 12px; font-weight: 700; cursor: pointer;
+}
+.btn-ses-attach:hover { background: #eef2ff; }
+
+@media (prefers-color-scheme: dark) {
+  .ses-page { background: #0f172a; }
+  .ses-topbar, .ses-section { background: #1e293b; border-color: #334155; }
+  .topbar-title-main, .ses-section-title, .po-sum-val, .po-dd-number { color: #e2e8f0; }
+  .ses-input { background: #0f172a; border-color: #334155; color: #e2e8f0; }
+  .po-summary-bar { background: #0f172a; border-color: #334155; }
+  .ses-table thead th { background: #0f172a; color: #94a3b8; }
+  .ses-table tbody td { border-color: #334155; }
+  .po-dropdown { background: #1e293b; border-color: #334155; }
+  .po-dropdown-item:hover { background: #0f172a; }
+  .ses-attach-chip { background: #1e293b; color: #a5b4fc; }
+  .ses-attach-chip:hover { background: #263143; }
+  .btn-ses-attach { background: #0f172a; border-color: #334155; color: #a5b4fc; }
+  .btn-ses-attach:hover { background: #1e293b; }
+}

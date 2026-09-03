@@ -1,0 +1,288 @@
+<c-container class="mt-4" fluid>
+  <!-- Header Section -->
+  <c-row class="mb-4">
+    <c-col xs="12">
+      <c-card class="border-0 shadow-lg">
+        <div class="gradient-header-levels">
+          <c-card-body class="p-4">
+            <c-row class="align-items-center">
+              <c-col xs="12" lg="4" class="mb-3 mb-lg-0">
+                <div class="d-flex align-items-center">
+                  <div class="avatar-circle-large me-3">
+                    {{ getInitials(fullName) }}
+                  </div>
+                  <div class="text-white">
+                    <h5 class="mb-1 fw-bold">{{ fullName }}</h5>
+                    <p class="mb-0 opacity-90">
+                      <i class="cil-shield-alt me-1"></i>
+                      {{ role }}
+                    </p>
+                  </div>
+                </div>
+              </c-col>
+
+              <c-col xs="12" lg="5" class="mb-3 mb-lg-0">
+                <h3 class="text-white mb-2 fw-bold">
+                  <i class="cil-warning me-2"></i>
+                  Risk Assessment Questions
+                </h3>
+                <p class="text-white mb-0 opacity-90">
+                  <i class="cil-building me-2"></i>
+                  Company: <strong>{{ companyName }}</strong> |
+                  <i class="cil-envelope-closed me-2"></i>
+                  <strong>{{ email }}</strong>
+                </p>
+              </c-col>
+            </c-row>
+          </c-card-body>
+        </div>
+      </c-card>
+    </c-col>
+  </c-row>
+
+  <!-- Info Alert -->
+  <c-row class="mb-4">
+    <c-col xs="12">
+      <c-alert color="info" class="modern-alert">
+        <div class="d-flex align-items-center">
+          <i class="cil-info me-3" style="font-size: 1.5rem;"></i>
+          <div>
+            Every active question here is shown to every supplier during self-registration.
+            Each question's Risk Weight adds to that supplier's risk score whenever they give
+            the "risky" answer - the Supplier Risk Dashboard shows the resulting LOW/MEDIUM/HIGH rating.
+          </div>
+        </div>
+      </c-alert>
+    </c-col>
+  </c-row>
+
+  <!-- Questions Table -->
+  <c-row>
+    <c-col xs="12">
+      <c-card class="border-0 shadow">
+        <c-card-header class="bg-white border-bottom">
+          <div class="d-flex align-items-center justify-content-between flex-wrap gap-2">
+            <h5 class="mb-0 fw-bold">
+              <i class="cil-list me-2 text-primary"></i>
+              Risk Questions
+            </h5>
+            <button cButton color="primary" (click)="openCreateModal()">
+              <i class="cil-plus me-2"></i>
+              Add Question
+            </button>
+          </div>
+        </c-card-header>
+
+        <c-card-body class="p-0">
+          <div *ngIf="isLoading" class="text-center py-5">
+            <div class="spinner-border text-primary" role="status" style="width: 3rem; height: 3rem;">
+              <span class="visually-hidden">Loading...</span>
+            </div>
+            <p class="mt-3 text-muted">Loading risk questions...</p>
+          </div>
+
+          <div *ngIf="!isLoading && questions.length === 0" class="text-center py-5">
+            <i class="cil-info" style="font-size: 4rem; color: #6c757d;"></i>
+            <p class="text-muted mb-3 fs-5 mt-3">No risk questions created yet.</p>
+            <button cButton color="primary" (click)="openCreateModal()">
+              <i class="cil-plus me-2"></i>
+              Add First Question
+            </button>
+          </div>
+
+          <div *ngIf="!isLoading && pagedQuestions.length > 0" class="table-responsive">
+            <table class="table table-hover modern-table mb-0">
+              <thead class="table-light">
+                <tr>
+                  <th style="width: 80px;" class="text-center">Sl No</th>
+                  <th>Question</th>
+                  <th class="text-center" style="width: 130px;">Risky Answer</th>
+                  <th class="text-center" style="width: 110px;">Risk Weight</th>
+                  <th class="text-center" style="width: 90px;">Status</th>
+                  <th class="text-center" style="width: 150px;">Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr *ngFor="let item of pagedQuestions; let i = index" class="modern-table-row">
+                  <td class="text-center">
+                    <div class="sl-no-badge">{{ (currentPage - 1) * pageSize + i + 1 }}</div>
+                  </td>
+                  <td>
+                    <span class="level-name-text">{{ item.questionText }}</span>
+                  </td>
+                  <td class="text-center">
+                    <c-badge color="warning" class="category-badge">{{ item.riskyAnswer }}</c-badge>
+                  </td>
+                  <td class="text-center">
+                    <c-badge color="dark" class="category-badge">{{ item.riskWeight }}</c-badge>
+                  </td>
+                  <td class="text-center">
+                    <c-badge [color]="item.isActive ? 'success' : 'danger'" class="status-badge">
+                      {{ item.isActive ? 'Active' : 'Inactive' }}
+                    </c-badge>
+                  </td>
+                  <td class="text-center">
+                    <button class="btn btn-sm btn-light text-primary me-1 action-icon-btn"
+                      (click)="openEditModal(item)" title="Edit Question">
+                      <i class="cil-pencil"></i>
+                    </button>
+                    <button *ngIf="item.isActive" class="btn btn-sm btn-light text-warning me-1 action-icon-btn"
+                      (click)="toggleStatus(item)" title="Deactivate">
+                      <i class="cil-ban"></i>
+                    </button>
+                    <button *ngIf="!item.isActive" class="btn btn-sm btn-light text-success me-1 action-icon-btn"
+                      (click)="toggleStatus(item)" title="Activate">
+                      <i class="cil-check"></i>
+                    </button>
+                    <button class="btn btn-sm btn-light text-danger action-icon-btn"
+                      (click)="confirmDelete(item)" title="Delete">
+                      <i class="cil-trash"></i>
+                    </button>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <!-- Pagination -->
+          <div *ngIf="!isLoading && questions.length > pageSize"
+            class="d-flex align-items-center justify-content-between px-3 py-3 border-top">
+            <small class="text-muted">
+              Showing {{ (currentPage - 1) * pageSize + 1 }}–{{ Math.min(currentPage * pageSize, questions.length) }}
+              of {{ questions.length }}
+            </small>
+            <nav>
+              <ul class="pagination pagination-sm mb-0">
+                <li class="page-item" [class.disabled]="currentPage === 1">
+                  <button class="page-link" (click)="prevPage()">Previous</button>
+                </li>
+                <li class="page-item" *ngFor="let p of pageNumbers" [class.active]="p === currentPage">
+                  <button class="page-link" (click)="goToPage(p)">{{ p }}</button>
+                </li>
+                <li class="page-item" [class.disabled]="currentPage === totalPages">
+                  <button class="page-link" (click)="nextPage()">Next</button>
+                </li>
+              </ul>
+            </nav>
+          </div>
+        </c-card-body>
+      </c-card>
+    </c-col>
+  </c-row>
+</c-container>
+
+<!-- CREATE/EDIT MODAL -->
+<c-modal [visible]="showModal" (visibleChange)="onModalClose($event)" size="lg">
+  <c-modal-header class="modal-header-gradient">
+    <h5 cModalTitle class="text-white">
+      <i [class]="isEditMode ? 'cil-pencil' : 'cil-plus'" class="me-2"></i>
+      {{ isEditMode ? 'Edit' : 'Add' }} Risk Question
+    </h5>
+    <button (click)="closeModal()" cButtonClose class="text-white"></button>
+  </c-modal-header>
+
+  <c-modal-body class="p-4">
+    <form [formGroup]="questionForm">
+      <c-row>
+        <c-col xs="12" class="mb-3">
+          <label cLabel class="form-label-modern">
+            Question <span class="text-danger">*</span>
+          </label>
+          <textarea cFormControl formControlName="questionText" rows="3"
+            placeholder="e.g., Is your company currently on any government or trade sanctions/watchlist?"
+            class="form-control-modern"
+            [class.is-invalid]="questionForm.get('questionText')?.invalid && questionForm.get('questionText')?.touched">
+          </textarea>
+          <div *ngIf="questionForm.get('questionText')?.invalid && questionForm.get('questionText')?.touched" class="invalid-feedback">
+            Question text is required (at least 5 characters)
+          </div>
+        </c-col>
+
+        <c-col xs="12" md="6" class="mb-3">
+          <label cLabel class="form-label-modern">
+            Which answer is "risky"? <span class="text-danger">*</span>
+          </label>
+          <select cFormControl formControlName="riskyAnswer" class="form-control-modern">
+            <option value="YES">YES</option>
+            <option value="NO">NO</option>
+          </select>
+        </c-col>
+
+        <c-col xs="12" md="6" class="mb-3">
+          <label cLabel class="form-label-modern">
+            Risk Weight (1-10) <span class="text-danger">*</span>
+          </label>
+          <input cFormControl type="number" formControlName="riskWeight" min="1" max="10"
+            class="form-control-modern"
+            [class.is-invalid]="questionForm.get('riskWeight')?.invalid && questionForm.get('riskWeight')?.touched" />
+          <div *ngIf="questionForm.get('riskWeight')?.invalid && questionForm.get('riskWeight')?.touched" class="invalid-feedback">
+            Risk weight must be between 1 and 10
+          </div>
+        </c-col>
+
+        <c-col xs="12">
+          <c-alert color="info" class="mb-0">
+            <i class="cil-info me-2"></i>
+            Suppliers answer this with a Yes/No when self-registering. Higher risk weight = bigger
+            impact on the overall risk score if they give the risky answer.
+          </c-alert>
+        </c-col>
+      </c-row>
+
+      <c-alert *ngIf="errorMessage" color="danger" [dismissible]="true" (visibleChange)="errorMessage = null">
+        <i class="cil-x-circle me-2"></i>
+        {{ errorMessage }}
+      </c-alert>
+    </form>
+  </c-modal-body>
+
+  <c-modal-footer>
+    <button cButton color="secondary" (click)="closeModal()" [disabled]="isSubmitting">
+      Cancel
+    </button>
+    <button cButton [color]="isEditMode ? 'warning' : 'primary'" (click)="submitQuestion()" [disabled]="isSubmitting || questionForm.invalid">
+      <span *ngIf="!isSubmitting">
+        <i [class]="isEditMode ? 'cil-save' : 'cil-plus'" class="me-2"></i>
+        {{ isEditMode ? 'Update' : 'Add' }}
+      </span>
+      <span *ngIf="isSubmitting">
+        <span class="spinner-border spinner-border-sm me-2"></span>
+        {{ isEditMode ? 'Updating...' : 'Adding...' }}
+      </span>
+    </button>
+  </c-modal-footer>
+</c-modal>
+
+<!-- DELETE MODAL -->
+<c-modal [visible]="showDeleteModal" (visibleChange)="showDeleteModal = $event" size="sm">
+  <c-modal-header class="modal-header-danger">
+    <h5 cModalTitle class="text-white">
+      <i class="cil-warning me-2"></i>
+      Confirm Delete
+    </h5>
+    <button (click)="showDeleteModal = false" cButtonClose class="text-white"></button>
+  </c-modal-header>
+  <c-modal-body>
+    <p>Are you sure you want to delete this question?</p>
+    <p class="text-muted small">{{ selectedQuestion?.questionText }}</p>
+    <div class="alert alert-warning">
+      <i class="cil-info me-2"></i>
+      <small>This action cannot be undone.</small>
+    </div>
+  </c-modal-body>
+  <c-modal-footer>
+    <button cButton color="secondary" (click)="showDeleteModal = false" [disabled]="isDeleting">
+      Cancel
+    </button>
+    <button cButton color="danger" (click)="deleteQuestion()" [disabled]="isDeleting">
+      <span *ngIf="!isDeleting">
+        <i class="cil-trash me-2"></i>
+        Delete
+      </span>
+      <span *ngIf="isDeleting">
+        <span class="spinner-border spinner-border-sm me-2"></span>
+        Deleting...
+      </span>
+    </button>
+  </c-modal-footer>
+</c-modal>

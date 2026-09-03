@@ -1,0 +1,933 @@
+
+/* ============================================================
+   SUPPLIER DETAIL MODAL STYLES
+   Add these to pending-approvals.component.css
+   ============================================================ */
+
+/* ---- Supplier Avatar (Large) ---- */
+.supplier-avatar-lg {
+  width: 60px;
+  height: 60px;
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.25);
+  border: 2px solid rgba(255, 255, 255, 0.4);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.3rem;
+  font-weight: 700;
+  color: #fff;
+  flex-shrink: 0;
+  overflow: hidden;
+}
+
+.supplier-logo-img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+/* ---- Contact Avatar (Medium) ---- */
+.contact-avatar {
+  width: 52px;
+  height: 52px;
+  border-radius: 12px;
+  background: linear-gradient(135deg, #1565c0, #283593);
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1rem;
+  font-weight: 700;
+  flex-shrink: 0;
+}
+
+/* ---- User Mini Avatar (Table) ---- */
+.user-mini-avatar {
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #42a5f5, #1565c0);
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.65rem;
+  font-weight: 700;
+  flex-shrink: 0;
+}
+
+/* ---- Detail Section ---- */
+.detail-section-header {
+  font-size: 0.78rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: #1565c0;
+  padding: 0.4rem 0.75rem;
+  background: linear-gradient(90deg, #e3f2fd, #f8f9fa);
+  border-left: 4px solid #1565c0;
+  border-radius: 0 6px 6px 0;
+  margin-bottom: 0.75rem;
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+/* ---- Detail Card (Container) ---- */
+.detail-card {
+  background: #fff;
+  border: 1px solid #e9ecef;
+  border-radius: 10px;
+  padding: 1.25rem;
+}
+
+/* ---- Field Pair ---- */
+.detail-field {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.detail-label {
+  font-size: 0.72rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: #8c96a3;
+}
+
+.detail-value {
+  font-size: 0.9rem;
+  color: #212529;
+  font-weight: 500;
+}
+
+/* ---- Small Field ---- */
+.detail-field-sm {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+/* ---- Sub Section Label ---- */
+.sub-section-label {
+  font-size: 0.73rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+  color: #495057;
+  border-bottom: 1px solid #e9ecef;
+  padding-bottom: 0.35rem;
+  margin-bottom: 0.5rem;
+}
+
+/* ---- Location Card ---- */
+.location-card {
+  border: 1px solid #dee2e6;
+  border-radius: 10px;
+  overflow: hidden;
+  background: #fff;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.05);
+  transition: box-shadow 0.2s;
+}
+
+.location-card:hover {
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+
+.location-header {
+  padding: 0.9rem 1.1rem;
+  background: #f8f9fa;
+  border-bottom: 1px solid transparent;
+  transition: background 0.2s;
+}
+
+.location-header:hover {
+  background: #f0f4f8;
+}
+
+.location-body {
+  padding: 1rem 1.1rem;
+  background: #fff;
+  border-top: 1px solid #e9ecef;
+  animation: slideDown 0.2s ease;
+}
+
+@keyframes slideDown {
+  from { opacity: 0; transform: translateY(-6px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* ---- Location Number Badge ---- */
+.location-number {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #1565c0, #283593);
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.78rem;
+  font-weight: 700;
+  flex-shrink: 0;
+}
+
+/* ---- Department Card ---- */
+.dept-card {
+  border: 1px solid #e3e8ef;
+  border-radius: 8px;
+  overflow: hidden;
+  background: #fff;
+}
+
+.dept-header {
+  padding: 0.7rem 1rem;
+  background: #f4f6fa;
+  transition: background 0.2s;
+}
+
+.dept-header:hover {
+  background: #eef1f8;
+}
+
+/* ---- Dept Number Badge ---- */
+.dept-number {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #26a69a, #00838f);
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.68rem;
+  font-weight: 700;
+  flex-shrink: 0;
+}
+
+/* ---- Users Table ---- */
+.table th {
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: #6c757d;
+  border-bottom: 2px solid #dee2e6;
+  white-space: nowrap;
+}
+
+.table td {
+  vertical-align: middle;
+}
+
+/* ---- Modal overrides ---- */
+.supplier-detail-modal .modal-content {
+  animation: modalFadeIn 0.25s ease;
+}
+
+@keyframes modalFadeIn {
+  from { opacity: 0; transform: scale(0.96) translateY(-10px); }
+  to   { opacity: 1; transform: scale(1) translateY(0); }
+}
+
+/* ── Outer card ─────────────────────────────────────────────── */
+.date-filter-card {
+  display: flex;
+  align-items: stretch;
+  background: #ffffff;
+  border-radius: 16px;
+  box-shadow: 0 2px 12px rgba(0,0,0,0.07);
+  border: 1px solid rgba(0,0,0,0.04);
+  overflow: hidden;
+  transition: box-shadow 0.2s ease;
+}
+.date-filter-card:hover {
+  box-shadow: 0 6px 20px rgba(0,0,0,0.10);
+}
+
+/* ── Purple left accent strip ───────────────────────────────── */
+.date-filter-accent {
+  width: 5px;
+  background: linear-gradient(180deg, #667eea 0%, #764ba2 100%);
+  flex-shrink: 0;
+}
+
+/* ── Inner layout ───────────────────────────────────────────── */
+.date-filter-inner {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 0;
+  padding: 18px 24px;
+  flex-wrap: wrap;
+  gap: 0;
+}
+
+/* ── Icon + Title block ─────────────────────────────────────── */
+.date-filter-title-wrap {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  flex-shrink: 0;
+  min-width: 160px;
+}
+.date-filter-icon-wrap {
+  width: 46px;
+  height: 46px;
+  border-radius: 12px;
+  background: linear-gradient(135deg, #667eea, #764ba2);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.2rem;
+  color: #fff;
+  flex-shrink: 0;
+}
+.date-filter-title {
+  font-size: 0.92rem;
+  font-weight: 700;
+  color: #1a1a2e;
+  line-height: 1.2;
+}
+.date-filter-subtitle {
+  font-size: 0.72rem;
+  color: #8a8a9a;
+  margin-top: 2px;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+  font-weight: 500;
+}
+
+/* ── Vertical divider ───────────────────────────────────────── */
+.date-filter-divider {
+  width: 1px;
+  height: 44px;
+  background: linear-gradient(180deg, transparent, #e2e5f0, transparent);
+  margin: 0 24px;
+  flex-shrink: 0;
+  align-self: center;
+}
+
+/* ── Controls row ───────────────────────────────────────────── */
+.date-filter-controls {
+  display: flex;
+  align-items: flex-end;
+  gap: 16px;
+  flex: 1;
+  flex-wrap: wrap;
+}
+
+/* ── Individual field ───────────────────────────────────────── */
+.date-filter-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 220px;
+}
+
+/* Custom date fields: hidden by default, shown with animation */
+.date-filter-custom-field {
+  max-width: 0;
+  min-width: 0;
+  overflow: hidden;
+  opacity: 0;
+  transition: max-width 0.3s ease, opacity 0.3s ease, min-width 0.3s ease;
+  pointer-events: none;
+}
+.date-filter-custom-field.date-filter-field-visible {
+  max-width: 200px;
+  min-width: 160px;
+  opacity: 1;
+  pointer-events: all;
+}
+
+/* ── Field label ────────────────────────────────────────────── */
+.date-filter-label {
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: #8a8a9a;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+  margin-bottom: 0;
+  white-space: nowrap;
+}
+.date-filter-label i {
+  color: #667eea;
+}
+
+/* ── Select wrapper ─────────────────────────────────────────── */
+.date-filter-select-wrap {
+  position: relative;
+}
+.date-filter-select {
+  appearance: none;
+  -webkit-appearance: none;
+  width: 100%;
+  padding: 9px 36px 9px 14px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #1a1a2e;
+  background: #f4f5fb;
+  border: 1.5px solid #e2e5f0;
+  border-radius: 10px;
+  cursor: pointer;
+  outline: none;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
+}
+.date-filter-select:hover {
+  border-color: #667eea;
+  background: #f0f2ff;
+}
+.date-filter-select:focus {
+  border-color: #667eea;
+  box-shadow: 0 0 0 3px rgba(102,126,234,0.15);
+  background: #fff;
+}
+.date-filter-select-icon {
+  position: absolute;
+  right: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 0.75rem;
+  color: #667eea;
+  pointer-events: none;
+}
+
+/* ── Date input wrapper ─────────────────────────────────────── */
+.date-filter-input-wrap {
+  position: relative;
+}
+.date-filter-input {
+  width: 100%;
+  padding: 9px 14px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #1a1a2e;
+  background: #f4f5fb;
+  border: 1.5px solid #e2e5f0;
+  border-radius: 10px;
+  outline: none;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
+}
+.date-filter-input:hover {
+  border-color: #667eea;
+  background: #f0f2ff;
+}
+.date-filter-input:focus {
+  border-color: #667eea;
+  box-shadow: 0 0 0 3px rgba(102,126,234,0.15);
+  background: #fff;
+}
+
+/* ── Right section (badge + reset) ─────────────────────────── */
+.date-filter-right {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  flex-shrink: 0;
+  margin-left: auto;
+  flex-wrap: wrap;
+}
+
+/* ── Active filter badge ────────────────────────────────────── */
+.date-filter-badge-wrap {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: linear-gradient(135deg, rgba(102,126,234,0.08), rgba(118,75,162,0.08));
+  border: 1.5px solid rgba(102,126,234,0.2);
+  border-radius: 12px;
+  padding: 8px 14px 8px 10px;
+}
+.date-filter-badge-icon {
+  width: 30px;
+  height: 30px;
+  border-radius: 8px;
+  background: linear-gradient(135deg, #667eea, #764ba2);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.75rem;
+  color: #fff;
+  flex-shrink: 0;
+}
+.date-filter-badge-label {
+  font-size: 0.68rem;
+  font-weight: 600;
+  color: #8a8a9a;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+  line-height: 1;
+}
+.date-filter-badge-value {
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: #667eea;
+  margin-top: 3px;
+  line-height: 1.2;
+  white-space: nowrap;
+}
+
+/* ── Reset button ───────────────────────────────────────────── */
+.date-filter-reset-btn {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 9px 16px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: #667eea;
+  background: #f0f2ff;
+  border: 1.5px solid #d0d5f5;
+  border-radius: 10px;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 0.2s ease;
+  outline: none;
+}
+.date-filter-reset-btn:hover {
+  background: linear-gradient(135deg, #667eea, #764ba2);
+  color: #fff;
+  border-color: transparent;
+  box-shadow: 0 4px 12px rgba(102,126,234,0.35);
+  transform: translateY(-1px);
+}
+.date-filter-reset-btn i {
+  font-size: 0.85rem;
+}
+
+/* ── Responsive ─────────────────────────────────────────────── */
+@media (max-width: 992px) {
+  .date-filter-inner {
+    flex-wrap: wrap;
+    gap: 16px;
+    padding: 16px 18px;
+  }
+  .date-filter-divider {
+    display: none;
+  }
+  .date-filter-title-wrap {
+    min-width: unset;
+    width: 100%;
+  }
+  .date-filter-controls {
+    width: 100%;
+  }
+  .date-filter-right {
+    width: 100%;
+    margin-left: 0;
+    justify-content: flex-start;
+  }
+}
+
+@media (max-width: 576px) {
+  .date-filter-field,
+  .date-filter-custom-field.date-filter-field-visible {
+    min-width: unset;
+    width: 100%;
+  }
+  .date-filter-badge-wrap {
+    width: 100%;
+  }
+}
+
+/* Main Container */
+.container-fluid {
+  background-color: #f7fafc;
+  min-height: 100vh;
+}
+
+/* Date input styling */
+input[type="datetime-local"] {
+  font-family: inherit;
+  font-size: 0.95rem;
+  padding: 0.625rem;
+  transition: all 0.2s ease;
+}
+
+input[type="datetime-local"]:focus {
+  border-color: #3b82f6 !important;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+input[type="datetime-local"]:disabled {
+  background-color: #f3f4f6;
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+/* Warning alert for last approver */
+.alert-warning {
+  background-color: #fef3c7;
+  border-color: #f59e0b;
+}
+
+.alert-warning .bi-calendar-event {
+  color: #f59e0b;
+}
+
+/* Success alert for final approval */
+.alert-success {
+  background-color: #d1fae5;
+  border-color: #16a34a;
+}
+
+/* Date field focus animation */
+@keyframes pulse-border {
+  0%, 100% {
+    border-color: #e2e8f0;
+  }
+  50% {
+    border-color: #3b82f6;
+  }
+}
+
+input[type="datetime-local"]:focus {
+  animation: pulse-border 1s ease-in-out;
+}
+
+/* Table Styling */
+.table thead th {
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: #64748b;
+  letter-spacing: 0.5px;
+  padding: 1rem 0.75rem;
+  border: none;
+}
+
+.table tbody td {
+  padding: 1rem 0.75rem;
+  vertical-align: middle;
+}
+
+.cursor-pointer {
+  cursor: pointer;
+  transition: color 0.2s;
+}
+
+.cursor-pointer:hover {
+  text-decoration: underline;
+  color: #4c51bf !important;
+}
+
+/* Badge Styling */
+.badge {
+  font-size: 0.75rem;
+  padding: 0.4rem 0.7rem;
+  font-weight: 600;
+}
+
+/* Button Group */
+.btn-group .btn {
+  border-radius: 6px;
+  margin: 0 2px;
+}
+
+.btn-group .btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+/* Modal Styling */
+.modal-content {
+  border: none;
+}
+
+.modal-header {
+  border-bottom: none;
+}
+
+.modal-footer {
+  border-top: 1px solid #e2e8f0;
+}
+
+/* Timeline Styling */
+.approval-timeline {
+  position: relative;
+  padding: 1rem 0;
+}
+
+.timeline-item {
+  position: relative;
+  display: flex;
+  gap: 1.5rem;
+  margin-bottom: 1.5rem;
+}
+
+.timeline-item:last-child {
+  margin-bottom: 0;
+}
+
+.timeline-marker {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  position: relative;
+}
+
+.timeline-marker-circle {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background-color: white;
+  border: 3px solid #e2e8f0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.2rem;
+  z-index: 2;
+  transition: all 0.3s;
+}
+
+.timeline-item.completed .timeline-marker-circle {
+  border-color: #48bb78;
+  background-color: #f0fff4;
+}
+
+.timeline-item.rejected .timeline-marker-circle {
+  border-color: #f56565;
+  background-color: #fff5f5;
+}
+
+.timeline-item.pending .timeline-marker-circle {
+  border-color: #ed8936;
+  background-color: #fffaf0;
+}
+
+.timeline-line {
+  width: 2px;
+  flex-grow: 1;
+  background-color: #e2e8f0;
+  margin-top: 0.5rem;
+}
+
+.timeline-item.completed .timeline-line {
+  background-color: #48bb78;
+}
+
+.timeline-content {
+  flex: 1;
+  background-color: white;
+  padding: 1rem;
+  border-radius: 8px;
+  border: 1px solid #e2e8f0;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+}
+
+/* Alert Styling */
+.alert {
+  border-radius: 8px;
+  border: 1px solid;
+}
+
+.alert-info {
+  background-color: #ebf8ff;
+  border-color: #bee3f8;
+  color: #2c5282;
+}
+
+.alert-warning {
+  background-color: #fffaf0;
+  border-color: #fbd38d;
+  color: #7c2d12;
+}
+
+.alert-light {
+  background-color: #f7fafc;
+  border-color: #e2e8f0;
+}
+
+/* Input Group */
+.input-group-text {
+  background-color: white;
+  border-right: none;
+}
+
+.form-control:focus {
+  border-color: #667eea;
+  box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+}
+/* ✅ NEW: Tab Styling */
+.nav-tabs .nav-link {
+  color: #6c757d;
+  border: none;
+  border-bottom: 3px solid transparent;
+  padding: 0.75rem 1.5rem;
+  font-weight: 600;
+}
+
+.nav-tabs .nav-link:hover {
+  color: #495057;
+  border-bottom-color: #dee2e6;
+}
+
+.nav-tabs .nav-link.active {
+  color: #0066cc;
+  border-bottom-color: #0066cc;
+  background-color: transparent;
+}
+
+/* ✅ HOLD Badge Styling */
+.badge.bg-warning {
+  background-color: #ffc107 !important;
+  color: #000 !important;
+}
+
+/* ✅ HOLD Table Header */
+thead.bg-warning-light {
+  background-color: #fff3cd !important;
+}
+
+/* ✅ HOLD Alert Styling */
+.alert-warning {
+  background-color: #fff3cd;
+  border-color: #ffc107;
+  color: #856404;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .btn-group {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+
+  .btn-group .btn {
+    width: 100%;
+  }
+
+  .timeline-item {
+    gap: 1rem;
+  }
+
+  .timeline-marker-circle {
+    width: 32px;
+    height: 32px;
+    font-size: 1rem;
+  }
+}
+
+/* Loading State */
+.spinner-border {
+  width: 3rem;
+  height: 3rem;
+}
+
+/* Empty State */
+.bi-inbox {
+  font-size: 4rem;
+}
+
+
+/* ==================== GRADIENT HEADER STYLES ==================== */
+
+/* Gradient Header */
+.gradient-header {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  border-radius: 12px;
+  padding: 10px;
+}
+
+/* Avatar Styles */
+.avatar-circle-large {
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.3);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 2rem;
+  font-weight: bold;
+  color: white;
+  border: 3px solid rgba(255, 255, 255, 0.5);
+}
+
+/* Info Cards */
+.info-card {
+  display: flex;
+  align-items: center;
+  padding: 12px;
+  background: rgba(255, 255, 255, 0.15);
+  border-radius: 8px;
+  backdrop-filter: blur(10px);
+}
+
+.info-card-icon {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-right: 12px;
+  font-size: 1.5rem;
+  color: white;
+}
+
+.info-card-content {
+  flex: 1;
+}
+
+.info-label {
+  font-size: 0.75rem;
+  opacity: 0.9;
+  color: white;
+  text-transform: uppercase;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+}
+
+.info-value {
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: white;
+  margin-top: 2px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Responsive Adjustments for Gradient Header */
+@media (max-width: 768px) {
+  .avatar-circle-large {
+    width: 60px;
+    height: 60px;
+    font-size: 1.5rem;
+  }
+
+  .info-card {
+    margin-bottom: 10px;
+  }
+
+  .info-card-icon {
+    width: 40px;
+    height: 40px;
+    font-size: 1.2rem;
+  }
+
+  .info-label {
+    font-size: 0.7rem;
+  }
+
+  .info-value {
+    font-size: 0.85rem;
+  }
+}
+
+@media (max-width: 576px) {
+  .gradient-header {
+    padding: 15px;
+  }
+
+  .avatar-circle-large {
+    width: 50px;
+    height: 50px;
+    font-size: 1.2rem;
+    border-width: 2px;
+  }
+}

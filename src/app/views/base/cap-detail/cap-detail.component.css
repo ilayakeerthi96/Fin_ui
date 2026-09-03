@@ -1,0 +1,211 @@
+.cap-page {
+  --surface-1:      #fcfcfb;
+  --surface-page:   #f6f8fc;
+  --border:         #e6eaf3;
+  --text-primary:   #0b0b0b;
+  --text-secondary: #52514e;
+  --text-muted:     #94a3b8;
+  --grid:           #eef1f8;
+  --accent:         #2a78d6;
+
+  padding: 22px; background: var(--surface-page); min-height: 100vh;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) .cap-page {
+    --surface-1: #1e293b; --surface-page: #0f172a; --border: #334155;
+    --text-primary: #e2e8f0; --text-secondary: #cbd5e1; --text-muted: #94a3b8;
+    --grid: #334155; --accent: #3987e5;
+  }
+}
+:root[data-theme="dark"] .cap-page {
+  --surface-1: #1e293b; --surface-page: #0f172a; --border: #334155;
+  --text-primary: #e2e8f0; --text-secondary: #cbd5e1; --text-muted: #94a3b8;
+  --grid: #334155; --accent: #3987e5;
+}
+
+.btn-cap-back {
+  background: none; border: none; color: var(--text-secondary); font-size: 13px; font-weight: 600;
+  cursor: pointer; padding: 0; margin-bottom: 14px;
+}
+.btn-cap-back:hover { color: var(--accent); }
+
+.cap-alert {
+  background: #fef2f2; color: #b91c1c; border: 1px solid #fecaca;
+  border-radius: 10px; padding: 11px 16px; margin-bottom: 14px; font-size: 13.5px;
+}
+.cap-success {
+  background: #f0fdf4; color: #15803d; border: 1px solid #bbf7d0;
+  border-radius: 10px; padding: 11px 16px; margin-bottom: 14px; font-size: 13.5px;
+}
+.cap-loading { text-align: center; padding: 44px; color: var(--text-secondary); font-weight: 600; }
+
+/* Follows the viewport (not the page) so an error or confirmation is seen the instant it happens,
+   regardless of scroll position — no page-jump, no hunting for a banner above the fold. */
+.cap-toast {
+  position: fixed; top: 18px; left: 50%; transform: translateX(-50%); z-index: 2000;
+  width: min(560px, calc(100% - 32px)); display: flex; flex-direction: column; gap: 8px;
+}
+.cap-toast-msg {
+  margin: 0 !important; box-shadow: 0 12px 28px rgba(15,23,42,.22);
+  display: flex; align-items: center; justify-content: space-between; gap: 12px;
+}
+.cap-toast-close {
+  background: none; border: none; color: inherit; opacity: .65; cursor: pointer;
+  font-size: 15px; line-height: 1; padding: 0; flex-shrink: 0;
+}
+.cap-toast-close:hover { opacity: 1; }
+
+.cap-topbar {
+  background: var(--surface-1); border: 1px solid var(--border); border-radius: 14px;
+  padding: 18px 22px; margin-bottom: 14px;
+  display: flex; align-items: center; justify-content: space-between; gap: 16px; flex-wrap: wrap;
+}
+.cap-title { font-size: 19px; font-weight: 800; color: var(--text-primary); }
+.cap-subtitle { font-size: 13px; color: var(--text-secondary); margin-top: 3px; }
+.cap-header-badges { display: flex; gap: 8px; align-items: center; }
+
+.cap-card {
+  background: var(--surface-1); border: 1px solid var(--border); border-radius: 12px;
+  padding: 18px 20px; margin-bottom: 14px;
+}
+.cap-card-title { font-size: 14.5px; font-weight: 800; color: var(--text-primary); margin-bottom: 12px; }
+.cap-card-head-row { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; }
+.cap-card-head-row .cap-card-title { margin-bottom: 0; }
+
+.cap-detail-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px 20px; }
+.cap-detail-grid > div { display: flex; flex-direction: column; gap: 2px; }
+.cap-field-label {
+  font-size: 11px; font-weight: 700; color: var(--text-muted);
+  text-transform: uppercase; letter-spacing: .03em;
+}
+.cap-field-value { font-size: 13.5px; color: var(--text-primary); font-weight: 600; }
+.cap-para { font-size: 13.5px; color: var(--text-primary); line-height: 1.6; margin: 4px 0 0; white-space: pre-wrap; }
+
+.cap-disposition-card { border: 1px solid var(--accent); background: rgba(42,120,214,.03); }
+.cap-disposition-tag {
+  display: inline-block; font-size: 13px; font-weight: 800; color: var(--accent);
+  background: var(--grid); padding: 4px 12px; border-radius: 20px;
+}
+.cap-note-hint { font-size: 11px; font-weight: 500; color: var(--text-muted); text-transform: none; letter-spacing: 0; }
+.cap-owner-badge {
+  margin-top: 14px; font-size: 12.5px; color: var(--text-secondary);
+  padding-top: 12px; border-top: 1px solid var(--border);
+}
+.cap-owner-badge strong { color: var(--text-primary); }
+.cap-checkbox-row {
+  display: flex; align-items: flex-start; gap: 8px; font-size: 13.5px;
+  color: var(--text-primary); cursor: pointer; font-weight: 600; margin-top: 10px;
+}
+.cap-checkbox-row input[type="checkbox"] { margin-top: 2px; flex-shrink: 0; }
+
+.cap-immediate-box {
+  margin-top: 14px; padding: 12px 14px; background: var(--grid); border-radius: 10px;
+}
+.cap-not-fix-tag {
+  background: #fee2e2; color: #b91c1c; font-size: 10px; font-weight: 800;
+  padding: 2px 7px; border-radius: 10px; margin-left: 8px; text-transform: none; letter-spacing: 0;
+}
+
+.cap-label {
+  font-size: 11px; font-weight: 700; color: var(--text-muted);
+  text-transform: uppercase; letter-spacing: .03em; display: block; margin-bottom: 4px;
+}
+.cap-input, .cap-textarea {
+  border: 1px solid var(--border); border-radius: 8px; padding: 8px 12px; font-size: 13.5px;
+  color: var(--text-primary); background: var(--surface-1); width: 100%; box-sizing: border-box;
+  font-family: inherit;
+}
+.cap-input:focus, .cap-textarea:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px rgba(42,120,214,.15); }
+.cap-textarea { resize: vertical; }
+.cap-form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+.cap-span-2 { grid-column: 1 / -1; }
+.cap-hint { font-size: 12px; color: var(--text-secondary); margin: 0 0 10px; line-height: 1.5; }
+
+.btn-cap-primary {
+  background: var(--accent); border: none; color: #fff; border-radius: 8px;
+  padding: 9px 16px; font-weight: 700; font-size: 13px; cursor: pointer;
+}
+.btn-cap-primary:disabled { opacity: .5; cursor: default; }
+.btn-cap-secondary {
+  background: var(--surface-1); border: 1px solid var(--border); color: var(--text-primary);
+  border-radius: 8px; padding: 8px 14px; font-weight: 700; font-size: 12.5px; cursor: pointer;
+}
+.btn-cap-secondary:disabled { opacity: .5; cursor: default; }
+.btn-cap-link {
+  background: none; border: none; color: var(--accent); font-size: 12px; font-weight: 700;
+  cursor: pointer; padding: 4px 0; margin-top: 6px;
+}
+
+.cap-empty-inline { color: var(--text-muted); font-size: 13px; font-style: italic; padding: 10px 0; }
+
+/* ── Actions ── */
+.cap-action-row {
+  display: flex; justify-content: space-between; gap: 18px; padding: 14px 0;
+  border-bottom: 1px solid var(--grid);
+}
+.cap-action-row:last-child { border-bottom: none; }
+.cap-action-main { flex: 1; min-width: 0; }
+.cap-action-item { font-size: 13.5px; font-weight: 700; color: var(--text-primary); margin-bottom: 4px; }
+.cap-action-meta { font-size: 12px; color: var(--text-secondary); margin-top: 2px; }
+.cap-not-implemented { color: #b91c1c; }
+.cap-completed-by { color: #15803d; }
+.cap-action-status { width: 190px; flex-shrink: 0; }
+.cap-not-implemented-box { margin-top: 8px; display: flex; flex-direction: column; gap: 6px; }
+
+.cap-evidence-list { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+.cap-evidence-chip {
+  display: inline-flex; align-items: center; gap: 4px; background: var(--grid);
+  border-radius: 20px; padding: 4px 10px; font-size: 11.5px; color: var(--text-primary);
+  cursor: pointer;
+}
+.cap-evidence-chip:hover { background: var(--border); }
+.cap-evidence-by { color: var(--text-muted); }
+
+/* ── Badges (shared look with the list page) ── */
+.cap-badge { display: inline-block; padding: 3px 9px; border-radius: 20px; font-size: 11px; font-weight: 700; }
+.cap-badge-open        { background: #e2e8f0; color: #334155; }
+.cap-badge-rca          { background: #fef3c7; color: #92400e; }
+.cap-badge-planned      { background: #dbeafe; color: #1d4ed8; }
+.cap-badge-progress     { background: #cffafe; color: #0e7490; }
+.cap-badge-verify       { background: #ede9fe; color: #6d28d9; }
+.cap-badge-closed       { background: #dcfce7; color: #15803d; }
+.cap-badge-reopened     { background: #fee2e2; color: #b91c1c; }
+
+.cap-sev { display: inline-block; padding: 3px 9px; border-radius: 20px; font-size: 11px; font-weight: 700; }
+.cap-sev-low      { background: #dcfce7; color: #15803d; }
+.cap-sev-medium   { background: #fef3c7; color: #92400e; }
+.cap-sev-high     { background: #ffedd5; color: #c2410c; }
+.cap-sev-critical { background: #fee2e2; color: #b91c1c; }
+
+.cap-overdue-flag { color: #b91c1c; font-weight: 700; margin-left: 6px; }
+.cap-effective { color: #15803d; }
+.cap-not-effective { color: #b91c1c; }
+
+.cap-closure-box { margin-top: 8px; padding: 12px 14px; background: var(--grid); border-radius: 10px; }
+.cap-reopen-note { font-size: 12.5px; color: #b91c1c; font-weight: 600; margin: 10px 0; }
+.cap-lifecycle-actions { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; margin-top: 14px; }
+
+/* ── Modals ── */
+.cap-modal-backdrop {
+  position: fixed; inset: 0; background: rgba(15,23,42,.55); z-index: 1100;
+  display: flex; align-items: center; justify-content: center; padding: 20px;
+}
+.cap-modal {
+  background: var(--surface-1); border-radius: 14px; width: 100%; max-width: 760px;
+  max-height: 90vh; display: flex; flex-direction: column;
+}
+.cap-modal-sm { max-width: 480px; }
+.cap-modal-header {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 18px 22px; border-bottom: 1px solid var(--border);
+}
+.cap-modal-title { font-size: 16.5px; font-weight: 800; color: var(--text-primary); }
+.cap-modal-close { border: none; background: none; font-size: 18px; color: var(--text-muted); cursor: pointer; }
+.cap-modal-body { padding: 18px 22px; overflow-y: auto; }
+/* Sits between the header and the scrollable body so an error never scrolls out of view. */
+.cap-modal-alert-slot { padding: 14px 22px 0; }
+.cap-modal-alert-slot .cap-alert { margin: 0; }
+.cap-modal-footer { display: flex; justify-content: flex-end; gap: 10px; padding: 14px 22px; border-top: 1px solid var(--border); }
+
+.spin { display: inline-block; animation: cap-spin 1s linear infinite; }
+@keyframes cap-spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }

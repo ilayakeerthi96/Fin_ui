@@ -1,0 +1,149 @@
+<c-container class="mt-4" fluid>
+  <c-row class="mb-4">
+    <c-col xs="12">
+      <c-card class="border-0 shadow-lg">
+        <div class="feedback-header">
+          <c-card-body class="p-4">
+            <h3 class="text-white mb-1 fw-bold">
+              <i class="bi bi-clipboard-check me-2"></i>
+              Supplier Performance Feedback
+            </h3>
+            <p class="text-white mb-0 opacity-90">RFQ #{{ rfqId }} — closed, payment completed</p>
+          </c-card-body>
+        </div>
+      </c-card>
+    </c-col>
+  </c-row>
+
+  <c-row *ngIf="isLoading">
+    <c-col xs="12" class="text-center py-5">
+      <c-spinner></c-spinner>
+      <p class="text-muted mt-3">Loading feedback form...</p>
+    </c-col>
+  </c-row>
+
+  <c-row *ngIf="!isLoading && loadError">
+    <c-col xs="12">
+      <c-alert color="warning">
+        <i class="bi bi-exclamation-triangle me-2"></i>
+        {{ loadError }}
+      </c-alert>
+      <button cButton color="secondary" (click)="goBack()">
+        <i class="bi bi-arrow-left me-1"></i> Back to Dashboard
+      </button>
+    </c-col>
+  </c-row>
+
+  <c-row *ngIf="!isLoading && !loadError && alreadySubmitted">
+    <c-col xs="12">
+      <c-alert color="info">
+        <i class="bi bi-check-circle me-2"></i>
+        Feedback has already been submitted for this RFQ.
+      </c-alert>
+      <button cButton color="secondary" (click)="goBack()">
+        <i class="bi bi-arrow-left me-1"></i> Back to Dashboard
+      </button>
+    </c-col>
+  </c-row>
+
+  <ng-container *ngIf="!isLoading && !loadError && !alreadySubmitted">
+    
+    <c-row class="mb-3">
+      <c-col xs="12">
+        <c-card class="border-0 shadow-sm">
+          <c-card-body class="d-flex justify-content-between align-items-center flex-wrap gap-2">
+            <div>
+              <strong>Supplier:</strong> {{ supplierName }}
+            </div>
+          </c-card-body>
+        </c-card>
+      </c-col>
+    </c-row>
+
+    <c-row *ngFor="let rc of criteria" class="mb-3">
+      <c-col xs="12">
+        <c-card class="border-0 shadow-sm">
+          <c-card-body>
+            <div class="d-flex justify-content-between align-items-start mb-3 flex-wrap gap-2">
+              <div>
+                <strong class="d-block text-dark mb-1">{{ rc.criterion.criterionName }}</strong>
+                <small class="text-muted">
+                  Weightage: {{ rc.weightage }}% | Max Score: {{ MAX_SCORE }}
+                </small>
+              </div>
+            </div>
+
+            <div class="row g-2 align-items-center">
+              <div class="col-3 col-md-2">
+                <label class="form-label small mb-1 fw-bold">Score (0-{{ MAX_SCORE }})</label>
+                <input type="number" class="form-control form-control-lg text-center fw-bold"
+                  [ngModel]="scores[rc.id]" (ngModelChange)="updateManualScore(rc.id, $event)"
+                  min="0" [max]="MAX_SCORE" step="1" />
+              </div>
+              <div class="col-9 col-md-10">
+                <label class="form-label small mb-1 fw-bold">Remarks (optional)</label>
+                <input type="text" class="form-control" placeholder="Explain the score, if useful"
+                  [(ngModel)]="comments[rc.id]" />
+              </div>
+            </div>
+          </c-card-body>
+        </c-card>
+      </c-col>
+    </c-row>
+
+    <c-row *ngFor="let entry of customEntries" class="mb-3">
+      <c-col xs="12">
+        <c-card class="border-0 shadow-sm border-dashed">
+          <c-card-body>
+            <div class="d-flex justify-content-between align-items-start mb-3 flex-wrap gap-2">
+              <div class="flex-grow-1 me-2">
+                <label class="form-label small mb-1 fw-bold">Custom Criterion Name</label>
+                <input type="text" class="form-control" placeholder="e.g. Communication, Packaging..."
+                  [(ngModel)]="entry.name" [ngModelOptions]="{standalone: true}" />
+              </div>
+              <button cButton color="danger" variant="outline" size="sm" class="mt-4"
+                (click)="removeCustomEntry(entry.key)">
+                <i class="bi bi-trash"></i>
+              </button>
+            </div>
+
+            <div class="row g-2 align-items-center">
+              <div class="col-3 col-md-2">
+                <label class="form-label small mb-1 fw-bold">Score (0-{{ MAX_SCORE }})</label>
+                <input type="number" class="form-control form-control-lg text-center fw-bold"
+                  [ngModel]="entry.score" (ngModelChange)="updateCustomScore(entry, $event)"
+                  [ngModelOptions]="{standalone: true}"
+                  min="0" [max]="MAX_SCORE" step="1" />
+              </div>
+              <div class="col-9 col-md-10">
+                <label class="form-label small mb-1 fw-bold">Remarks (optional)</label>
+                <input type="text" class="form-control" placeholder="Explain the score, if useful"
+                  [(ngModel)]="entry.comments" [ngModelOptions]="{standalone: true}" />
+              </div>
+            </div>
+          </c-card-body>
+        </c-card>
+      </c-col>
+    </c-row>
+
+    <c-row class="mb-3">
+      <c-col xs="12">
+        <button cButton color="dark" variant="outline" size="sm" (click)="addCustomEntry()">
+          <i class="bi bi-plus-lg me-1"></i> Add Custom Criterion
+        </button>
+      </c-col>
+    </c-row>
+
+    <c-row>
+      <c-col xs="12" class="d-flex justify-content-between mb-5">
+        <button cButton color="secondary" (click)="goBack()" [disabled]="isSubmitting">
+          <i class="bi bi-arrow-left me-1"></i> Cancel
+        </button>
+        <button cButton color="success" (click)="submitFeedback()" [disabled]="isSubmitting">
+          <c-spinner *ngIf="isSubmitting" size="sm" class="me-1"></c-spinner>
+          {{ isSubmitting ? 'Submitting...' : 'Submit Feedback' }}
+        </button>
+      </c-col>
+    </c-row>
+  </ng-container>
+</c-container>

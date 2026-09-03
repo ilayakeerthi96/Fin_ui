@@ -1,0 +1,371 @@
+<!-- <div class="bg-light dark:bg-transparent min-vh-100 d-flex flex-row align-items-center">
+  <c-container breakpoint="md">
+    <c-row class="justify-content-center">
+      <c-col lg="5" xl="4">
+        <c-card-group>
+          <c-card class="p-4 shadow-lg border-0" style="border-radius: 12px;">
+            <c-card-body>
+            
+              <div class="text-center mb-4">
+                <img src="assets/images/ITTI-Logo.png" alt="Company Logo" style="height: 60px;" class="mb-2" />
+                <h4 class="mt-3 fw-semibold text-muted">Welcome Back</h4>
+                <p class="small text-muted">Sign in to your account</p>
+              </div>
+
+              <form [formGroup]="loginForm" (ngSubmit)="unifiedLogin()">
+                
+               
+                <c-input-group class="mb-3">
+                  <span cInputGroupText>
+                    <svg cIcon name="cilUser"></svg>
+                  </span>
+                  <input 
+                    formControlName="email" 
+                    cFormControl 
+                    placeholder="Email Address"
+                    type="email"
+                    [class.is-invalid]="submitted && loginF['email'].errors"
+                    (input)="clearError()" />
+                </c-input-group>
+                <div *ngIf="submitted && loginF['email'].errors" class="text-danger mb-2 small">
+                  <span *ngIf="loginF['email'].errors['required']">Email is required.</span>
+                  <span *ngIf="loginF['email'].errors['email']">Please enter a valid email address.</span>
+                </div>
+
+               
+                <c-input-group class="mb-4">
+                  <span cInputGroupText>
+                    <svg cIcon name="cilLockLocked"></svg>
+                  </span>
+                  <input 
+                    formControlName="password" 
+                    cFormControl 
+                    type="password" 
+                    placeholder="Password"
+                    [class.is-invalid]="submitted && loginF['password'].errors"
+                    (input)="clearError()" />
+                </c-input-group>
+                <div *ngIf="submitted && loginF['password'].errors" class="text-danger mb-3 small">
+                  <span *ngIf="loginF['password'].errors['required']">Password is required.</span>
+                </div>
+
+               
+                <c-row class="justify-content-center">
+                  <c-col xs="12" class="text-center">
+                    <button 
+                      type="submit" 
+                      cButton 
+                      class="px-4 w-100 fw-semibold" 
+                      color="primary"
+                      [disabled]="isLoading">
+                      <span *ngIf="!isLoading">Sign In</span>
+                      <span *ngIf="isLoading">
+                        <span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+                        Signing in...
+                      </span>
+                    </button>
+                  </c-col>
+                </c-row>
+
+
+
+               
+                <c-alert color="danger" *ngIf="errorMessage" class="py-2 my-3 small text-center">
+                  {{ errorMessage }}
+                </c-alert>
+
+               
+                <c-alert color="success" *ngIf="successMessage" class="py-2 my-3 small text-center">
+                  {{ successMessage }}
+                </c-alert>
+              </form>
+
+
+                             
+<div class="text-center mt-3 pt-2 border-top">
+  <p class="text-muted small mb-1">Are you a supplier looking to work with us?</p>
+  <a routerLink="/register" class="btn btn-outline-secondary btn-sm px-4">
+    Register as Supplier
+  </a>
+</div>
+
+            </c-card-body>
+
+          
+            <div class="text-center small text-muted pb-2">
+              © 2025 ITTI. All Rights Reserved.
+            </div>
+          </c-card>
+        </c-card-group>
+      </c-col>
+    </c-row>
+  </c-container>
+</div> -->
+
+
+<div class="bg-light dark:bg-transparent min-vh-100 d-flex flex-row align-items-center">
+  <c-container breakpoint="md">
+    <c-row class="justify-content-center">
+      <c-col lg="5" xl="4">
+        <c-card-group>
+          <c-card class="p-4 shadow-lg border-0" style="border-radius: 12px;">
+            <c-card-body>
+              <!-- Company Logo -->
+              <div class="text-center mb-4">
+                <img src="assets/images/ITTI-Logo.png" alt="Company Logo" style="height: 60px;" class="mb-2" />
+                <h4 class="mt-3 fw-semibold text-muted">{{ 'LOGIN_WELCOME_BACK' | translate }}</h4>
+                <p class="small text-muted">{{ 'LOGIN_SIGN_IN_SUBTITLE' | translate }}</p>
+              </div>
+
+              <!-- Single Unified Login Form -->
+              <form [formGroup]="loginForm" (ngSubmit)="unifiedLogin()">
+
+                <!-- Email Input -->
+                <c-input-group class="mb-3">
+                  <span cInputGroupText>
+                    <svg cIcon name="cilUser"></svg>
+                  </span>
+                  <input
+                    formControlName="email"
+                    cFormControl
+                    [placeholder]="'LOGIN_EMAIL_PLACEHOLDER' | translate"
+                    type="email"
+                    [class.is-invalid]="submitted && loginF['email'].errors"
+                    (input)="clearError()" />
+                </c-input-group>
+                <div *ngIf="submitted && loginF['email'].errors" class="text-danger mb-2 small">
+                  <span *ngIf="loginF['email'].errors['required']">{{ 'LOGIN_EMAIL_REQUIRED' | translate }}</span>
+                  <span *ngIf="loginF['email'].errors['email']">{{ 'LOGIN_EMAIL_INVALID' | translate }}</span>
+                </div>
+
+                <!-- Password Input -->
+                <c-input-group class="mb-4">
+                  <span cInputGroupText>
+                    <svg cIcon name="cilLockLocked"></svg>
+                  </span>
+                  <input
+                    formControlName="password"
+                    cFormControl
+                    type="password"
+                    [placeholder]="'LOGIN_PASSWORD_PLACEHOLDER' | translate"
+                    [class.is-invalid]="submitted && loginF['password'].errors"
+                    (input)="clearError()" />
+                </c-input-group>
+                <div *ngIf="submitted && loginF['password'].errors" class="text-danger mb-3 small">
+                  <span *ngIf="loginF['password'].errors['required']">{{ 'LOGIN_PASSWORD_REQUIRED' | translate }}</span>
+                </div>
+
+                <div class="text-end mb-3">
+                  <a href="javascript:void(0)" class="small text-decoration-none" (click)="openForgotPassword()">Forgot password?</a>
+                </div>
+
+                <!-- Login Button -->
+                <c-row class="justify-content-center">
+                  <c-col xs="12" class="text-center">
+                    <button
+                      type="submit"
+                      cButton
+                      class="px-4 w-100 fw-semibold"
+                      color="primary"
+                      [disabled]="isLoading">
+                      <span *ngIf="!isLoading">{{ 'LOGIN_SIGN_IN_BUTTON' | translate }}</span>
+                      <span *ngIf="isLoading">
+                        <span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+                        {{ 'LOGIN_SIGNING_IN' | translate }}
+                      </span>
+                    </button>
+                  </c-col>
+                </c-row>
+
+                <!-- Error Message -->
+                <c-alert color="danger" *ngIf="errorMessage" class="py-2 my-3 small text-center">
+                  {{ errorMessage }}
+                </c-alert>
+
+                <!-- Success Message -->
+                <c-alert color="success" *ngIf="successMessage" class="py-2 my-3 small text-center">
+                  {{ successMessage }}
+                </c-alert>
+              </form>
+
+              <!-- ✅ FIX: Use [routerLink] (property binding) instead of routerLink attribute -->
+              <!-- This is properly imported via RouterLink in the component -->
+              <div class="text-center mt-3 pt-2 border-top">
+                <p class="text-muted small mb-2">{{ 'LOGIN_SUPPLIER_PROMPT' | translate }}</p>
+                <button
+                  type="button"
+                  class="btn btn-outline-secondary btn-sm px-4"
+                  (click)="goToRegister()">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24"
+                    fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                    stroke-linejoin="round" class="me-1" style="vertical-align: -1px;">
+                    <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/>
+                    <circle cx="9" cy="7" r="4"/>
+                    <line x1="19" x2="19" y1="8" y2="14"/>
+                    <line x1="22" x2="16" y1="11" y2="11"/>
+                  </svg>
+                  {{ 'LOGIN_REGISTER_BUTTON' | translate }}
+                </button>
+              </div>
+
+            </c-card-body>
+
+            <!-- Footer -->
+            <div class="text-center small text-muted pb-2">
+              &copy; 2026 ITTI. {{ 'LOGIN_FOOTER_RIGHTS' | translate }}
+            </div>
+          </c-card>
+        </c-card-group>
+      </c-col>
+    </c-row>
+  </c-container>
+</div>
+
+<!-- ════════════════════════════════════════════════════════════════════════════
+     FORGOT PASSWORD MODAL — OTP flow, adapted from the team's HRMS pattern.
+     One email box covers every login type this page already tries (buyer, supplier, org
+     admin, super admin, hierarchy) — the backend resolves which one it belongs to.
+     ════════════════════════════════════════════════════════════════════════════ -->
+<div class="fp-overlay" *ngIf="fpStep !== 'idle'" (click)="closeForgotPassword()"></div>
+
+<div class="fp-modal" *ngIf="fpStep !== 'idle'" role="dialog" aria-modal="true">
+
+  <button class="fp-close" (click)="closeForgotPassword()" aria-label="Close">✕</button>
+
+  <!-- ── STEP 1: Enter email ── -->
+  <ng-container *ngIf="fpStep === 'enter_email'">
+    <div class="fp-icon-wrap"><div class="fp-icon">🔑</div></div>
+    <h3 class="fp-title">Forgot Password?</h3>
+    <p class="fp-subtitle">
+      Enter your email and we'll send a one-time password to your registered address.
+    </p>
+
+    <div class="fp-field">
+      <label class="fp-label">EMAIL ADDRESS</label>
+      <input class="fp-input" type="email" placeholder="you@company.com" autocomplete="username"
+        [(ngModel)]="fpEmail" (keyup.enter)="requestOtp()" />
+    </div>
+
+    <div class="fp-error" *ngIf="fpError">{{ fpError }}</div>
+
+    <button class="fp-btn" (click)="requestOtp()" [disabled]="fpLoading">
+      <span *ngIf="!fpLoading">Send OTP →</span>
+      <span *ngIf="fpLoading"><span class="spinner-border spinner-border-sm me-2"></span>Sending...</span>
+    </button>
+  </ng-container>
+
+  <!-- ── STEP 2: Enter OTP ── -->
+  <ng-container *ngIf="fpStep === 'enter_otp'">
+    <div class="fp-icon-wrap"><div class="fp-icon">📧</div></div>
+    <h3 class="fp-title">Check Your Email</h3>
+    <p class="fp-subtitle">
+      We sent a 6-digit OTP to <strong>{{ fpMaskedEmail }}</strong>.
+      It expires in <strong>10 minutes</strong>.
+    </p>
+
+    <div class="otp-boxes" (paste)="onOtpPaste($event)">
+      <input *ngFor="let digit of fpOtp; let i = index; trackBy: trackByIndex" [id]="'otp-' + i" class="otp-box"
+        type="text" inputmode="numeric" maxlength="1" [value]="fpOtp[i]" (input)="onOtpInput($event, i)"
+        (keydown)="onOtpKeydown($event, i)" autocomplete="one-time-code" />
+    </div>
+
+    <div class="fp-error" *ngIf="fpError">{{ fpError }}</div>
+
+    <button class="fp-btn" (click)="verifyOtp()" [disabled]="fpLoading || otpString.length < 6">
+      <span *ngIf="!fpLoading">Verify OTP →</span>
+      <span *ngIf="fpLoading"><span class="spinner-border spinner-border-sm me-2"></span>Verifying...</span>
+    </button>
+
+    <div class="fp-resend">
+      Didn't receive it?
+      <a href="javascript:void(0)" (click)="resendOtp()">Resend OTP</a>
+    </div>
+  </ng-container>
+
+  <!-- ── STEP 3: New Password ── -->
+  <ng-container *ngIf="fpStep === 'enter_new_pass'">
+    <div class="fp-icon-wrap"><div class="fp-icon">🔒</div></div>
+    <h3 class="fp-title">Set New Password</h3>
+    <p class="fp-subtitle">Create a strong password for your account.</p>
+
+    <form [formGroup]="fpNewPassForm">
+      <div class="fp-field">
+        <label class="fp-label">NEW PASSWORD</label>
+        <div class="fp-pass-wrap">
+          <input class="fp-input" [type]="fpShowNew ? 'text' : 'password'" formControlName="newPassword"
+            placeholder="Enter new password" [class.fp-input-error]="np?.touched && np?.invalid" />
+          <button type="button" class="fp-eye" (mousedown)="fpShowNew=true" (mouseup)="fpShowNew=false"
+            (mouseleave)="fpShowNew=false">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+              <path d="M16 8s-3-5.5-8-5.5S0 8 0 8s3 5.5 8 5.5S16 8 16 8zM1.173 8a13.133 13.133 0 0 1 1.66-2.043C4.12 4.668 5.88 3.5 8 3.5c2.12 0 3.879 1.168 5.168 2.457A13.133 13.133 0 0 1 14.828 8c-.058.087-.122.183-.195.288-.335.48-.83 1.12-1.465 1.755C11.879 11.332 10.119 12.5 8 12.5c-2.12 0-3.879-1.168-5.168-2.457A13.134 13.134 0 0 1 1.172 8z"/>
+              <path d="M8 5.5a2.5 2.5 0 1 0 0 5 2.5 2.5 0 0 0 0-5zM4.5 8a3.5 3.5 0 1 1 7 0 3.5 3.5 0 0 1-7 0z"/>
+            </svg>
+          </button>
+        </div>
+
+        <div class="strength-meter" *ngIf="np?.value">
+          <div class="strength-bar-track">
+            <div class="strength-bar-fill" [style.width.%]="getStrengthPercent()" [style.background]="getStrengthColor()"></div>
+          </div>
+          <span class="strength-label" [style.color]="getStrengthColor()">{{ getStrengthLabel() }}</span>
+        </div>
+
+        <div class="pw-checklist" *ngIf="np?.touched || np?.value">
+          <div class="pw-req" [class.met]="!np?.errors?.['minLength']">
+            <span class="req-icon">{{ !np?.errors?.['minLength'] ? '✓' : '○' }}</span>Minimum 8 characters
+          </div>
+          <div class="pw-req" [class.met]="!np?.errors?.['uppercase']">
+            <span class="req-icon">{{ !np?.errors?.['uppercase'] ? '✓' : '○' }}</span>At least one uppercase letter (A–Z)
+          </div>
+          <div class="pw-req" [class.met]="!np?.errors?.['lowercase']">
+            <span class="req-icon">{{ !np?.errors?.['lowercase'] ? '✓' : '○' }}</span>At least one lowercase letter (a–z)
+          </div>
+          <div class="pw-req" [class.met]="!np?.errors?.['digit']">
+            <span class="req-icon">{{ !np?.errors?.['digit'] ? '✓' : '○' }}</span>At least one number (0–9)
+          </div>
+          <div class="pw-req" [class.met]="!np?.errors?.['symbol']">
+            <span class="req-icon">{{ !np?.errors?.['symbol'] ? '✓' : '○' }}</span>At least one special character (!&#64;#$%...)
+          </div>
+        </div>
+      </div>
+
+      <div class="fp-field">
+        <label class="fp-label">CONFIRM PASSWORD</label>
+        <div class="fp-pass-wrap">
+          <input class="fp-input" [type]="fpShowConfirm ? 'text' : 'password'" formControlName="confirmPassword"
+            placeholder="Re-enter new password"
+            [class.fp-input-error]="fpNewPassForm.errors?.['passwordsMismatch'] && fpNewPassForm.get('confirmPassword')?.touched" />
+          <button type="button" class="fp-eye" (mousedown)="fpShowConfirm=true" (mouseup)="fpShowConfirm=false"
+            (mouseleave)="fpShowConfirm=false">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+              <path d="M16 8s-3-5.5-8-5.5S0 8 0 8s3 5.5 8 5.5S16 8 16 8zM1.173 8a13.133 13.133 0 0 1 1.66-2.043C4.12 4.668 5.88 3.5 8 3.5c2.12 0 3.879 1.168 5.168 2.457A13.133 13.133 0 0 1 14.828 8c-.058.087-.122.183-.195.288-.335.48-.83 1.12-1.465 1.755C11.879 11.332 10.119 12.5 8 12.5c-2.12 0-3.879-1.168-5.168-2.457A13.134 13.134 0 0 1 1.172 8z"/>
+              <path d="M8 5.5a2.5 2.5 0 1 0 0 5 2.5 2.5 0 0 0 0-5zM4.5 8a3.5 3.5 0 1 1 7 0 3.5 3.5 0 0 1-7 0z"/>
+            </svg>
+          </button>
+        </div>
+        <div class="fp-error fp-mismatch"
+          *ngIf="fpNewPassForm.errors?.['passwordsMismatch'] && fpNewPassForm.get('confirmPassword')?.touched">
+          Passwords do not match.
+        </div>
+      </div>
+    </form>
+
+    <div class="fp-error" *ngIf="fpError">{{ fpError }}</div>
+
+    <button class="fp-btn" (click)="resetPassword()" [disabled]="fpLoading || fpNewPassForm.invalid">
+      <span *ngIf="!fpLoading">Reset Password →</span>
+      <span *ngIf="fpLoading"><span class="spinner-border spinner-border-sm me-2"></span>Resetting...</span>
+    </button>
+  </ng-container>
+
+  <!-- ── STEP 4: Done ── -->
+  <ng-container *ngIf="fpStep === 'done'">
+    <div class="fp-success-wrap">
+      <div class="fp-success-icon">✅</div>
+      <h3 class="fp-title">Password Reset!</h3>
+      <p class="fp-subtitle">Your password has been updated successfully. A confirmation has been sent to your email.</p>
+      <button class="fp-btn" (click)="closeForgotPassword()">Back to Login →</button>
+    </div>
+  </ng-container>
+
+</div>
