@@ -1,0 +1,292 @@
+<c-container fluid class="status-tracking">
+
+  <c-row class="mb-3">
+    <c-col [md]="8">
+      <h4 class="page-title mb-1">Status Tracking</h4>
+      <p class="page-subtitle mb-0">
+        Where every purchase order sits in the workflow. Select a PO to replay its full
+        history — who did what, and when.
+      </p>
+    </c-col>
+    <c-col [md]="4" class="text-end">
+      <button cButton color="secondary" variant="outline" size="sm"
+              (click)="load()" [disabled]="isLoading">Refresh</button>
+    </c-col>
+  </c-row>
+
+  <!-- ===================== DASHBOARD-STYLE SUMMARY TILES ===================== -->
+  <div class="row g-3 mb-4">
+    <div class="col-6 col-md-3">
+      <div class="stat-card">
+        <div class="stat-icon-wrap stat-hold">
+          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
+        </div>
+        <div class="stat-info">
+          <div class="stat-value">{{ inApprovalCount }}</div>
+          <div class="stat-label">In Approval</div>
+        </div>
+      </div>
+    </div>
+    <div class="col-6 col-md-3">
+      <div class="stat-card">
+        <div class="stat-icon-wrap stat-teal">
+          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 6 9 17l-5-5"/></svg>
+        </div>
+        <div class="stat-info">
+          <div class="stat-value">{{ awaitingReleaseCount }}</div>
+          <div class="stat-label">Awaiting Release</div>
+        </div>
+      </div>
+    </div>
+    <div class="col-6 col-md-3">
+      <div class="stat-card">
+        <div class="stat-icon-wrap stat-green">
+          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 3H8a2 2 0 0 0-2 2v16l6-4 6 4V5a2 2 0 0 0-2-2Z"/></svg>
+        </div>
+        <div class="stat-info">
+          <div class="stat-value">{{ activeCount }}</div>
+          <div class="stat-label">Active with Supplier</div>
+        </div>
+      </div>
+    </div>
+    <div class="col-6 col-md-3">
+      <div class="stat-card">
+        <div class="stat-icon-wrap stat-purple">
+          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="10" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+        </div>
+        <div class="stat-info">
+          <div class="stat-value">{{ closedCount }}</div>
+          <div class="stat-label">Closed / Foreclosed</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===================== FILTERS ===================== -->
+  <c-card class="mb-3">
+    <c-card-body>
+      <c-row class="align-items-end">
+        <c-col [md]="3" class="mb-2">
+          <label class="form-label">Status</label>
+          <select class="form-select form-select-sm" [(ngModel)]="statusFilter"
+                  name="statusFilter" (change)="applyFilters()">
+            <option *ngFor="let s of statusOptions" [value]="s">{{ s }}</option>
+          </select>
+        </c-col>
+        <c-col [md]="6" class="mb-2">
+          <label class="form-label">Search</label>
+          <input class="form-control form-control-sm" [(ngModel)]="searchText" name="searchText"
+                 (input)="applyFilters()" placeholder="PO number or supplier">
+        </c-col>
+        <c-col [md]="3" class="mb-2 text-end">
+          <span class="text-muted small">{{ filtered.length }} of {{ allPOs.length }} PO(s)</span>
+        </c-col>
+      </c-row>
+    </c-card-body>
+  </c-card>
+
+  <div class="alert alert-danger" *ngIf="errorMessage">{{ errorMessage }}</div>
+
+  <c-row>
+
+    <!-- ===================== PO LIST ===================== -->
+    <c-col [md]="selectedPO ? 7 : 12">
+      <div class="card po-style-card">
+
+        <div class="text-center py-5" *ngIf="isLoading">
+          <c-spinner color="primary"></c-spinner>
+          <p class="mt-2 text-muted">Loading purchase orders…</p>
+        </div>
+
+        <div class="text-center py-5 text-muted" *ngIf="!isLoading && filtered.length === 0">
+          No purchase orders match the current filters.
+        </div>
+
+        <div class="table-responsive" *ngIf="!isLoading && filtered.length > 0">
+
+          <!-- Table header with result count -->
+          <div class="px-4 pt-3 pb-2 d-flex align-items-center justify-content-between">
+            <h5 class="fw-bold text-dark mb-0">
+              <i class="bi bi-table me-2 text-primary"></i>Purchase Orders
+            </h5>
+            <small class="text-muted">{{ filtered.length }} result{{ filtered.length !== 1 ? 's' : '' }}</small>
+          </div>
+
+          <table class="table po-table mb-0">
+            <thead class="table-header">
+              <tr>
+                <th>PO Number / Details</th>
+                <th>Supplier</th>
+                <th class="text-end">Grand Total</th>
+                <th class="text-center">Status</th>
+                <th class="text-center">Payment</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let po of paginated; trackBy: trackById"
+                  class="po-main-row"
+                  [class.table-active]="selectedPO?.id === po.id"
+                  (click)="selectPO(po)">
+                <td>
+                  <a class="po-number-link" href="javascript:void(0)" (click)="viewPO(po, $event)">
+                    <i class="bi bi-file-earmark-text me-1"></i>{{ po.poNumber }}
+                  </a>
+                  <div class="text-muted small mt-1">Created {{ po.createdAt | date:'dd MMM yy' }}</div>
+                </td>
+                <td>{{ po.supplierName }}</td>
+                <td class="text-end">
+                  <div class="fw-bold text-success fs-6">{{ po.currencySymbol }}{{ po.grandTotal | number:'1.2-2' }}</div>
+                </td>
+                <td class="text-center"><span class="badge" [ngClass]="'bg-' + statusColor(po.status)">{{ po.status }}</span></td>
+                <td class="text-center">
+                  <span class="badge" [ngClass]="'bg-' + paymentColor(po.paymentStatus)">{{ paymentStatusLabel(po.paymentStatus) }}</span>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+
+          <!-- ===== PAGINATION BAR ===== -->
+          <div class="pagination-bar d-flex align-items-center justify-content-between flex-wrap gap-3 px-4 py-3">
+            <div class="d-flex align-items-center gap-3 flex-wrap">
+              <span class="text-muted small">
+                Showing <strong>{{ startIndex }}–{{ endIndex }}</strong> of <strong>{{ filtered.length }}</strong> orders
+              </span>
+              <div class="d-flex align-items-center gap-2">
+                <label class="text-muted small mb-0 text-nowrap">Rows per page:</label>
+                <div class="page-size-group">
+                  <button *ngFor="let size of pageSizeOptions" class="page-size-btn"
+                          [class.active]="pageSize === size" (click)="onPageSizeChange(size)">{{ size }}</button>
+                </div>
+              </div>
+            </div>
+            <div class="d-flex align-items-center gap-1">
+              <button class="page-nav-btn" [disabled]="currentPage === 1" (click)="goToPage(1)" title="First page">
+                <i class="bi bi-chevron-double-left"></i>
+              </button>
+              <button class="page-nav-btn" [disabled]="currentPage === 1" (click)="goToPage(currentPage - 1)" title="Previous page">
+                <i class="bi bi-chevron-left"></i>
+              </button>
+              <ng-container *ngFor="let page of pageNumbers">
+                <span *ngIf="page === -1" class="page-ellipsis">…</span>
+                <button *ngIf="page !== -1" class="page-num-btn" [class.active]="currentPage === page" (click)="goToPage(page)">{{ page }}</button>
+              </ng-container>
+              <button class="page-nav-btn" [disabled]="currentPage === totalPages" (click)="goToPage(currentPage + 1)" title="Next page">
+                <i class="bi bi-chevron-right"></i>
+              </button>
+              <button class="page-nav-btn" [disabled]="currentPage === totalPages" (click)="goToPage(totalPages)" title="Last page">
+                <i class="bi bi-chevron-double-right"></i>
+              </button>
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </c-col>
+
+    <!-- ===================== DETAIL / TIMELINE ===================== -->
+    <c-col [md]="5" *ngIf="selectedPO">
+      <c-card>
+        <c-card-header class="d-flex justify-content-between align-items-center">
+          <strong>{{ selectedPO.poNumber }}</strong>
+          <button cButton color="secondary" variant="ghost" size="sm"
+                  (click)="selectPO(selectedPO)">✕</button>
+        </c-card-header>
+        <c-card-body>
+
+          <!-- Lifecycle progress -->
+          <div class="mb-4" *ngIf="lifecycleIndex(selectedPO) >= 0">
+            <div class="stage-track">
+              <div class="stage" *ngFor="let stage of lifecycle; let i = index"
+                   [class.done]="isStageDone(selectedPO, i)">
+                <span class="stage-dot"></span>
+                <span class="stage-label">{{ stage }}</span>
+              </div>
+            </div>
+          </div>
+          <div class="alert alert-warning py-2" *ngIf="lifecycleIndex(selectedPO) < 0">
+            This PO left the normal workflow — current status
+            <strong>{{ selectedPO.status }}</strong>.
+          </div>
+
+          <!-- Key facts -->
+          <c-row class="mb-3">
+            <c-col [md]="6" class="mb-2">
+              <div class="fact-label">Supplier</div>
+              <div>{{ selectedPO.supplierName }}</div>
+            </c-col>
+            <c-col [md]="6" class="mb-2">
+              <div class="fact-label">Value</div>
+              <div>{{ selectedPO.currencySymbol }}{{ selectedPO.grandTotal | number:'1.2-2' }}</div>
+            </c-col>
+            <c-col [md]="6" class="mb-2">
+              <div class="fact-label">Invoiced</div>
+              <div>{{ selectedPO.currencySymbol }}{{ selectedPO.totalInvoicedAmount | number:'1.2-2' }}</div>
+            </c-col>
+            <c-col [md]="6" class="mb-2">
+              <div class="fact-label">Paid</div>
+              <div>{{ selectedPO.currencySymbol }}{{ selectedPO.totalPaidAmount | number:'1.2-2' }}</div>
+            </c-col>
+            <c-col [md]="6" class="mb-2">
+              <div class="fact-label">Released</div>
+              <div>{{ selectedPO.releasedAt ? (selectedPO.releasedAt | date:'dd MMM yy') : 'Not yet' }}</div>
+            </c-col>
+            <c-col [md]="6" class="mb-2">
+              <div class="fact-label">Fully Supplied</div>
+              <div>{{ selectedPO.fullySupplied ? 'Yes' : 'No' }}</div>
+            </c-col>
+          </c-row>
+
+          <!-- Audit timeline -->
+          <h6 class="mb-2">History</h6>
+
+          <div class="text-center py-4" *ngIf="isLoadingTimeline">
+            <c-spinner size="sm" color="primary"></c-spinner>
+          </div>
+
+          <div class="text-muted small" *ngIf="!isLoadingTimeline && timeline.length === 0">
+            No recorded events for this PO yet.
+          </div>
+
+          <ul class="timeline" *ngIf="!isLoadingTimeline && timeline.length > 0">
+            <li class="timeline-item" *ngFor="let event of timeline"
+                [class.is-failure]="event.status === 'FAILURE'">
+              <div class="d-flex justify-content-between align-items-start">
+                <div class="timeline-time">{{ event.eventTime | date:'dd MMM yy, HH:mm' }}</div>
+                <c-badge [color]="eventColor(event)" *ngIf="event.status === 'FAILURE'">Failed</c-badge>
+              </div>
+              <div class="timeline-action">{{ event.action }}</div>
+              <div class="timeline-meta">
+                {{ event.actorName || event.actorEmail || 'System' }}
+                <span *ngIf="event.actorRole"> · {{ event.actorRole }}</span>
+              </div>
+              <div class="timeline-meta" *ngIf="event.remarks">{{ event.remarks }}</div>
+              <div class="timeline-ip" *ngIf="event.ipAddress">From {{ event.ipAddress }}</div>
+
+              <!-- Expandable before/after detail — the same snapshot the Audit Log shows,
+                   surfaced here so the full history of one PO reads in one place. -->
+              <span class="timeline-toggle" *ngIf="hasSnapshot(event)" (click)="toggleDetail(event)">
+                {{ isExpanded(event) ? '▾ Hide details' : '▸ What changed' }}
+              </span>
+
+              <div class="timeline-snapshot" *ngIf="isExpanded(event)">
+                <div class="snapshot-cols">
+                  <div>
+                    <div class="snapshot-col-label">Before</div>
+                    <pre class="snapshot">{{ prettyJson(event.oldValue) }}</pre>
+                  </div>
+                  <div>
+                    <div class="snapshot-col-label">After</div>
+                    <pre class="snapshot">{{ prettyJson(event.newValue) }}</pre>
+                  </div>
+                </div>
+              </div>
+            </li>
+          </ul>
+
+        </c-card-body>
+      </c-card>
+    </c-col>
+
+  </c-row>
+
+</c-container>

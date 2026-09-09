@@ -1,0 +1,368 @@
+/* Status tracking screen. Theme variables carry the colours so this follows the app's
+   light/dark setting rather than hard-coding a palette. */
+
+.status-tracking .page-title {
+  font-weight: 600;
+}
+
+.status-tracking .page-subtitle {
+  font-size: 0.875rem;
+  color: var(--cui-secondary-color, #6c757d);
+}
+
+.status-tracking .form-label {
+  font-size: 0.75rem;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+  margin-bottom: 0.25rem;
+  color: var(--cui-secondary-color, #6c757d);
+}
+
+.status-tracking .req {
+  color: var(--cui-danger, #e55353);
+  font-weight: 700;
+}
+
+/* ── Summary tiles ─────────────────────────────────────────────────────
+   Same visual language as the PO dashboard (po-list): a white rounded card,
+   a coloured gradient icon, a big bold value and an uppercase label. */
+
+.stat-card {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  background: #ffffff;
+  border-radius: 16px;
+  padding: 20px 22px;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.07);
+  border: 1px solid rgba(0, 0, 0, 0.04);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  height: 100%;
+}
+.stat-card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.11);
+}
+
+.stat-icon-wrap {
+  width: 52px;
+  height: 52px;
+  border-radius: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #ffffff;
+  flex-shrink: 0;
+}
+.stat-purple { background: linear-gradient(135deg, #6c63ff, #9b59b6); }
+.stat-teal   { background: linear-gradient(135deg, #43cea2, #185a9d); }
+.stat-green  { background: linear-gradient(135deg, #56ab2f, #a8e063); }
+.stat-hold   { background: linear-gradient(135deg, #f7971e, #ffd200); }
+
+.stat-info { display: flex; flex-direction: column; justify-content: center; min-width: 0; }
+.stat-value { font-size: 2rem; font-weight: 800; color: #1a1a2e; line-height: 1.1; letter-spacing: -0.5px; }
+.stat-value-sm { font-size: 1.3rem; }
+.stat-label {
+  font-size: 0.72rem; font-weight: 500; color: #8a8a9a;
+  text-transform: uppercase; letter-spacing: 0.4px; margin-top: 2px;
+}
+
+.status-tracking table th {
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+  white-space: nowrap;
+  font-weight: 600;
+}
+
+/* ── Confirmation dialog ───────────────────────────────────────────────
+   A plain fixed-position panel rather than a CoreUI modal: the surrounding
+   screens in this app use the same pattern, and it keeps the component free of
+   an extra module import for a single two-field dialog. */
+
+.status-tracking .modal-backdrop-custom {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.45);
+  z-index: 1040;
+}
+
+.status-tracking .modal-custom {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: min(520px, calc(100vw - 2rem));
+  max-height: calc(100vh - 2rem);
+  overflow-y: auto;
+  z-index: 1050;
+}
+
+
+/* ── Timeline ──────────────────────────────────────────────────────────
+   A single vertical rule with a dot per event. Built from borders rather
+   than images so it inherits the theme's colours automatically. */
+
+.status-tracking .timeline {
+  position: relative;
+  margin: 0;
+  padding: 0 0 0 1.75rem;
+  list-style: none;
+}
+
+.status-tracking .timeline::before {
+  content: '';
+  position: absolute;
+  left: 0.5rem;
+  top: 0.35rem;
+  bottom: 0.35rem;
+  width: 2px;
+  background: var(--cui-border-color, #dee2e6);
+}
+
+.status-tracking .timeline-item {
+  position: relative;
+  padding-bottom: 1.1rem;
+}
+
+.status-tracking .timeline-item:last-child {
+  padding-bottom: 0;
+}
+
+.status-tracking .timeline-item::before {
+  content: '';
+  position: absolute;
+  left: -1.4rem;
+  top: 0.3rem;
+  width: 0.7rem;
+  height: 0.7rem;
+  border-radius: 50%;
+  background: var(--cui-body-bg, #fff);
+  border: 2px solid var(--cui-primary, #321fdb);
+}
+
+.status-tracking .timeline-item.is-failure::before {
+  border-color: var(--cui-danger, #e55353);
+}
+
+.status-tracking .timeline-time {
+  font-size: 0.75rem;
+  color: var(--cui-secondary-color, #6c757d);
+}
+
+.status-tracking .timeline-action {
+  font-weight: 600;
+  font-size: 0.875rem;
+}
+
+.status-tracking .timeline-meta {
+  font-size: 0.8125rem;
+  color: var(--cui-secondary-color, #6c757d);
+}
+
+/* ── Expandable change detail — "very detailed for every change" ───────
+   Each timeline entry that carries a before/after snapshot gets a toggle;
+   the JSON is shown pre-formatted, capped in height so one huge line-item
+   diff cannot push the rest of the timeline off-screen. */
+
+.status-tracking .timeline-toggle {
+  font-size: 0.75rem;
+  color: var(--cui-primary, #321fdb);
+  cursor: pointer;
+  user-select: none;
+  margin-top: 0.15rem;
+  display: inline-block;
+}
+
+.status-tracking .timeline-snapshot {
+  margin-top: 0.5rem;
+  padding: 0.5rem 0.65rem;
+  background: var(--cui-tertiary-bg, #f8f9fa);
+  border: 1px solid var(--cui-border-color, #dee2e6);
+  border-radius: 6px;
+}
+
+.status-tracking .snapshot-cols {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.5rem;
+}
+
+@media (max-width: 576px) {
+  .status-tracking .snapshot-cols { grid-template-columns: 1fr; }
+}
+
+.status-tracking .snapshot-col-label {
+  font-size: 0.625rem;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+  color: var(--cui-secondary-color, #6c757d);
+  margin-bottom: 0.2rem;
+}
+
+.status-tracking .snapshot {
+  max-height: 220px;
+  overflow: auto;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 0.6875rem;
+  white-space: pre-wrap;
+  word-break: break-word;
+  margin: 0;
+}
+
+.status-tracking .timeline-ip {
+  font-size: 0.6875rem;
+  color: var(--cui-secondary-color, #6c757d);
+  margin-top: 0.3rem;
+}
+
+/* ── Lifecycle progress ────────────────────────────────────────────────
+   Five stages laid out evenly; completed ones fill in. Purely a summary of
+   PO.status — the timeline underneath carries the real detail. */
+
+.status-tracking .stage-track {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 0.25rem;
+}
+
+.status-tracking .stage {
+  flex: 1;
+  text-align: center;
+  position: relative;
+}
+
+/* Connector between stages */
+.status-tracking .stage:not(:last-child)::after {
+  content: '';
+  position: absolute;
+  top: 0.4rem;
+  left: 50%;
+  width: 100%;
+  height: 2px;
+  background: var(--cui-border-color, #dee2e6);
+  z-index: 0;
+}
+
+.status-tracking .stage.done:not(:last-child)::after {
+  background: var(--cui-success, #2eb85c);
+}
+
+.status-tracking .stage-dot {
+  position: relative;
+  z-index: 1;
+  display: block;
+  width: 0.85rem;
+  height: 0.85rem;
+  margin: 0 auto 0.35rem;
+  border-radius: 50%;
+  background: var(--cui-body-bg, #fff);
+  border: 2px solid var(--cui-border-color, #dee2e6);
+}
+
+.status-tracking .stage.done .stage-dot {
+  background: var(--cui-success, #2eb85c);
+  border-color: var(--cui-success, #2eb85c);
+}
+
+.status-tracking .stage-label {
+  display: block;
+  font-size: 0.625rem;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+  color: var(--cui-secondary-color, #6c757d);
+  word-break: break-word;
+}
+
+.status-tracking .stage.done .stage-label {
+  color: var(--cui-body-color, #212529);
+  font-weight: 600;
+}
+
+/* ── Key facts ─────────────────────────────────────────────────────── */
+
+.status-tracking .fact-label {
+  font-size: 0.6875rem;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+  color: var(--cui-secondary-color, #6c757d);
+}
+
+.status-tracking .po-row {
+  cursor: pointer;
+}
+
+/* ── Table — same look as the PO list ──────────────────────────────────── */
+
+.status-tracking .po-style-card { border-radius: 12px; overflow: hidden; }
+
+.status-tracking .po-table { font-size: 0.88rem; border-collapse: collapse; }
+
+.status-tracking .table-header th {
+  background: #e8eaf6 !important;
+  color: #1a237e !important;
+  font-weight: 700;
+  font-size: 0.78rem;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+  padding: 12px 14px;
+  border-bottom: 2px solid #c5cae9 !important;
+}
+
+.status-tracking .po-table tbody .po-main-row {
+  cursor: pointer;
+}
+.status-tracking .po-table tbody .po-main-row td {
+  padding: 12px 14px;
+  vertical-align: middle;
+  border-top: 1px solid #e9ecef !important;
+  border-bottom: none !important;
+}
+.status-tracking .po-table tbody .po-main-row:first-child td { border-top: none !important; }
+.status-tracking .po-main-row:hover td { background: #f8f9ff !important; }
+.status-tracking .po-main-row.table-active td { background: #eef1ff !important; }
+
+.status-tracking .po-number-link { font-weight: 700; color: #1976d2; cursor: pointer; text-decoration: none; }
+.status-tracking .po-number-link:hover { text-decoration: underline; }
+
+/* ── Pagination bar ─────────────────────────────────────────────────────── */
+
+.status-tracking .pagination-bar { border-top: 1px solid #e9ecef; background: #fafbff; }
+
+.status-tracking .page-size-group { display: flex; border: 1px solid #d0d5dd; border-radius: 8px; overflow: hidden; }
+.status-tracking .page-size-btn {
+  background: #fff; border: none; border-right: 1px solid #d0d5dd;
+  padding: 5px 12px; font-size: 0.8rem; font-weight: 500; color: #555;
+  cursor: pointer; transition: background 0.15s, color 0.15s; line-height: 1;
+}
+.status-tracking .page-size-btn:last-child { border-right: none; }
+.status-tracking .page-size-btn:hover { background: #f0f4ff; color: #1976d2; }
+.status-tracking .page-size-btn.active { background: linear-gradient(135deg, #667eea, #764ba2); color: #fff; font-weight: 700; }
+
+.status-tracking .page-num-btn {
+  min-width: 34px; height: 34px; border-radius: 8px; border: 1px solid #d0d5dd;
+  background: #fff; color: #444; font-size: 0.82rem; font-weight: 500;
+  cursor: pointer; transition: all 0.15s; padding: 0 4px;
+}
+.status-tracking .page-num-btn:hover { background: #f0f4ff; border-color: #667eea; color: #1976d2; }
+.status-tracking .page-num-btn.active {
+  background: linear-gradient(135deg, #667eea, #764ba2); border-color: #667eea;
+  color: #fff; font-weight: 700; box-shadow: 0 2px 8px rgba(102, 126, 234, 0.4);
+}
+
+.status-tracking .page-nav-btn {
+  width: 34px; height: 34px; border-radius: 8px; border: 1px solid #d0d5dd;
+  background: #fff; color: #555; font-size: 0.85rem; cursor: pointer;
+  display: flex; align-items: center; justify-content: center; transition: all 0.15s;
+}
+.status-tracking .page-nav-btn:hover:not(:disabled) { background: #f0f4ff; border-color: #667eea; color: #667eea; }
+.status-tracking .page-nav-btn:disabled { opacity: 0.35; cursor: not-allowed; }
+
+.status-tracking .page-ellipsis { padding: 0 4px; color: #aaa; font-size: 0.9rem; line-height: 34px; user-select: none; }
+
+@media (max-width: 768px) {
+  .status-tracking .pagination-bar { flex-direction: column; align-items: flex-start !important; }
+  .status-tracking .page-size-btn { padding: 5px 9px; }
+}

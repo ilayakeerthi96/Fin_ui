@@ -603,10 +603,11 @@ export class LoginComponent {
 
       console.log('🔵 UNIFIED LOGIN ATTEMPT for:', loginRequest.email);
 
+      // The Super Admin branch was removed with the role itself. The Organization Admin
+      // is now the application's top-level account and is created by the seed script,
+      // so there is nothing above it to authenticate as. Every other branch, and the
+      // first-success-wins precedence between them, is unchanged.
       forkJoin({
-        superAdmin: this.dataService.superAdminLogin(loginRequest).pipe(
-          catchError(err => of({ success: false, error: err, type: 'superadmin' }))
-        ),
         orgAdmin: this.dataService.organizationAdminLogin(loginRequest).pipe(
           catchError(err => of({ success: false, error: err, type: 'orgadmin' }))
         ),
@@ -623,9 +624,7 @@ export class LoginComponent {
         next: (results: any) => {
           console.log('📊 Login Results:', results);
 
-          if (results.superAdmin?.success === true && results.superAdmin?.data?.token) {
-            this.handleSuperAdminLogin(results.superAdmin, loginRequest);
-          } else if (results.orgAdmin?.success === true && results.orgAdmin?.data?.token) {
+          if (results.orgAdmin?.success === true && results.orgAdmin?.data?.token) {
             this.handleOrgAdminLogin(results.orgAdmin, loginRequest);
           } else if (results.hierarchy?.success === true && results.hierarchy?.data?.token) {
             this.handleHierarchyLogin(results.hierarchy, loginRequest);
@@ -649,64 +648,6 @@ export class LoginComponent {
       this.isLoading = false;
       this.loginForm.markAllAsTouched();
     }
-  }
-
-  // ============================================
-  // SUPERADMIN LOGIN
-  // ============================================
-  private handleSuperAdminLogin(response: any, loginRequest: any) {
-    console.log('✅ SUPERADMIN LOGIN SUCCESS');
-    this.isLoading = false;
-    const userData = response.data;
-
-    const now = new Date().getTime();
-    localStorage.setItem('token', userData.token);
-    localStorage.setItem('expirationTime', JSON.stringify(now + (24 * 60 * 60 * 1000)));
-    localStorage.setItem('loginTimestamp', JSON.stringify(now));
-    localStorage.setItem('userId', userData.id?.toString() || '');
-    localStorage.setItem('email', userData.email || '');
-    localStorage.setItem('fullName', userData.fullName || '');
-    localStorage.setItem('phone', userData.phone || '');
-    localStorage.setItem('companyName', userData.companyName || '');
-    localStorage.setItem('role', 'SUPER_ADMIN');
-    localStorage.setItem('userType', 'SUPER_ADMIN');
-    localStorage.setItem('loginStatus', 'true');
-    localStorage.setItem('superAdminLogoUrl', userData.logoUrl || '');
-
-    if (userData.logoBase64 && userData.logoBase64 !== 'null') {
-      localStorage.setItem('logoBase64', userData.logoBase64);
-    } else {
-      localStorage.removeItem('logoBase64');
-    }
-
-    this.themeService.loadThemeOnLogin();
-
-    const currentUser: User = {
-      id: userData.id || 0,
-      username: userData.email || loginRequest.email,
-      roles: ['SUPER_ADMIN'],
-      department: []
-    };
-
-    const signinData = {
-      userId: userData.id,
-      email: userData.email,
-      fullName: userData.fullName,
-      companyName: userData.companyName,
-      role: 'SUPER_ADMIN',
-      userType: 'SUPER_ADMIN',
-      isActive: userData.isActive,
-      userRoleAccess: [{
-        userRoleAccessId: 0, userRoles: 'SUPER_ADMIN', pageAccess: 'ALL',
-        createdDate: null, accessRead: true, accessEdit: true, accessDelete: true
-      }]
-    };
-
-    localStorage.setItem('signinData', JSON.stringify(signinData));
-    localStorage.setItem('userRole', JSON.stringify(signinData.userRoleAccess));
-    this.authService.setUser(currentUser);
-    this.authService.setLoginStatus(true);
-    this.router.navigate(['/superadmin-dashboard']);
   }
 
   // ============================================
@@ -839,8 +780,13 @@ export class LoginComponent {
     this.authService.setUser(currentUser);
     this.authService.setLoginStatus(true);
     // ✅ Legal team gets their own contract-only dashboard instead of the RFQ/PO hierarchy dashboard
-    if ((userData.role || '').toUpperCase() === 'LEGAL') {
+    const roleUpper = (userData.role || '').toUpperCase();
+    if (roleUpper === 'LEGAL') {
       this.router.navigate(['/legal-dashboard']);
+    } else if (roleUpper === 'PROCUREMENT_OPERATOR') {
+      // Runs PO/invoice/payment/closure day-to-day — the PO list IS their dashboard
+      // (it already carries the summary tiles), so there is no separate landing page.
+      this.router.navigate(['/po-list']);
     } else {
       this.router.navigate(['/hierarchy-dashboard']);
     }

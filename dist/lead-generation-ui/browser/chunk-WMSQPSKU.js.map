@@ -1,0 +1,7 @@
+{
+  "version": 3,
+  "sources": ["src/app/views/base/create-s/routes.ts"],
+  "sourcesContent": ["import { Routes } from '@angular/router';\r\n\r\nexport const routes: Routes = [\r\n  {\r\n    path: '',\r\n    loadComponent: () => import('./create-s.component').then(m => m.CreateSComponent),\r\n    data: { title: 'Create s' }\r\n  },\r\n    {\r\n    path: 'edit/:id',\r\n    loadComponent: () => import('./create-s.component').then(m => m.CreateSComponent),\r\n    data: { title: 'Edit Supplier' }\r\n  },\r\n \r\n];\r\n"],
+  "mappings": ";;;AAEO,IAAM,SAAiB;EAC5B;IACE,MAAM;IACN,eAAe,MAAM,OAAO,qBAAsB,EAAE,KAAK,OAAK,EAAE,gBAAgB;IAChF,MAAM,EAAE,OAAO,WAAU;;EAEzB;IACA,MAAM;IACN,eAAe,MAAM,OAAO,qBAAsB,EAAE,KAAK,OAAK,EAAE,gBAAgB;IAChF,MAAM,EAAE,OAAO,gBAAe;;;",
+  "names": []
+}

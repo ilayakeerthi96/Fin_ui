@@ -431,8 +431,8 @@
                   <td class="ps-4"><strong>{{ (poCurrentPage-1)*poPageSize+i+1 }}</strong></td>
                   <td>
                     <div class="fw-bold text-primary">{{ po.poNumber }}</div>
-                    <small class="badge bg-success">APPROVED</small>
-                    <small *ngIf="po.sourceSesId" class="badge bg-warning text-dark"><i class="bi bi-tools"></i> Service</small>
+                    <span class="badge bg-success">APPROVED</span>
+                    <span *ngIf="po.sourceSesId" class="badge bg-warning text-dark"><i class="bi bi-tools"></i> Service</span>
                   </td>
                   <td><div class="fw-semibold">{{ po.rfqNumber }}</div><small class="text-muted">{{ po.rfqTitle }}</small></td>
                   <td><div class="fw-semibold">{{ po.buyerCompanyName }}</div></td>
@@ -1059,8 +1059,8 @@
                   <td class="ps-4"><strong>{{ (poCurrentPage-1)*poPageSize+i+1 }}</strong></td>
                   <td>
                     <div class="fw-bold text-primary">{{ po.poNumber }}</div>
-                    <small class="badge bg-success">APPROVED</small>
-                    <small *ngIf="po.sourceSesId" class="badge bg-warning text-dark"><i class="bi bi-tools"></i> Service</small>
+                    <span class="badge bg-success">APPROVED</span>
+                    <span *ngIf="po.sourceSesId" class="badge bg-warning text-dark"><i class="bi bi-tools"></i> Service</span>
                   </td>
                   <td><div class="fw-semibold">{{ po.rfqNumber }}</div><small class="text-muted">{{ po.rfqTitle }}</small></td>
                   <td><div class="fw-semibold">{{ po.buyerCompanyName }}</div></td>
@@ -1448,12 +1448,8 @@
       <c-card-header class="bg-white border-0 pt-3 px-4 pb-0">
         <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
           <ul class="nav nav-tabs border-0" style="gap:4px;">
-            <li class="nav-item">
-              <button class="nav-link dash-tab-btn" [class.active]="activeTab==='rfq'" (click)="switchTab('rfq')">
-                <i class="bi bi-file-text me-1"></i>RFQs
-                <span class="tab-count-badge" [class.badge-active]="activeTab==='rfq'">{{ dateFilteredRFQs.length }}</span>
-              </button>
-            </li>
+            <!-- The RFQs tab was removed with the RFQ module. Suppliers now work
+                 directly from released Purchase Orders. -->
             <li class="nav-item">
               <button class="nav-link dash-tab-btn" [class.active]="activeTab==='po'" (click)="switchTab('po')">
                 <i class="bi bi-cart-check me-1"></i>Purchase Orders
@@ -1468,20 +1464,6 @@
             </li>
           </ul>
           <div class="d-flex gap-2 align-items-center">
-
-            <ng-container *ngIf="activeTab==='rfq'">
-              <input type="text" class="form-control form-control-sm" style="width:180px;"
-                placeholder="Search RFQ..." [(ngModel)]="searchText" (ngModelChange)="onSearchChange()"/>
-              <select class="form-select form-select-sm" style="width:150px;"
-                [(ngModel)]="statusFilter" (change)="currentPage = 1; loadRFQs()">
-                <option value="ALL">All status</option>
-                <option value="PENDING">Pending</option>
-                <option value="SENT">Sent</option>
-                <option value="RESPONDED">Responded</option>
-                <option value="SELECTED">Selected</option>
-                <option value="EXPIRED">Expired</option>
-              </select>
-            </ng-container>
 
             <ng-container *ngIf="activeTab==='po'">
               <input type="text" class="form-control form-control-sm" style="width:180px;"
@@ -1719,37 +1701,46 @@
               <i class="bi bi-tools me-1"></i>Service (Spares) <span class="badge bg-light text-dark ms-1">{{ servicePOCount }}</span>
             </button>
           </div>
-          <div class="px-4 py-2 border-bottom" style="background:#f8f9fa;">
-            <small class="text-muted">
-              Showing {{ paginatedPOs.length }} of {{ filteredPOList.length }} Approved Purchase Orders
-              <span *ngIf="activeDateRangeLabel"> — {{ activeDateRangeLabel }}</span>
-            </small>
-          </div>
           <div *ngIf="isLoadingPOs" class="text-center py-5"><c-spinner color="warning"></c-spinner></div>
-          <div *ngIf="!isLoadingPOs" class="table-responsive">
-            <table class="table align-middle mb-0">
-              <thead style="background:#f8f9fa;">
+          <div *ngIf="!isLoadingPOs" class="table-responsive po-style-card">
+
+            <!-- Table header with result count -->
+            <div class="px-4 pt-3 pb-2 d-flex align-items-center justify-content-between">
+              <h5 class="fw-bold text-dark mb-0">
+                <i class="bi bi-table me-2 text-primary"></i>Purchase Orders
+                <span *ngIf="activeDateRangeLabel" class="text-muted fw-normal" style="font-size: 0.85rem;">
+                  — {{ activeDateRangeLabel }}
+                </span>
+              </h5>
+              <small class="text-muted">{{ filteredPOList.length }} result{{ filteredPOList.length !== 1 ? 's' : '' }}</small>
+            </div>
+
+            <table class="table po-table mb-0">
+              <thead class="table-header">
                 <tr>
-                  <th class="ps-4">SL</th><th>PO NUMBER</th><th>RFQ REFERENCE</th>
-                  <th>BUYER</th><th class="text-end">VALUE</th><th>PO DATE</th>
-                  <th>INVOICE STATUS</th><th class="text-center">ACTION</th>
+                  <th>PO Number / Details</th>
+                  <th class="text-end">Value</th>
+                  <th>PO Date</th>
+                  <th class="text-center">Invoice Status</th>
+                  <th class="text-center">Action</th>
                 </tr>
               </thead>
               <tbody>
-                <tr *ngFor="let po of paginatedPOs; let i = index" class="table-row-hover">
-                  <td class="ps-4"><strong>{{ (poCurrentPage-1)*poPageSize+i+1 }}</strong></td>
+                <tr *ngFor="let po of paginatedPOs; let i = index" class="po-main-row">
                   <td>
-                    <div class="fw-bold text-primary">{{ po.poNumber }}</div>
-                    <small class="badge bg-success">APPROVED</small>
-                    <small *ngIf="po.sourceSesId" class="badge bg-warning text-dark"><i class="bi bi-tools"></i> Service</small>
+                    <a class="po-number-link" href="javascript:void(0)">
+                      <i class="bi bi-file-earmark-text me-1"></i>{{ po.poNumber }}
+                    </a>
+                    <div class="mt-1">
+                      <span class="badge bg-success">APPROVED</span>
+                      <span *ngIf="po.sourceSesId" class="badge bg-warning text-dark"><i class="bi bi-tools"></i> Service</span>
+                    </div>
                   </td>
-                  <td><div class="fw-semibold">{{ po.rfqNumber }}</div><small class="text-muted">{{ po.rfqTitle }}</small></td>
-                  <td><div class="fw-semibold">{{ po.buyerCompanyName }}</div></td>
                   <td class="text-end">
-                    <span class="fw-bold text-success">{{ formatCurrency(po.grandTotal, po.currencyCode) }}</span>
+                    <div class="fw-bold text-success fs-6">{{ formatCurrency(po.grandTotal, po.currencyCode) }}</div>
                   </td>
                   <td><small class="text-muted">{{ formatDate(po.createdAt) }}</small></td>
-                  <td>
+                  <td class="text-center">
                     <span *ngIf="po.hasInvoice" class="badge"
                       [ngClass]="{
                         'bg-success':           po.invoiceStatus==='APPROVED' || po.invoiceStatus==='PAID',
@@ -1819,7 +1810,7 @@
                   </td>
                 </tr>
                 <tr *ngIf="paginatedPOs.length===0">
-                  <td colspan="8" class="text-center py-5">
+                  <td colspan="5" class="text-center py-5">
                     <i class="bi bi-cart-x display-6 d-block mb-2" style="opacity:.25;"></i>
                     <p class="text-muted mb-0">No approved Purchase Orders found</p>
                     <small *ngIf="activeDateRangeLabel" class="text-muted">for <strong>{{ activeDateRangeLabel }}</strong></small>
@@ -1827,6 +1818,42 @@
                 </tr>
               </tbody>
             </table>
+
+            <!-- ===== PAGINATION BAR ===== -->
+            <div class="pagination-bar d-flex align-items-center justify-content-between flex-wrap gap-3 px-4 py-3"
+                 *ngIf="filteredPOList.length > 0">
+              <div class="d-flex align-items-center gap-3 flex-wrap">
+                <span class="text-muted small">
+                  Showing <strong>{{ poStartIndex }}–{{ poEndIndex }}</strong> of <strong>{{ filteredPOList.length }}</strong> orders
+                </span>
+                <div class="d-flex align-items-center gap-2">
+                  <label class="text-muted small mb-0 text-nowrap">Rows per page:</label>
+                  <div class="page-size-group">
+                    <button *ngFor="let size of poPageSizeOptions" class="page-size-btn"
+                            [class.active]="poPageSize === size" (click)="onPOPageSizeChange(size)">{{ size }}</button>
+                  </div>
+                </div>
+              </div>
+              <div class="d-flex align-items-center gap-1">
+                <button class="page-nav-btn" [disabled]="poCurrentPage === 1" (click)="goToPOPage(1)" title="First page">
+                  <i class="bi bi-chevron-double-left"></i>
+                </button>
+                <button class="page-nav-btn" [disabled]="poCurrentPage === 1" (click)="goToPOPage(poCurrentPage - 1)" title="Previous page">
+                  <i class="bi bi-chevron-left"></i>
+                </button>
+                <ng-container *ngFor="let page of poPageNumbers">
+                  <span *ngIf="page === -1" class="page-ellipsis">…</span>
+                  <button *ngIf="page !== -1" class="page-num-btn" [class.active]="poCurrentPage === page" (click)="goToPOPage(page)">{{ page }}</button>
+                </ng-container>
+                <button class="page-nav-btn" [disabled]="poCurrentPage === totalPOPages" (click)="goToPOPage(poCurrentPage + 1)" title="Next page">
+                  <i class="bi bi-chevron-right"></i>
+                </button>
+                <button class="page-nav-btn" [disabled]="poCurrentPage === totalPOPages" (click)="goToPOPage(totalPOPages)" title="Last page">
+                  <i class="bi bi-chevron-double-right"></i>
+                </button>
+              </div>
+            </div>
+
           </div>
         </div>
 
@@ -2494,12 +2521,13 @@
       <div class="card-header bg-white"><h6 class="fw-bold mb-0"><i class="bi bi-bank me-2 text-success"></i>Bank Details</h6></div>
       <div class="card-body">
         <div class="row g-3">
-          <div class="col-md-6"><label class="form-label fw-semibold">Bank Name <span class="text-danger">*</span></label><input type="text" class="form-control" [(ngModel)]="editInvoiceForm.bankName"/></div>
-          <div class="col-md-6"><label class="form-label fw-semibold">Account Holder Name <span class="text-danger">*</span></label><input type="text" class="form-control" [(ngModel)]="editInvoiceForm.accountHolderName"/></div>
-          <div class="col-md-6"><label class="form-label fw-semibold">Account Number <span class="text-danger">*</span></label><input type="text" class="form-control" [(ngModel)]="editInvoiceForm.accountNumber"/></div>
-          <div class="col-md-3"><label class="form-label fw-semibold">IFSC Code <span class="text-danger">*</span></label><input type="text" class="form-control" [(ngModel)]="editInvoiceForm.ifscCode" style="text-transform:uppercase;" (input)="editInvoiceForm.ifscCode = editInvoiceForm.ifscCode.toUpperCase()"/></div>
-          <div class="col-md-3"><label class="form-label fw-semibold">Branch</label><input type="text" class="form-control" [(ngModel)]="editInvoiceForm.branchName"/></div>
+          <div class="col-md-6"><label class="form-label fw-semibold">Bank Name <span class="text-danger">*</span></label><input type="text" class="form-control" [(ngModel)]="editInvoiceForm.bankName" readonly style="background:#f4f5f7;cursor:default;"/></div>
+          <div class="col-md-6"><label class="form-label fw-semibold">Account Holder Name <span class="text-danger">*</span></label><input type="text" class="form-control" [(ngModel)]="editInvoiceForm.accountHolderName" readonly style="background:#f4f5f7;cursor:default;"/></div>
+          <div class="col-md-6"><label class="form-label fw-semibold">Account Number <span class="text-danger">*</span></label><input type="text" class="form-control" [(ngModel)]="editInvoiceForm.accountNumber" readonly style="background:#f4f5f7;cursor:default;"/></div>
+          <div class="col-md-3"><label class="form-label fw-semibold">IFSC Code <span class="text-danger">*</span></label><input type="text" class="form-control" [(ngModel)]="editInvoiceForm.ifscCode" readonly style="text-transform:uppercase;background:#f4f5f7;cursor:default;"/></div>
+          <div class="col-md-3"><label class="form-label fw-semibold">Branch</label><input type="text" class="form-control" [(ngModel)]="editInvoiceForm.branchName" readonly style="background:#f4f5f7;cursor:default;"/></div>
           <div class="col-md-6"><label class="form-label fw-semibold">UPI ID <small class="text-muted">(optional)</small></label><input type="text" class="form-control" [(ngModel)]="editInvoiceForm.upiId"/></div>
+          <div class="col-12"><small class="text-muted"><i class="bi bi-info-circle me-1"></i>Bank details are taken from your registered supplier profile and can't be edited here. Contact the buyer to update them.</small></div>
         </div>
       </div>
     </div>
@@ -2576,37 +2604,28 @@
         </div>
       </div>
 
-      <div *ngIf="hasPoType(selectedPOForInvoice.poType, 'BLANKET_CONTRACT')" class="card border-0 mb-4" style="border-radius:10px; border:1px solid #e0e0e0!important;">
+      <div class="card border-0 mb-4" style="border-radius:10px; border:1px solid #e0e0e0!important;">
         <div class="card-body">
-          <h6 class="fw-bold mb-3"><i class="bi bi-signpost-split me-2 text-primary"></i>How will you provide this invoice?</h6>
-          <div class="btn-group w-100 mb-3" role="group">
-            <button type="button" class="btn" [class.btn-primary]="invoiceInputMode==='write'" [class.btn-outline-secondary]="invoiceInputMode!=='write'" (click)="invoiceInputMode='write'">
-              <i class="bi bi-pencil-square me-1"></i>Fill In Manually
-            </button>
-            <button type="button" class="btn" [class.btn-primary]="invoiceInputMode==='upload'" [class.btn-outline-secondary]="invoiceInputMode!=='upload'" (click)="invoiceInputMode='upload'">
-              <i class="bi bi-paperclip me-1"></i>Upload Invoice Document
-            </button>
-          </div>
+          <h6 class="fw-bold mb-3"><i class="bi bi-paperclip me-2 text-primary"></i>Supporting Documents (optional)</h6>
+          <small class="text-muted d-block mb-3">
+            Attach one or more files alongside the line items below — a scanned invoice, a delivery
+            challan, anything worth keeping with this invoice. Attaching a document does not replace
+            filling in the amounts; both are saved together.
+          </small>
 
-          <div *ngIf="invoiceInputMode==='upload'">
-            <label class="d-block text-center p-4" style="border:2px dashed #ced4da;border-radius:10px;cursor:pointer;background:#fafbfc;">
-              <i class="bi bi-cloud-arrow-up fs-2 text-primary d-block mb-1"></i>
-              <span class="fw-semibold">Click to attach your invoice document</span><br>
-              <small class="text-muted">PDF, image, or any file — the numbers below still need confirming to match it</small>
-              <input type="file" class="d-none" multiple (change)="onInvoiceAttachmentsSelected($event)" />
-            </label>
+          <label class="d-block text-center p-4" style="border:2px dashed #ced4da;border-radius:10px;cursor:pointer;background:#fafbfc;">
+            <i class="bi bi-cloud-arrow-up fs-2 text-primary d-block mb-1"></i>
+            <span class="fw-semibold">Click to attach one or more files</span><br>
+            <small class="text-muted">PDF, image, or any file type — no limit on how many</small>
+            <input type="file" class="d-none" multiple (change)="onInvoiceAttachmentsSelected($event)" />
+          </label>
 
-            <div *ngIf="pendingInvoiceAttachments.length > 0" class="d-flex flex-wrap gap-2 mt-3">
-              <div *ngFor="let a of pendingInvoiceAttachments; let ai = index" class="d-flex align-items-center gap-2 px-2 py-1" style="background:#eef2ff;border-radius:8px;font-size:0.82rem;">
-                <img *ngIf="a.isImage" [src]="a.previewUrl" style="width:28px;height:28px;object-fit:cover;border-radius:4px;" alt="" />
-                <i *ngIf="!a.isImage" class="bi bi-file-earmark-text text-primary"></i>
-                <span>{{ a.file.name }}</span>
-                <button type="button" class="btn-close" style="font-size:0.6rem;" (click)="removeInvoiceAttachment(ai)" aria-label="Remove"></button>
-              </div>
-            </div>
-
-            <div class="alert alert-light border mt-3 mb-0 py-2" style="font-size:0.82rem;">
-              <i class="bi bi-info-circle me-1"></i>Confirm the dates, quantities and amounts below to match your uploaded document.
+          <div *ngIf="pendingInvoiceAttachments.length > 0" class="d-flex flex-wrap gap-2 mt-3">
+            <div *ngFor="let a of pendingInvoiceAttachments; let ai = index" class="d-flex align-items-center gap-2 px-2 py-1" style="background:#eef2ff;border-radius:8px;font-size:0.82rem;">
+              <img *ngIf="a.isImage" [src]="a.previewUrl" style="width:28px;height:28px;object-fit:cover;border-radius:4px;" alt="" />
+              <i *ngIf="!a.isImage" class="bi bi-file-earmark-text text-primary"></i>
+              <span>{{ a.file.name }}</span>
+              <button type="button" class="btn-close" style="font-size:0.6rem;" (click)="removeInvoiceAttachment(ai)" aria-label="Remove"></button>
             </div>
           </div>
         </div>
@@ -2626,6 +2645,40 @@
               <input type="date" class="form-control" [(ngModel)]="invoiceForm.dueDate" [min]="getTodayStr()"/>
               <small class="text-muted"><i class="bi bi-info-circle me-1"></i>Past dates are not allowed</small>
             </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card border-0 mb-4" style="border-radius:10px; border:1px solid #e0e0e0!important;">
+        <div class="card-body">
+          <h6 class="fw-bold mb-3"><i class="bi bi-file-earmark-spreadsheet me-2 text-primary"></i>Upload Items from a Spreadsheet (optional)</h6>
+          <small class="text-muted d-block mb-3">
+            Instead of typing each row into the grid below, download the template — it already has
+            this PO's items filled in — set Qty to Invoice / Discount % / Tax %, then upload it back.
+            Unit Price stays fixed from the PO either way.
+          </small>
+
+          <div class="d-flex flex-wrap gap-2 align-items-center">
+            <button type="button" class="btn btn-outline-primary btn-sm" (click)="downloadInvoiceItemTemplate()">
+              <i class="bi bi-download me-1"></i>Download Template
+            </button>
+            <label class="btn btn-primary btn-sm mb-0" style="cursor:pointer;">
+              <i class="bi bi-upload me-1"></i>Upload Filled Template
+              <input type="file" class="d-none" accept=".xlsx,.xls,.csv" (change)="onInvoiceItemsFileSelected($event)" [disabled]="isProcessingItemUpload"/>
+            </label>
+            <c-spinner *ngIf="isProcessingItemUpload" size="sm"></c-spinner>
+          </div>
+
+          <div class="alert mt-3 mb-0 py-2"
+               [ngClass]="itemUploadSummary && itemUploadSummary.unmatched.length > 0 ? 'alert-warning' : 'alert-success'"
+               *ngIf="itemUploadSummary">
+            <i class="bi me-1" [ngClass]="itemUploadSummary.unmatched.length > 0 ? 'bi-exclamation-triangle-fill' : 'bi-check-circle-fill'"></i>
+            <strong>{{ itemUploadSummary.matched }} of {{ itemUploadSummary.total }}</strong> item(s) updated from the sheet.
+            <span *ngIf="itemUploadSummary.unmatched.length > 0">
+              An invoice can only bill for items already on this PO — these rows were <strong>not
+              invoiced</strong>: <strong>{{ itemUploadSummary.unmatched.join(', ') }}</strong>
+            </span>
+            <span *ngIf="itemUploadSummary.unmatched.length === 0"> Review the grid below before submitting.</span>
           </div>
         </div>
       </div>
@@ -2715,12 +2768,13 @@
         <div class="card-header bg-white"><h6 class="fw-bold mb-0"><i class="bi bi-bank me-2 text-success"></i>Bank Details <small class="text-muted fw-normal">(Required to submit)</small></h6></div>
         <div class="card-body">
           <div class="row g-3">
-            <div class="col-md-6"><label class="form-label fw-semibold">Bank Name *</label><input type="text" class="form-control" [(ngModel)]="invoiceForm.bankName"/></div>
-            <div class="col-md-6"><label class="form-label fw-semibold">Account Holder Name *</label><input type="text" class="form-control" [(ngModel)]="invoiceForm.accountHolderName"/></div>
-            <div class="col-md-6"><label class="form-label fw-semibold">Account Number *</label><input type="text" class="form-control" [(ngModel)]="invoiceForm.accountNumber"/></div>
-            <div class="col-md-3"><label class="form-label fw-semibold">IFSC Code *</label><input type="text" class="form-control" [(ngModel)]="invoiceForm.ifscCode" style="text-transform:uppercase;"/></div>
-            <div class="col-md-3"><label class="form-label fw-semibold">Branch</label><input type="text" class="form-control" [(ngModel)]="invoiceForm.branchName"/></div>
+            <div class="col-md-6"><label class="form-label fw-semibold">Bank Name *</label><input type="text" class="form-control" [(ngModel)]="invoiceForm.bankName" readonly style="background:#f4f5f7;cursor:default;"/></div>
+            <div class="col-md-6"><label class="form-label fw-semibold">Account Holder Name *</label><input type="text" class="form-control" [(ngModel)]="invoiceForm.accountHolderName" readonly style="background:#f4f5f7;cursor:default;"/></div>
+            <div class="col-md-6"><label class="form-label fw-semibold">Account Number *</label><input type="text" class="form-control" [(ngModel)]="invoiceForm.accountNumber" readonly style="background:#f4f5f7;cursor:default;"/></div>
+            <div class="col-md-3"><label class="form-label fw-semibold">IFSC Code *</label><input type="text" class="form-control" [(ngModel)]="invoiceForm.ifscCode" readonly style="text-transform:uppercase;background:#f4f5f7;cursor:default;"/></div>
+            <div class="col-md-3"><label class="form-label fw-semibold">Branch</label><input type="text" class="form-control" [(ngModel)]="invoiceForm.branchName" readonly style="background:#f4f5f7;cursor:default;"/></div>
             <div class="col-md-6"><label class="form-label fw-semibold">UPI ID <small class="text-muted">(optional)</small></label><input type="text" class="form-control" [(ngModel)]="invoiceForm.upiId"/></div>
+            <div class="col-12"><small class="text-muted"><i class="bi bi-info-circle me-1"></i>Bank details are taken from your registered supplier profile and can't be edited here. Contact the buyer to update them.</small></div>
           </div>
         </div>
       </div>
@@ -3493,12 +3547,13 @@
       <div class="card-header bg-white"><h6 class="fw-bold mb-0"><i class="bi bi-bank me-2 text-success"></i>Bank Details</h6></div>
       <div class="card-body">
         <div class="row g-3">
-          <div class="col-md-6"><label class="form-label fw-semibold">Bank Name <span class="text-danger">*</span></label><input type="text" class="form-control" [(ngModel)]="editInvoiceForm.bankName"/></div>
-          <div class="col-md-6"><label class="form-label fw-semibold">Account Holder Name <span class="text-danger">*</span></label><input type="text" class="form-control" [(ngModel)]="editInvoiceForm.accountHolderName"/></div>
-          <div class="col-md-6"><label class="form-label fw-semibold">Account Number <span class="text-danger">*</span></label><input type="text" class="form-control" [(ngModel)]="editInvoiceForm.accountNumber"/></div>
-          <div class="col-md-3"><label class="form-label fw-semibold">IFSC Code <span class="text-danger">*</span></label><input type="text" class="form-control" [(ngModel)]="editInvoiceForm.ifscCode" style="text-transform:uppercase;" (input)="editInvoiceForm.ifscCode = editInvoiceForm.ifscCode.toUpperCase()"/></div>
-          <div class="col-md-3"><label class="form-label fw-semibold">Branch</label><input type="text" class="form-control" [(ngModel)]="editInvoiceForm.branchName"/></div>
+          <div class="col-md-6"><label class="form-label fw-semibold">Bank Name <span class="text-danger">*</span></label><input type="text" class="form-control" [(ngModel)]="editInvoiceForm.bankName" readonly style="background:#f4f5f7;cursor:default;"/></div>
+          <div class="col-md-6"><label class="form-label fw-semibold">Account Holder Name <span class="text-danger">*</span></label><input type="text" class="form-control" [(ngModel)]="editInvoiceForm.accountHolderName" readonly style="background:#f4f5f7;cursor:default;"/></div>
+          <div class="col-md-6"><label class="form-label fw-semibold">Account Number <span class="text-danger">*</span></label><input type="text" class="form-control" [(ngModel)]="editInvoiceForm.accountNumber" readonly style="background:#f4f5f7;cursor:default;"/></div>
+          <div class="col-md-3"><label class="form-label fw-semibold">IFSC Code <span class="text-danger">*</span></label><input type="text" class="form-control" [(ngModel)]="editInvoiceForm.ifscCode" readonly style="text-transform:uppercase;background:#f4f5f7;cursor:default;"/></div>
+          <div class="col-md-3"><label class="form-label fw-semibold">Branch</label><input type="text" class="form-control" [(ngModel)]="editInvoiceForm.branchName" readonly style="background:#f4f5f7;cursor:default;"/></div>
           <div class="col-md-6"><label class="form-label fw-semibold">UPI ID <small class="text-muted">(optional)</small></label><input type="text" class="form-control" [(ngModel)]="editInvoiceForm.upiId"/></div>
+          <div class="col-12"><small class="text-muted"><i class="bi bi-info-circle me-1"></i>Bank details are taken from your registered supplier profile and can't be edited here. Contact the buyer to update them.</small></div>
         </div>
       </div>
     </div>
@@ -3575,37 +3630,28 @@
         </div>
       </div>
 
-      <div *ngIf="hasPoType(selectedPOForInvoice.poType, 'BLANKET_CONTRACT')" class="card border-0 mb-4" style="border-radius:10px; border:1px solid #e0e0e0!important;">
+      <div class="card border-0 mb-4" style="border-radius:10px; border:1px solid #e0e0e0!important;">
         <div class="card-body">
-          <h6 class="fw-bold mb-3"><i class="bi bi-signpost-split me-2 text-primary"></i>How will you provide this invoice?</h6>
-          <div class="btn-group w-100 mb-3" role="group">
-            <button type="button" class="btn" [class.btn-primary]="invoiceInputMode==='write'" [class.btn-outline-secondary]="invoiceInputMode!=='write'" (click)="invoiceInputMode='write'">
-              <i class="bi bi-pencil-square me-1"></i>Fill In Manually
-            </button>
-            <button type="button" class="btn" [class.btn-primary]="invoiceInputMode==='upload'" [class.btn-outline-secondary]="invoiceInputMode!=='upload'" (click)="invoiceInputMode='upload'">
-              <i class="bi bi-paperclip me-1"></i>Upload Invoice Document
-            </button>
-          </div>
+          <h6 class="fw-bold mb-3"><i class="bi bi-paperclip me-2 text-primary"></i>Supporting Documents (optional)</h6>
+          <small class="text-muted d-block mb-3">
+            Attach one or more files alongside the line items below — a scanned invoice, a delivery
+            challan, anything worth keeping with this invoice. Attaching a document does not replace
+            filling in the amounts; both are saved together.
+          </small>
 
-          <div *ngIf="invoiceInputMode==='upload'">
-            <label class="d-block text-center p-4" style="border:2px dashed #ced4da;border-radius:10px;cursor:pointer;background:#fafbfc;">
-              <i class="bi bi-cloud-arrow-up fs-2 text-primary d-block mb-1"></i>
-              <span class="fw-semibold">Click to attach your invoice document</span><br>
-              <small class="text-muted">PDF, image, or any file — the numbers below still need confirming to match it</small>
-              <input type="file" class="d-none" multiple (change)="onInvoiceAttachmentsSelected($event)" />
-            </label>
+          <label class="d-block text-center p-4" style="border:2px dashed #ced4da;border-radius:10px;cursor:pointer;background:#fafbfc;">
+            <i class="bi bi-cloud-arrow-up fs-2 text-primary d-block mb-1"></i>
+            <span class="fw-semibold">Click to attach one or more files</span><br>
+            <small class="text-muted">PDF, image, or any file type — no limit on how many</small>
+            <input type="file" class="d-none" multiple (change)="onInvoiceAttachmentsSelected($event)" />
+          </label>
 
-            <div *ngIf="pendingInvoiceAttachments.length > 0" class="d-flex flex-wrap gap-2 mt-3">
-              <div *ngFor="let a of pendingInvoiceAttachments; let ai = index" class="d-flex align-items-center gap-2 px-2 py-1" style="background:#eef2ff;border-radius:8px;font-size:0.82rem;">
-                <img *ngIf="a.isImage" [src]="a.previewUrl" style="width:28px;height:28px;object-fit:cover;border-radius:4px;" alt="" />
-                <i *ngIf="!a.isImage" class="bi bi-file-earmark-text text-primary"></i>
-                <span>{{ a.file.name }}</span>
-                <button type="button" class="btn-close" style="font-size:0.6rem;" (click)="removeInvoiceAttachment(ai)" aria-label="Remove"></button>
-              </div>
-            </div>
-
-            <div class="alert alert-light border mt-3 mb-0 py-2" style="font-size:0.82rem;">
-              <i class="bi bi-info-circle me-1"></i>Confirm the dates, quantities and amounts below to match your uploaded document.
+          <div *ngIf="pendingInvoiceAttachments.length > 0" class="d-flex flex-wrap gap-2 mt-3">
+            <div *ngFor="let a of pendingInvoiceAttachments; let ai = index" class="d-flex align-items-center gap-2 px-2 py-1" style="background:#eef2ff;border-radius:8px;font-size:0.82rem;">
+              <img *ngIf="a.isImage" [src]="a.previewUrl" style="width:28px;height:28px;object-fit:cover;border-radius:4px;" alt="" />
+              <i *ngIf="!a.isImage" class="bi bi-file-earmark-text text-primary"></i>
+              <span>{{ a.file.name }}</span>
+              <button type="button" class="btn-close" style="font-size:0.6rem;" (click)="removeInvoiceAttachment(ai)" aria-label="Remove"></button>
             </div>
           </div>
         </div>
@@ -3625,6 +3671,40 @@
               <input type="date" class="form-control" [(ngModel)]="invoiceForm.dueDate" [min]="getTodayStr()"/>
               <small class="text-muted"><i class="bi bi-info-circle me-1"></i>Past dates are not allowed</small>
             </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card border-0 mb-4" style="border-radius:10px; border:1px solid #e0e0e0!important;">
+        <div class="card-body">
+          <h6 class="fw-bold mb-3"><i class="bi bi-file-earmark-spreadsheet me-2 text-primary"></i>Upload Items from a Spreadsheet (optional)</h6>
+          <small class="text-muted d-block mb-3">
+            Instead of typing each row into the grid below, download the template — it already has
+            this PO's items filled in — set Qty to Invoice / Discount % / Tax %, then upload it back.
+            Unit Price stays fixed from the PO either way.
+          </small>
+
+          <div class="d-flex flex-wrap gap-2 align-items-center">
+            <button type="button" class="btn btn-outline-primary btn-sm" (click)="downloadInvoiceItemTemplate()">
+              <i class="bi bi-download me-1"></i>Download Template
+            </button>
+            <label class="btn btn-primary btn-sm mb-0" style="cursor:pointer;">
+              <i class="bi bi-upload me-1"></i>Upload Filled Template
+              <input type="file" class="d-none" accept=".xlsx,.xls,.csv" (change)="onInvoiceItemsFileSelected($event)" [disabled]="isProcessingItemUpload"/>
+            </label>
+            <c-spinner *ngIf="isProcessingItemUpload" size="sm"></c-spinner>
+          </div>
+
+          <div class="alert mt-3 mb-0 py-2"
+               [ngClass]="itemUploadSummary && itemUploadSummary.unmatched.length > 0 ? 'alert-warning' : 'alert-success'"
+               *ngIf="itemUploadSummary">
+            <i class="bi me-1" [ngClass]="itemUploadSummary.unmatched.length > 0 ? 'bi-exclamation-triangle-fill' : 'bi-check-circle-fill'"></i>
+            <strong>{{ itemUploadSummary.matched }} of {{ itemUploadSummary.total }}</strong> item(s) updated from the sheet.
+            <span *ngIf="itemUploadSummary.unmatched.length > 0">
+              An invoice can only bill for items already on this PO — these rows were <strong>not
+              invoiced</strong>: <strong>{{ itemUploadSummary.unmatched.join(', ') }}</strong>
+            </span>
+            <span *ngIf="itemUploadSummary.unmatched.length === 0"> Review the grid below before submitting.</span>
           </div>
         </div>
       </div>
@@ -3714,12 +3794,13 @@
         <div class="card-header bg-white"><h6 class="fw-bold mb-0"><i class="bi bi-bank me-2 text-success"></i>Bank Details <small class="text-muted fw-normal">(Required to submit)</small></h6></div>
         <div class="card-body">
           <div class="row g-3">
-            <div class="col-md-6"><label class="form-label fw-semibold">Bank Name *</label><input type="text" class="form-control" [(ngModel)]="invoiceForm.bankName"/></div>
-            <div class="col-md-6"><label class="form-label fw-semibold">Account Holder Name *</label><input type="text" class="form-control" [(ngModel)]="invoiceForm.accountHolderName"/></div>
-            <div class="col-md-6"><label class="form-label fw-semibold">Account Number *</label><input type="text" class="form-control" [(ngModel)]="invoiceForm.accountNumber"/></div>
-            <div class="col-md-3"><label class="form-label fw-semibold">IFSC Code *</label><input type="text" class="form-control" [(ngModel)]="invoiceForm.ifscCode" style="text-transform:uppercase;"/></div>
-            <div class="col-md-3"><label class="form-label fw-semibold">Branch</label><input type="text" class="form-control" [(ngModel)]="invoiceForm.branchName"/></div>
+            <div class="col-md-6"><label class="form-label fw-semibold">Bank Name *</label><input type="text" class="form-control" [(ngModel)]="invoiceForm.bankName" readonly style="background:#f4f5f7;cursor:default;"/></div>
+            <div class="col-md-6"><label class="form-label fw-semibold">Account Holder Name *</label><input type="text" class="form-control" [(ngModel)]="invoiceForm.accountHolderName" readonly style="background:#f4f5f7;cursor:default;"/></div>
+            <div class="col-md-6"><label class="form-label fw-semibold">Account Number *</label><input type="text" class="form-control" [(ngModel)]="invoiceForm.accountNumber" readonly style="background:#f4f5f7;cursor:default;"/></div>
+            <div class="col-md-3"><label class="form-label fw-semibold">IFSC Code *</label><input type="text" class="form-control" [(ngModel)]="invoiceForm.ifscCode" readonly style="text-transform:uppercase;background:#f4f5f7;cursor:default;"/></div>
+            <div class="col-md-3"><label class="form-label fw-semibold">Branch</label><input type="text" class="form-control" [(ngModel)]="invoiceForm.branchName" readonly style="background:#f4f5f7;cursor:default;"/></div>
             <div class="col-md-6"><label class="form-label fw-semibold">UPI ID <small class="text-muted">(optional)</small></label><input type="text" class="form-control" [(ngModel)]="invoiceForm.upiId"/></div>
+            <div class="col-12"><small class="text-muted"><i class="bi bi-info-circle me-1"></i>Bank details are taken from your registered supplier profile and can't be edited here. Contact the buyer to update them.</small></div>
           </div>
         </div>
       </div>

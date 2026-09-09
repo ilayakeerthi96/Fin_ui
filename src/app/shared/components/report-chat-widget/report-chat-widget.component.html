@@ -1,0 +1,55 @@
+<div class="widget-root" *ngIf="visibleForRole">
+
+  <!-- Collapsed launcher button -->
+  <button class="launcher-btn" *ngIf="!isOpen" (click)="toggleOpen()" title="Report Assistant">
+    <i class="bi bi-chat-square-text-fill"></i>
+  </button>
+
+  <!-- Expanded panel -->
+  <div class="widget-panel" *ngIf="isOpen">
+
+    <div class="widget-header" (click)="toggleOpen()">
+      <div class="widget-header-left">
+        <div class="widget-avatar"><i class="bi bi-chat-square-text-fill"></i></div>
+        <div>
+          <div class="widget-title">Report Assistant</div>
+          <div class="widget-subtitle">Answers from your PO data</div>
+        </div>
+      </div>
+      <button class="minimise-btn" (click)="toggleOpen(); $event.stopPropagation()" title="Minimise">
+        <i class="bi bi-dash-lg"></i>
+      </button>
+    </div>
+
+    <div class="widget-scroll" #chatScroll>
+      <div class="text-center py-3" *ngIf="isLoadingData">
+        <div class="spinner-border spinner-border-sm text-primary"></div>
+      </div>
+
+      <div *ngFor="let m of chatMessages" class="widget-row" [class.widget-row-user]="m.role === 'user'">
+        <div class="widget-bubble" [class.bubble-user]="m.role === 'user'" [class.bubble-bot]="m.role === 'bot'">
+          <div>{{ m.text }}</div>
+          <div class="widget-highlight" *ngIf="m.highlight">{{ m.highlight }}</div>
+          <div class="widget-rows" *ngIf="m.rows && m.rows.length">
+            <div class="widget-row-item" *ngFor="let r of m.rows"
+                 [class.widget-row-clickable]="!r.label"
+                 (click)="!r.label && askExample(r.value)">
+              <span *ngIf="r.label" class="widget-row-label">{{ r.label }}</span>
+              <span [class.widget-row-value]="r.label">{{ r.value }}</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="widget-input-bar">
+      <input type="text" class="form-control" placeholder="Ask about spend, payments, a PO…"
+             [(ngModel)]="chatInput" (keyup.enter)="sendMessage()">
+      <button class="btn btn-primary" (click)="sendMessage()" [disabled]="!chatInput.trim()">
+        <i class="bi bi-send-fill"></i>
+      </button>
+    </div>
+
+  </div>
+
+</div>

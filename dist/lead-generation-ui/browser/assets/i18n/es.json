@@ -1,0 +1,23 @@
+{
+  "HEADER_SYSTEM_TITLE": "SISTEMA DE GESTIÓN DE PROVEEDORES",
+  "HEADER_CHANGE_PASSWORD": "Cambiar Contraseña",
+  "HEADER_LOGOUT": "Cerrar Sesión",
+  "HEADER_CONFIRM_LOGOUT_TITLE": "Confirmar Cierre de Sesión",
+  "HEADER_CONFIRM_LOGOUT_MESSAGE": "¿Está seguro de que desea cerrar sesión?",
+  "HEADER_LOGOUT_YES": "Sí, Cerrar Sesión",
+  "HEADER_LOGOUT_NO": "No, Permanecer",
+  "HEADER_LANGUAGE": "Idioma",
+
+  "LOGIN_WELCOME_BACK": "Bienvenido de Nuevo",
+  "LOGIN_SIGN_IN_SUBTITLE": "Inicie sesión en su cuenta",
+  "LOGIN_EMAIL_PLACEHOLDER": "Correo Electrónico",
+  "LOGIN_EMAIL_REQUIRED": "El correo electrónico es obligatorio.",
+  "LOGIN_EMAIL_INVALID": "Ingrese una dirección de correo electrónico válida.",
+  "LOGIN_PASSWORD_PLACEHOLDER": "Contraseña",
+  "LOGIN_PASSWORD_REQUIRED": "La contraseña es obligatoria.",
+  "LOGIN_SIGN_IN_BUTTON": "Iniciar Sesión",
+  "LOGIN_SIGNING_IN": "Iniciando sesión...",
+  "LOGIN_SUPPLIER_PROMPT": "¿Es usted un proveedor interesado en trabajar con nosotros?",
+  "LOGIN_REGISTER_BUTTON": "Registrarse como Proveedor",
+  "LOGIN_FOOTER_RIGHTS": "Todos los Derechos Reservados."
+}

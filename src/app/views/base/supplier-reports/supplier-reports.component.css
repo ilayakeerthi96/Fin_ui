@@ -1,0 +1,150 @@
+/* ============================================
+   STATISTICS CARDS (4 COLORED BOXES)
+   Same pattern as supplier-dashboard.component.css
+   ============================================ */
+.stat-card {
+  border: none;
+  border-radius: 0.75rem;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  transition: transform 0.2s, box-shadow 0.2s;
+  overflow: hidden;
+  position: relative;
+  height: 100%;
+}
+
+.stat-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 120px;
+  height: 120px;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 50%;
+  transform: translate(40%, -40%);
+}
+
+.stat-card-blue .stat-icon {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+}
+
+.stat-card-warning .stat-icon {
+  background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+  color: white;
+}
+
+.stat-card-success .stat-icon {
+  background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+  color: white;
+}
+
+.stat-card-info .stat-icon {
+  background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);
+  color: white;
+}
+
+.stat-card c-card-body {
+  position: relative;
+  z-index: 1;
+}
+
+.stat-icon {
+  width: 60px;
+  height: 60px;
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 0.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 2rem;
+}
+
+.stat-number {
+  font-size: 2rem;
+  font-weight: 700;
+  line-height: 1;
+  margin-bottom: 0.25rem;
+}
+
+.stat-label {
+  font-size: 0.875rem;
+  font-weight: 500;
+  opacity: 0.9;
+}
+
+/* ── Pie chart + clickable legend, side by side ──────────────────────────── */
+.chart-legend-layout {
+  display: flex; gap: 20px; align-items: center;
+}
+.chart-pie-wrap {
+  width: 180px; height: 180px; flex-shrink: 0;
+  position: relative;   /* Chart.js needs a positioned ancestor with a fixed size to resize against */
+}
+/* CoreUI's <c-chart> host element carries its own "chart-wrapper" class (a host binding),
+   which is what Chart.js actually measures for responsive sizing — without an explicit size
+   on it, it defaults to a 2:1 box (e.g. 180x90) instead of filling this 180x180 square. */
+.chart-pie-wrap c-chart {
+  display: block; width: 100%; height: 100%;
+}
+.chart-legend-list { flex: 1; min-width: 0; }
+
+.breakdown-clickable {
+  cursor: pointer; border-radius: 8px; padding: 6px 8px; margin: 0 -8px;
+  transition: background 0.15s ease;
+}
+.breakdown-clickable:hover { background: #f5f6fa; }
+.breakdown-clickable.breakdown-active {
+  background: #eef0ff; box-shadow: inset 3px 0 0 #6c63ff;
+}
+
+/* ── Monthly bar chart — real Chart.js bar, not CSS bars ─────────────────── */
+.month-chart-wrap {
+  height: 220px;
+  position: relative;   /* same reason as .chart-pie-wrap above */
+  overflow: hidden;     /* belt-and-braces: never let the canvas bleed into content below it */
+}
+.month-chart-wrap c-chart {
+  display: block; width: 100%; height: 100%;
+}
+
+/* ── Active filter chips (set by clicking a chart segment) ──────────────── */
+.active-filter-bar {
+  display: flex; align-items: center; flex-wrap: wrap; gap: 8px;
+  background: #fff; border: 1px solid #eef0f4;
+  border-radius: 10px; padding: 10px 14px;
+}
+.filter-chip {
+  display: inline-flex; align-items: center; gap: 8px;
+  background: #eef0ff; color: #4c1d95; border-radius: 20px;
+  padding: 5px 12px; font-size: 0.8rem; font-weight: 600;
+}
+.filter-chip i { cursor: pointer; font-size: 0.7rem; opacity: 0.7; }
+.filter-chip i:hover { opacity: 1; }
+
+/* ── Detail tables — same look as the PO list ────────────────────────────── */
+.po-style-card { border-radius: 12px; overflow: hidden; }
+
+.po-table { font-size: 0.88rem; border-collapse: collapse; }
+
+.table-header th {
+  background: #e8eaf6 !important;
+  color: #1a237e !important;
+  font-weight: 700;
+  font-size: 0.78rem;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+  padding: 12px 14px;
+  border-bottom: 2px solid #c5cae9 !important;
+}
+
+.po-table tbody .po-main-row td {
+  padding: 12px 14px;
+  vertical-align: middle;
+  border-top: 1px solid #e9ecef !important;
+  border-bottom: none !important;
+}
+.po-table tbody .po-main-row:first-child td { border-top: none !important; }
+.po-main-row:hover td { background: #f8f9ff !important; }
+
+.po-number-link { font-weight: 700; color: #1976d2; }

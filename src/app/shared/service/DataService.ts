@@ -2238,10 +2238,11 @@ rejectInvoice(invoiceId: number, buyerName: string, remarks: string): Observable
  * BUYER: Mark invoice as paid
  * PUT /api/invoice/{invoiceId}/mark-paid
  */
-markInvoicePaid(invoiceId: number, buyerName: string, paymentReference: string): Observable<any> {
+markInvoicePaid(invoiceId: number, buyerName: string, paymentReference: string,
+                 paymentMode: string = '', paymentRemarks: string = ''): Observable<any> {
   const url = `${environment.API_URL}leadcapture/api/invoice/${invoiceId}/mark-paid`;
   console.log('%c[MARK INVOICE PAID]', 'color: #00aa00;', invoiceId);
-  return this.invokePutAPI(url, { paidBy: buyerName, buyerName, paymentReference });
+  return this.invokePutAPI(url, { paidBy: buyerName, buyerName, paymentReference, paymentMode, paymentRemarks });
 }
 
 /**
@@ -3550,4 +3551,137 @@ getSupplierById(supplierId: number): Observable<any> {
   });
 }
 
+
+  // =========================================================================
+  // FINANCE PO APPLICATION — manual PO, release, closure, payment, audit
+  // =========================================================================
+  //
+  // Every write below sends X-USER-* identity headers alongside the bearer token.
+  // The backend records the audit actor from THOSE headers rather than from the
+  // request body, so the trail always names the signed-in user and never whichever
+  // name a form happened to contain. The token still does the authenticating —
+  // these headers only carry display identity for the audit row.
+
+  private auditHeaders(): HttpHeaders {
+    return new HttpHeaders({
+      'Authorization':  'Bearer ' + (localStorage.getItem('token') || ''),
+      'Content-Type':   'application/json',
+      'X-USER-ID':      localStorage.getItem('userId')      || '',
+      'X-USER-EMAIL':   localStorage.getItem('email')       || '',
+      'X-USER-NAME':    localStorage.getItem('fullName')    || '',
+      'X-USER-ROLE':    localStorage.getItem('role')        || '',
+      'X-COMPANY-NAME': localStorage.getItem('companyName') || ''
+    });
+  }
+
+  // ── PO: create / edit ────────────────────────────────────────────────────
+
+  /** Creates a PO the Admin typed in by hand. Always lands in DRAFT. */
+  createManualPO(payload: any): Observable<any> {
+    const url = `${environment.API_URL}leadcapture/api/purchase-order/manual`;
+    return this.http.post<any>(url, payload, { headers: this.auditHeaders() });
+  }
+
+  /** Edits a DRAFT or RETURNED_FOR_REVISION PO. Rejected by the API in any other status. */
+  updateManualPO(poId: number, payload: any): Observable<any> {
+    const url = `${environment.API_URL}leadcapture/api/purchase-order/manual/${poId}`;
+    return this.http.put<any>(url, payload, { headers: this.auditHeaders() });
+  }
+
+  // ── PO: lifecycle ────────────────────────────────────────────────────────
+
+  submitPOForApproval(poId: number): Observable<any> {
+    const url = `${environment.API_URL}leadcapture/api/purchase-order/${poId}/submit-approval`;
+    return this.http.post<any>(url, {}, { headers: this.auditHeaders() });
+  }
+
+  /** Releases an APPROVED PO — this is what makes it visible to the supplier. */
+  releasePO(poId: number, remarks: string = ''): Observable<any> {
+    const url = `${environment.API_URL}leadcapture/api/purchase-order/${poId}/release`;
+    return this.http.post<any>(url, { remarks }, { headers: this.auditHeaders() });
+  }
+
+  /**
+   * Closes a completed PO. `force` is needed only when payment is still outstanding —
+   * the API refuses otherwise, because closing stops the supplier invoicing further.
+   */
+  closePO(poId: number, remarks: string = '', force: boolean = false): Observable<any> {
+    const url = `${environment.API_URL}leadcapture/api/purchase-order/${poId}/close`;
+    return this.http.post<any>(url, { remarks, force }, { headers: this.auditHeaders() });
+  }
+
+  /** Closes a PO early. The API requires a non-empty reason. */
+  foreclosePO(poId: number, reason: string): Observable<any> {
+    const url = `${environment.API_URL}leadcapture/api/purchase-order/${poId}/foreclose`;
+    return this.http.post<any>(url, { reason }, { headers: this.auditHeaders() });
+  }
+
+  /** Records delivered quantities. `quantities` is keyed by PO line-item id. */
+  updateSuppliedQuantities(poId: number, quantities: Record<number, number>): Observable<any> {
+    const url = `${environment.API_URL}leadcapture/api/purchase-order/${poId}/supplied-quantities`;
+    return this.http.put<any>(url, { quantities }, { headers: this.auditHeaders() });
+  }
+
+  /** PO plus its full audit timeline — backs the Status Tracking screen. */
+  getPOStatusTimeline(poId: number): Observable<any> {
+    const url = `${environment.API_URL}leadcapture/api/purchase-order/${poId}/status-timeline`;
+    return this.http.get<any>(url, { headers: this.headers() });
+  }
+
+  /** Every PO in the system, for the Admin's PO list. */
+  getAllPurchaseOrders(): Observable<any> {
+    const url = `${environment.API_URL}leadcapture/api/purchase-order`;
+    return this.http.get<any>(url, { headers: this.headers() });
+  }
+
+  // ── Audit trail ──────────────────────────────────────────────────────────
+
+  /**
+   * Filtered, paged audit search. Any filter may be omitted.
+   * Server caps page size at 500 regardless of what is asked for.
+   */
+  getAuditLogs(filters: {
+    companyName?: string; entityType?: string; entityId?: number;
+    action?: string; actorEmail?: string;
+    fromDate?: string; toDate?: string;
+    page?: number; size?: number;
+  } = {}): Observable<any> {
+    const params: string[] = [];
+    Object.entries(filters).forEach(([k, v]) => {
+      if (v !== undefined && v !== null && v !== '') {
+        params.push(`${k}=${encodeURIComponent(String(v))}`);
+      }
+    });
+    const query = params.length ? `?${params.join('&')}` : '';
+    const url = `${environment.API_URL}leadcapture/api/audit${query}`;
+    return this.http.get<any>(url, { headers: this.headers() });
+  }
+
+  /** The complete history of one record — the audit panel on PO and invoice screens. */
+  getAuditTrailForEntity(entityType: string, entityId: number): Observable<any> {
+    const url = `${environment.API_URL}leadcapture/api/audit/entity/${entityType}/${entityId}`;
+    return this.http.get<any>(url, { headers: this.headers() });
+  }
+
+  // ── Supporting lookups for the PO form ───────────────────────────────────
+
+  getAllSuppliersForPO(): Observable<any> {
+    const url = `${environment.API_URL}leadcapture/api/supplier`;
+    return this.http.get<any>(url, { headers: this.headers() });
+  }
+
+  getAllBuyersForPO(): Observable<any> {
+    const url = `${environment.API_URL}leadcapture/api/buyer`;
+    return this.http.get<any>(url, { headers: this.headers() });
+  }
+
+  getLocationsForBuyer(buyerId: number): Observable<any> {
+    const url = `${environment.API_URL}leadcapture/api/location/buyer/${buyerId}`;
+    return this.http.get<any>(url, { headers: this.headers() });
+  }
+
+  getDepartmentsForLocation(locationId: number): Observable<any> {
+    const url = `${environment.API_URL}leadcapture/api/department/location/${locationId}`;
+    return this.http.get<any>(url, { headers: this.headers() });
+  }
 }

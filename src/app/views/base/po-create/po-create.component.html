@@ -1,0 +1,282 @@
+<c-container fluid class="po-create">
+
+  <!-- ===================== HEADER BAR ===================== -->
+  <c-row class="mb-3">
+    <c-col [md]="8">
+      <h4 class="page-title mb-1">
+        {{ isEditMode ? 'Edit Purchase Order' : 'Create Purchase Order' }}
+      </h4>
+      <p class="page-subtitle mb-0">
+        {{ isEditMode
+            ? 'Editing ' + (po.poNumber || 'this PO') + ' — only DRAFT and returned POs can be changed.'
+            : 'Entered manually. The PO is saved as DRAFT and enters the approval flow when you submit it.' }}
+      </p>
+    </c-col>
+    <c-col [md]="4" class="text-end">
+      <button cButton color="secondary" variant="outline" class="me-2"
+              (click)="cancel()" [disabled]="isSaving">
+        Cancel
+      </button>
+      <button cButton color="primary" variant="outline" class="me-2"
+              (click)="savePO(false)" [disabled]="isSaving || isLoading">
+        <c-spinner size="sm" *ngIf="isSaving"></c-spinner>
+        Save as Draft
+      </button>
+      <button cButton color="success"
+              (click)="savePO(true)" [disabled]="isSaving || isLoading">
+        Save &amp; Release to Supplier
+      </button>
+    </c-col>
+  </c-row>
+
+  <div class="alert alert-danger" *ngIf="errorMessage">{{ errorMessage }}</div>
+
+  <div class="text-center py-5" *ngIf="isLoading">
+    <c-spinner color="primary"></c-spinner>
+    <p class="mt-2 text-muted">Loading purchase order…</p>
+  </div>
+
+  <ng-container *ngIf="!isLoading">
+
+    <!-- ===================== PO HEADER ===================== -->
+    <c-card class="mb-3">
+      <c-card-header><strong>PO Details</strong></c-card-header>
+      <c-card-body>
+        <c-row>
+
+          <c-col [md]="3" class="mb-3">
+            <label class="form-label">PO Number</label>
+            <input class="form-control" [(ngModel)]="po.poNumber" name="poNumber"
+                   [readonly]="isEditMode"
+                   placeholder="Auto-generated if left blank">
+            <small class="text-muted">Leave blank to auto-generate.</small>
+          </c-col>
+
+          <c-col [md]="3" class="mb-3">
+            <label class="form-label">PO Date</label>
+            <input type="date" class="form-control" [(ngModel)]="po.poDate" name="poDate">
+          </c-col>
+
+          <c-col [md]="3" class="mb-3">
+            <label class="form-label">Supplier <span class="req">*</span></label>
+            <select class="form-select" [(ngModel)]="po.supplierId" name="supplierId"
+                    (change)="onSupplierChange()">
+              <option [ngValue]="null">— Select supplier —</option>
+              <option *ngFor="let s of suppliers" [ngValue]="s.id">{{ s.companyName }}</option>
+            </select>
+          </c-col>
+
+          <c-col [md]="3" class="mb-3">
+            <label class="form-label">Supplier Code</label>
+            <input class="form-control" [(ngModel)]="po.supplierCode" name="supplierCode"
+                   placeholder="From supplier master">
+          </c-col>
+
+          <c-col [md]="3" class="mb-3">
+            <label class="form-label">Buyer Company</label>
+            <input class="form-control" [value]="buyerName" disabled readonly>
+            <small class="text-muted">Fixed — this is a single-buyer application.</small>
+          </c-col>
+
+          <c-col [md]="3" class="mb-3">
+            <label class="form-label">Buying Location</label>
+            <select class="form-select" [(ngModel)]="po.buyerLocationId" name="buyerLocationId"
+                    (change)="onLocationChange()">
+              <option [ngValue]="null">— Select location —</option>
+              <option *ngFor="let l of locations" [ngValue]="l.id">{{ l.locationName }}</option>
+            </select>
+            <small class="text-muted">Sets the PO currency.</small>
+          </c-col>
+
+          <c-col [md]="3" class="mb-3">
+            <label class="form-label">Delivery Location</label>
+            <select class="form-select" [(ngModel)]="po.deliveryLocationId" name="deliveryLocationId">
+              <option [ngValue]="null">— Same as buying location —</option>
+              <option *ngFor="let l of locations" [ngValue]="l.id">{{ l.locationName }}</option>
+            </select>
+          </c-col>
+
+          <c-col [md]="3" class="mb-3">
+            <label class="form-label">Department / Buyer Group</label>
+            <select class="form-select" [(ngModel)]="po.departmentId" name="departmentId">
+              <option [ngValue]="null">— None —</option>
+              <option *ngFor="let d of departments" [ngValue]="d.id">{{ d.departmentName }}</option>
+            </select>
+          </c-col>
+
+          <c-col [md]="3" class="mb-3">
+            <label class="form-label">Currency</label>
+            <input class="form-control" [value]="po.currencyCode + ' (' + po.currencySymbol + ')'" readonly>
+          </c-col>
+
+          <c-col [md]="3" class="mb-3">
+            <label class="form-label">Delivery Date</label>
+            <input type="date" class="form-control" [(ngModel)]="po.deliveryDate" name="deliveryDate">
+          </c-col>
+
+          <c-col [md]="3" class="mb-3">
+            <label class="form-label">PO Type</label>
+            <select class="form-select" [(ngModel)]="po.poType" name="poType">
+              <option *ngFor="let t of poTypeOptions" [value]="t">{{ t }}</option>
+            </select>
+          </c-col>
+
+          <c-col [md]="3" class="mb-3">
+            <label class="form-label">PO Status</label>
+            <input class="form-control" [value]="po.status || 'DRAFT'" readonly>
+          </c-col>
+
+          <c-col [md]="4" class="mb-3">
+            <label class="form-label">Payment Terms</label>
+            <input class="form-control" [(ngModel)]="po.paymentTerms" name="paymentTerms"
+                   placeholder="e.g. 30 days from invoice date">
+          </c-col>
+
+          <c-col [md]="4" class="mb-3">
+            <label class="form-label">Delivery Terms</label>
+            <input class="form-control" [(ngModel)]="po.deliveryTerms" name="deliveryTerms"
+                   placeholder="e.g. FOB destination">
+          </c-col>
+
+          <c-col [md]="4" class="mb-3">
+            <label class="form-label">Header Tax %</label>
+            <input type="number" min="0" step="0.01" class="form-control"
+                   [(ngModel)]="po.taxPercentage" name="taxPercentage">
+            <small class="text-muted">Used only when no line has its own tax rate.</small>
+          </c-col>
+
+          <c-col [md]="6" class="mb-3">
+            <label class="form-label">Remarks</label>
+            <textarea class="form-control" rows="2" [(ngModel)]="po.remarks" name="remarks"></textarea>
+          </c-col>
+
+          <c-col [md]="6" class="mb-3">
+            <label class="form-label">Internal Notes</label>
+            <textarea class="form-control" rows="2" [(ngModel)]="po.internalNotes" name="internalNotes"></textarea>
+            <small class="text-muted">Not shown to the supplier.</small>
+          </c-col>
+
+        </c-row>
+      </c-card-body>
+    </c-card>
+
+    <!-- ===================== LINE ITEMS ===================== -->
+    <c-card class="mb-3">
+      <c-card-header class="d-flex justify-content-between align-items-center">
+        <strong>Items</strong>
+        <button cButton color="primary" size="sm" (click)="addItem()">+ Add Item</button>
+      </c-card-header>
+      <c-card-body class="p-0">
+        <div class="table-responsive">
+          <table class="table table-sm align-middle mb-0 items-table">
+            <thead>
+              <tr>
+                <th style="width:44px">#</th>
+                <th style="width:120px">Item Code</th>
+                <th style="min-width:220px">Description <span class="req">*</span></th>
+                <th style="width:110px">Qty <span class="req">*</span></th>
+                <th style="width:100px">Unit <span class="req">*</span></th>
+                <th style="width:120px">Unit Price <span class="req">*</span></th>
+                <th style="width:110px">Discount</th>
+                <th style="width:90px">Tax %</th>
+                <th style="width:120px" class="text-end">Total</th>
+                <th style="width:110px">Supplied</th>
+                <th style="width:110px" class="text-end">Remaining</th>
+                <th style="width:56px"></th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let item of items; let i = index; trackBy: trackByIndex">
+                <td class="text-muted">{{ i + 1 }}</td>
+                <td>
+                  <input class="form-control form-control-sm" [(ngModel)]="item.itemCode"
+                         [name]="'code' + i" placeholder="Code">
+                </td>
+                <td>
+                  <input class="form-control form-control-sm" [(ngModel)]="item.itemDescription"
+                         [name]="'desc' + i" placeholder="Item / product description">
+                </td>
+                <td>
+                  <input type="number" min="0" step="0.001" class="form-control form-control-sm text-end"
+                         [(ngModel)]="item.quantity" [name]="'qty' + i">
+                </td>
+                <td>
+                  <select class="form-select form-select-sm" [(ngModel)]="item.uom" [name]="'uom' + i">
+                    <option *ngFor="let u of uomOptions" [value]="u">{{ u }}</option>
+                  </select>
+                </td>
+                <td>
+                  <input type="number" min="0" step="0.01" class="form-control form-control-sm text-end"
+                         [(ngModel)]="item.unitRate" [name]="'rate' + i">
+                </td>
+                <td>
+                  <input type="number" min="0" step="0.01" class="form-control form-control-sm text-end"
+                         [(ngModel)]="item.discountAmount" [name]="'disc' + i">
+                </td>
+                <td>
+                  <input type="number" min="0" step="0.01" class="form-control form-control-sm text-end"
+                         [(ngModel)]="item.taxPercentage" [name]="'tax' + i">
+                </td>
+                <td class="text-end fw-semibold">
+                  {{ po.currencySymbol }}{{ lineTotal(item) | number:'1.2-2' }}
+                </td>
+                <td>
+                  <input type="number" min="0" step="0.001" class="form-control form-control-sm text-end"
+                         [(ngModel)]="item.suppliedQuantity" [name]="'sup' + i">
+                </td>
+                <td class="text-end">
+                  <c-badge [color]="lineRemaining(item) === 0 ? 'success' : 'warning'">
+                    {{ lineRemaining(item) | number:'1.0-3' }}
+                  </c-badge>
+                </td>
+                <td class="text-center">
+                  <button cButton color="danger" variant="ghost" size="sm"
+                          (click)="removeItem(i)" title="Remove item">✕</button>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </c-card-body>
+    </c-card>
+
+    <!-- ===================== TOTALS ===================== -->
+    <c-row class="mb-4">
+      <c-col [md]="7">
+        <c-card>
+          <c-card-header><strong>Other Terms &amp; Conditions</strong></c-card-header>
+          <c-card-body>
+            <textarea class="form-control" rows="4" [(ngModel)]="po.otherTerms" name="otherTerms"
+                      placeholder="Warranty, penalties, inspection requirements…"></textarea>
+          </c-card-body>
+        </c-card>
+      </c-col>
+
+      <c-col [md]="5">
+        <c-card class="totals-card">
+          <c-card-header><strong>Summary</strong></c-card-header>
+          <c-card-body>
+            <div class="d-flex justify-content-between py-1">
+              <span class="text-muted">Subtotal</span>
+              <span>{{ po.currencySymbol }}{{ subtotal | number:'1.2-2' }}</span>
+            </div>
+            <div class="d-flex justify-content-between py-1">
+              <span class="text-muted">Tax</span>
+              <span>{{ po.currencySymbol }}{{ totalTax | number:'1.2-2' }}</span>
+            </div>
+            <hr class="my-2">
+            <div class="d-flex justify-content-between py-1 grand-total">
+              <strong>Grand Total</strong>
+              <strong>{{ po.currencySymbol }}{{ grandTotal | number:'1.2-2' }}</strong>
+            </div>
+            <p class="text-muted small mt-3 mb-0">
+              Totals are recalculated by the server when the PO is saved. If these figures
+              differ from the saved PO, the saved values are the authoritative ones.
+            </p>
+          </c-card-body>
+        </c-card>
+      </c-col>
+    </c-row>
+
+  </ng-container>
+</c-container>

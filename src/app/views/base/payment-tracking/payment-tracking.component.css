@@ -1,0 +1,174 @@
+/* Payment tracking. Theme variables carry the colours so this follows the app's
+   light/dark setting rather than hard-coding a palette. */
+
+.payment-tracking .page-title {
+  font-weight: 600;
+}
+
+.payment-tracking .page-subtitle {
+  font-size: 0.875rem;
+  color: var(--cui-secondary-color, #6c757d);
+}
+
+.payment-tracking .form-label {
+  font-size: 0.75rem;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+  margin-bottom: 0.25rem;
+  color: var(--cui-secondary-color, #6c757d);
+}
+
+.payment-tracking .req {
+  color: var(--cui-danger, #e55353);
+  font-weight: 700;
+}
+
+/* ── Summary tiles ─────────────────────────────────────────────────────
+   Same visual language as the PO dashboard (po-list): a white rounded card,
+   a coloured gradient icon, a big bold value and an uppercase label. */
+
+.stat-card {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  background: #ffffff;
+  border-radius: 16px;
+  padding: 20px 22px;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.07);
+  border: 1px solid rgba(0, 0, 0, 0.04);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  height: 100%;
+}
+.stat-card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.11);
+}
+.stat-card-alert {
+  border: 1px solid rgba(255, 65, 108, 0.35);
+}
+
+.stat-icon-wrap {
+  width: 52px;
+  height: 52px;
+  border-radius: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #ffffff;
+  flex-shrink: 0;
+}
+.stat-purple { background: linear-gradient(135deg, #6c63ff, #9b59b6); }
+.stat-green  { background: linear-gradient(135deg, #56ab2f, #a8e063); }
+.stat-hold   { background: linear-gradient(135deg, #f7971e, #ffd200); }
+.stat-red    { background: linear-gradient(135deg, #ff416c, #ff4b2b); }
+
+.stat-info { display: flex; flex-direction: column; justify-content: center; min-width: 0; }
+.stat-value { font-size: 2rem; font-weight: 800; color: #1a1a2e; line-height: 1.1; letter-spacing: -0.5px; }
+.stat-value-sm { font-size: 1.3rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.stat-label {
+  font-size: 0.72rem; font-weight: 500; color: #8a8a9a;
+  text-transform: uppercase; letter-spacing: 0.4px; margin-top: 2px;
+}
+
+.collection-card { border-radius: 12px; }
+
+/* ── Table — same look as the PO list ──────────────────────────────────── */
+
+.po-style-card { border-radius: 12px; overflow: hidden; }
+
+.po-table { font-size: 0.88rem; border-collapse: collapse; }
+
+.table-header th {
+  background: #e8eaf6 !important;
+  color: #1a237e !important;
+  font-weight: 700;
+  font-size: 0.78rem;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+  padding: 12px 14px;
+  border-bottom: 2px solid #c5cae9 !important;
+}
+
+.po-table tbody .po-main-row td {
+  padding: 12px 14px;
+  vertical-align: middle;
+  border-top: 1px solid #e9ecef !important;
+  border-bottom: none !important;
+}
+.po-table tbody .po-main-row:first-child td { border-top: none !important; }
+.po-main-row:hover td { background: #f8f9ff !important; }
+
+.po-number-link { font-weight: 700; color: #1976d2; cursor: pointer; text-decoration: none; }
+.po-number-link:hover { text-decoration: underline; }
+
+/* ── Pagination bar ─────────────────────────────────────────────────────── */
+
+.pagination-bar { border-top: 1px solid #e9ecef; background: #fafbff; }
+
+.page-size-group { display: flex; border: 1px solid #d0d5dd; border-radius: 8px; overflow: hidden; }
+.page-size-btn {
+  background: #fff; border: none; border-right: 1px solid #d0d5dd;
+  padding: 5px 12px; font-size: 0.8rem; font-weight: 500; color: #555;
+  cursor: pointer; transition: background 0.15s, color 0.15s; line-height: 1;
+}
+.page-size-btn:last-child { border-right: none; }
+.page-size-btn:hover { background: #f0f4ff; color: #1976d2; }
+.page-size-btn.active { background: linear-gradient(135deg, #667eea, #764ba2); color: #fff; font-weight: 700; }
+
+.page-num-btn {
+  min-width: 34px; height: 34px; border-radius: 8px; border: 1px solid #d0d5dd;
+  background: #fff; color: #444; font-size: 0.82rem; font-weight: 500;
+  cursor: pointer; transition: all 0.15s; padding: 0 4px;
+}
+.page-num-btn:hover { background: #f0f4ff; border-color: #667eea; color: #1976d2; }
+.page-num-btn.active {
+  background: linear-gradient(135deg, #667eea, #764ba2); border-color: #667eea;
+  color: #fff; font-weight: 700; box-shadow: 0 2px 8px rgba(102, 126, 234, 0.4);
+}
+
+.page-nav-btn {
+  width: 34px; height: 34px; border-radius: 8px; border: 1px solid #d0d5dd;
+  background: #fff; color: #555; font-size: 0.85rem; cursor: pointer;
+  display: flex; align-items: center; justify-content: center; transition: all 0.15s;
+}
+.page-nav-btn:hover:not(:disabled) { background: #f0f4ff; border-color: #667eea; color: #667eea; }
+.page-nav-btn:disabled { opacity: 0.35; cursor: not-allowed; }
+
+.page-ellipsis { padding: 0 4px; color: #aaa; font-size: 0.9rem; line-height: 34px; user-select: none; }
+
+@media (max-width: 768px) {
+  .pagination-bar { flex-direction: column; align-items: flex-start !important; }
+  .page-size-btn { padding: 5px 9px; }
+}
+
+.payment-tracking table th {
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+  white-space: nowrap;
+  font-weight: 600;
+}
+
+/* ── Confirmation dialog ───────────────────────────────────────────────
+   A plain fixed-position panel rather than a CoreUI modal: the surrounding
+   screens in this app use the same pattern, and it keeps the component free of
+   an extra module import for a single two-field dialog. */
+
+.payment-tracking .modal-backdrop-custom {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.45);
+  z-index: 1040;
+}
+
+.payment-tracking .modal-custom {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: min(520px, calc(100vw - 2rem));
+  max-height: calc(100vh - 2rem);
+  overflow-y: auto;
+  z-index: 1050;
+}

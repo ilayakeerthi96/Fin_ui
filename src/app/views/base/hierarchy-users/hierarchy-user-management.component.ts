@@ -39,7 +39,7 @@ export class HierarchyUserManagementComponent implements OnInit {
   companyName: string = '';
   fullName: string = '';
   email: string = '';
-  role: string = 'Super Administrator';
+  role: string = 'Organization Admin';   // Super Admin was removed; this screen is Admin-only
   selectedLevelFilter: string = '';
   
   isLoading: boolean = false;
@@ -67,21 +67,30 @@ export class HierarchyUserManagementComponent implements OnInit {
     this.loadHierarchyUsers();
   }
 
+  /**
+   * Every login created from this screen now is a Procurement Operations login — there is
+   * no approval hierarchy left to place someone into, so designation, phone, the level
+   * choice and the reporting structure are no longer asked for. They still exist as hidden
+   * form fields (the backend still stores them) and are filled in automatically below.
+   */
   initForm(): void {
     this.userForm = this.fb.group({
       email: ['', [Validators.required, Validators.email]],
       fullName: ['', [Validators.required, Validators.minLength(2), Validators.maxLength(100)]],
-      designation: ['', [Validators.required, Validators.minLength(2), Validators.maxLength(100)]],
+      designation: ['Procurement Operations'],
       phone: [''],
       hierarchyLevelId: ['', Validators.required],
       reportsToIds: [[]],
       password: [''],
       companyName: ['']
     });
+  }
 
-    this.userForm.get('hierarchyLevelId')?.valueChanges.subscribe(() => {
-      this.updatePotentialManagers();
-    });
+  /** The one level every user created here belongs to — resolved by name so this keeps
+   *  working regardless of the level's numeric id in a given database. */
+  private procurementOpsLevelId(): number | null {
+    const level = this.hierarchyLevels.find(l => l.levelName === 'Procurement Operations');
+    return level ? level.id : null;
   }
 
   loadHierarchyLevels(): void {
@@ -174,21 +183,21 @@ export class HierarchyUserManagementComponent implements OnInit {
     this.selectedUser = null;
     
     this.userForm.reset();
-    
-    this.userForm.patchValue({ 
+
+    this.userForm.patchValue({
       companyName: this.companyName,
       reportsToIds: [],
       email: '',
       fullName: '',
-      designation: '',
+      designation: 'Procurement Operations',
       phone: '',
-      hierarchyLevelId: '',
+      hierarchyLevelId: this.procurementOpsLevelId(),
       password: ''
     });
-    
+
     this.userForm.get('password')?.setValidators([Validators.required, Validators.minLength(6)]);
     this.userForm.get('password')?.updateValueAndValidity();
-    
+
     this.potentialManagers = [];
     
     this.errorMessage = null;

@@ -90,6 +90,7 @@ import { DefaultFooterComponent } from './';
 
 import { navItems } from './_nav';
 import { AuthService } from '../../shared/service/AuthService';
+import { ReportChatWidgetComponent } from '../../shared/components/report-chat-widget/report-chat-widget.component';
 
 @Component({
   selector: 'app-default-layout',
@@ -112,7 +113,8 @@ import { AuthService } from '../../shared/service/AuthService';
 
     DefaultHeaderComponent,
     DefaultFooterComponent,
-    NgScrollbar
+    NgScrollbar,
+    ReportChatWidgetComponent
   ]
 })
 export class DefaultLayoutComponent implements OnInit {

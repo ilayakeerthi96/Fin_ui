@@ -1,0 +1,183 @@
+<c-container fluid class="px-4 py-3">
+
+  <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
+    <div>
+      <h4 class="fw-bold mb-1">Reports</h4>
+      <div class="text-muted">Your purchase order and invoice activity{{ companyName ? ' — ' + companyName : '' }}</div>
+    </div>
+  </div>
+
+  <div *ngIf="isLoading" class="text-center py-5"><c-spinner color="primary"></c-spinner></div>
+
+  <div *ngIf="!isLoading && errorMessage" class="alert alert-danger">{{ errorMessage }}</div>
+
+  <div *ngIf="!isLoading && !errorMessage">
+
+    <!-- ==================== KPI TILES ==================== -->
+    <c-row class="mb-2">
+      <c-col xs="12" sm="6" lg="3" class="mb-3">
+        <c-card class="stat-card stat-card-blue"><c-card-body class="p-3">
+          <div class="d-flex align-items-center">
+            <div class="stat-icon me-3"><i class="bi bi-cart-check"></i></div>
+            <div><div class="stat-number">{{ reportPOCount }}</div><div class="stat-label">POs Received</div></div>
+          </div>
+        </c-card-body></c-card>
+      </c-col>
+      <c-col xs="12" sm="6" lg="3" class="mb-3">
+        <c-card class="stat-card stat-card-info"><c-card-body class="p-3">
+          <div class="d-flex align-items-center">
+            <div class="stat-icon me-3"><i class="bi bi-receipt"></i></div>
+            <div><div class="stat-number">{{ reportInvoiceCount }}</div><div class="stat-label">Invoices Submitted</div></div>
+          </div>
+        </c-card-body></c-card>
+      </c-col>
+      <c-col xs="12" sm="6" lg="3" class="mb-3">
+        <c-card class="stat-card stat-card-success"><c-card-body class="p-3">
+          <div class="d-flex align-items-center">
+            <div class="stat-icon me-3"><i class="bi bi-check-circle"></i></div>
+            <div><div class="stat-number" style="font-size:1.15rem;">{{ formatCurrency(reportPaidValue, reportCurrencyCode) }}</div><div class="stat-label">Payment Received</div></div>
+          </div>
+        </c-card-body></c-card>
+      </c-col>
+      <c-col xs="12" sm="6" lg="3" class="mb-3">
+        <c-card class="stat-card stat-card-warning"><c-card-body class="p-3">
+          <div class="d-flex align-items-center">
+            <div class="stat-icon me-3"><i class="bi bi-hourglass-split"></i></div>
+            <div><div class="stat-number" style="font-size:1.15rem;">{{ formatCurrency(reportPendingValue, reportCurrencyCode) }}</div><div class="stat-label">Awaiting Payment</div></div>
+          </div>
+        </c-card-body></c-card>
+      </c-col>
+    </c-row>
+
+    <!-- ==================== BREAKDOWN + TREND ==================== -->
+    <c-row>
+      <c-col lg="5" class="mb-4">
+        <c-card class="border-0 shadow-sm h-100" style="border-radius:12px;">
+          <c-card-header class="bg-white border-0 d-flex justify-content-between align-items-center">
+            <strong>Invoice Status Breakdown</strong>
+            <small class="text-muted fw-normal">Click a slice to filter</small>
+          </c-card-header>
+          <c-card-body>
+            <div class="text-muted small py-3" *ngIf="reportInvoiceStatusBreakdown.length===0">No invoices yet.</div>
+            <div class="chart-legend-layout" *ngIf="reportInvoiceStatusBreakdown.length>0">
+              <div class="chart-pie-wrap">
+                <c-chart type="pie" [data]="statusChartData" [options]="statusChartOptions"
+                         (getElementAtEvent)="onStatusChartClick($event)"></c-chart>
+              </div>
+              <div class="chart-legend-list">
+                <div class="d-flex justify-content-between align-items-center py-2 breakdown-clickable"
+                     [class.breakdown-active]="statusFilter === row.status"
+                     (click)="filterByStatus(row)"
+                     *ngFor="let row of reportInvoiceStatusBreakdown">
+                  <span class="badge" [ngClass]="row.badgeClass">{{ row.label }}</span>
+                  <span class="text-muted small">{{ row.count }} invoice{{ row.count === 1 ? '' : 's' }} &middot; {{ formatCurrency(row.value, reportCurrencyCode) }}</span>
+                </div>
+              </div>
+            </div>
+          </c-card-body>
+        </c-card>
+      </c-col>
+      <c-col lg="7" class="mb-4">
+        <c-card class="border-0 shadow-sm h-100" style="border-radius:12px;">
+          <c-card-header class="bg-white border-0 d-flex justify-content-between align-items-center">
+            <strong>Invoice Value by Month</strong>
+            <small class="text-muted fw-normal">Click a bar to filter</small>
+          </c-card-header>
+          <c-card-body>
+            <div class="text-muted small py-3" *ngIf="reportMonthlyTrend.length===0">No invoices to chart yet.</div>
+            <div class="month-chart-wrap" *ngIf="reportMonthlyTrend.length>0">
+              <c-chart type="bar" [data]="monthChartData" [options]="monthChartOptions"
+                       (getElementAtEvent)="onMonthChartClick($event)"></c-chart>
+            </div>
+          </c-card-body>
+        </c-card>
+      </c-col>
+    </c-row>
+
+    <!-- ==================== ACTIVE FILTERS ==================== -->
+    <div class="active-filter-bar mb-3" *ngIf="hasClickFilters">
+      <span class="text-muted small me-2"><i class="bi bi-funnel-fill me-1"></i>Filtered by:</span>
+      <span class="filter-chip" *ngIf="statusFilter">
+        Status: {{ getInvoiceStatusLabel(statusFilter) }}
+        <i class="bi bi-x-lg" (click)="clearStatusFilter()"></i>
+      </span>
+      <span class="filter-chip" *ngIf="monthFilter">
+        Month: {{ monthFilterLabel }}
+        <i class="bi bi-x-lg" (click)="clearMonthFilter()"></i>
+      </span>
+      <button class="btn btn-link btn-sm text-decoration-none" (click)="clearAllClickFilters()">Clear all</button>
+    </div>
+
+    <!-- ==================== DETAILED PURCHASE ORDERS ==================== -->
+    <c-card class="border-0 shadow-sm po-style-card mb-4" style="border-radius:12px;">
+      <c-card-header class="bg-white border-0 d-flex justify-content-between align-items-center">
+        <strong>Purchase Orders — Full Detail</strong>
+        <span class="text-muted small">{{ sortedPOList.length }} PO{{ sortedPOList.length === 1 ? '' : 's' }}</span>
+      </c-card-header>
+      <c-card-body class="p-0">
+        <div class="text-muted small text-center py-4" *ngIf="sortedPOList.length===0">No purchase orders yet.</div>
+        <div class="table-responsive" *ngIf="sortedPOList.length>0">
+          <table class="table po-table mb-0">
+            <thead class="table-header">
+              <tr>
+                <th class="ps-4">SL</th>
+                <th>PO Number</th>
+                <th>PO Date</th>
+                <th class="text-end">Value</th>
+                <th class="text-center">Invoice Status</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr class="po-main-row" *ngFor="let po of sortedPOList; let i = index">
+                <td class="ps-4">{{ i + 1 }}</td>
+                <td><span class="po-number-link"><i class="bi bi-file-earmark-text me-1"></i>{{ po.poNumber }}</span></td>
+                <td><small class="text-muted">{{ formatDate(po.createdAt) }}</small></td>
+                <td class="text-end fw-bold text-success">{{ formatCurrency(po.grandTotal, po.currencyCode) }}</td>
+                <td class="text-center"><span class="badge" [ngClass]="poInvoiceStatusBadgeClass(po)">{{ poInvoiceStatusLabel(po) }}</span></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </c-card-body>
+    </c-card>
+
+    <!-- ==================== DETAILED INVOICES ==================== -->
+    <c-card class="border-0 shadow-sm po-style-card mb-4" style="border-radius:12px;">
+      <c-card-header class="bg-white border-0 d-flex justify-content-between align-items-center">
+        <strong>Invoices — Full Detail</strong>
+        <span class="text-muted small">{{ sortedInvoiceList.length }} invoice{{ sortedInvoiceList.length === 1 ? '' : 's' }}</span>
+      </c-card-header>
+      <c-card-body class="p-0">
+        <div class="text-muted small text-center py-4" *ngIf="sortedInvoiceList.length===0">No invoices yet.</div>
+        <div class="table-responsive" *ngIf="sortedInvoiceList.length>0">
+          <table class="table po-table mb-0">
+            <thead class="table-header">
+              <tr>
+                <th class="ps-4">SL</th>
+                <th>Invoice Number</th>
+                <th>PO Number</th>
+                <th>Invoice Date</th>
+                <th class="text-end">Value</th>
+                <th class="text-center">Status</th>
+                <th>Paid On</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr class="po-main-row" *ngFor="let inv of sortedInvoiceList; let i = index">
+                <td class="ps-4">{{ i + 1 }}</td>
+                <td><span class="po-number-link"><i class="bi bi-receipt me-1"></i>{{ inv.invoiceNumber }}</span></td>
+                <td><small class="text-muted">{{ inv.poNumber }}</small></td>
+                <td><small class="text-muted">{{ formatDate(inv.invoiceDate || inv.submittedAt || inv.createdAt) }}</small></td>
+                <td class="text-end fw-bold text-success">{{ formatCurrency(inv.grandTotal, inv.currencyCode) }}</td>
+                <td class="text-center"><span class="badge" [ngClass]="reportStatusBadgeClass(inv.status)">{{ getInvoiceStatusLabel(inv.status) }}</span></td>
+                <td><small class="text-muted">{{ inv.status === 'PAID' ? formatDate(inv.paidAt) : '—' }}</small></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </c-card-body>
+    </c-card>
+
+  </div>
+
+</c-container>

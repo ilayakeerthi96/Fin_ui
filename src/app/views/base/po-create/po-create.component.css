@@ -1,0 +1,51 @@
+/* Manual PO entry screen.
+   Kept intentionally light — the app's global CoreUI theme supplies colours, spacing and
+   dark-mode handling, so overriding them here would fight the rest of the application. */
+
+.po-create .page-title {
+  font-weight: 600;
+}
+
+.po-create .page-subtitle {
+  font-size: 0.875rem;
+  color: var(--cui-secondary-color, #6c757d);
+}
+
+/* Required-field marker */
+.po-create .req {
+  color: var(--cui-danger, #e55353);
+  font-weight: 700;
+}
+
+.po-create .form-label {
+  font-size: 0.8125rem;
+  font-weight: 500;
+  margin-bottom: 0.25rem;
+}
+
+/* The item grid is wide by design — let it scroll inside the card rather than
+   forcing the whole page to scroll sideways on a laptop screen. */
+.po-create .table-responsive {
+  overflow-x: auto;
+}
+
+.po-create .items-table th {
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+  white-space: nowrap;
+  font-weight: 600;
+}
+
+.po-create .items-table td {
+  vertical-align: middle;
+}
+
+.po-create .items-table input,
+.po-create .items-table select {
+  min-width: 0;
+}
+
+.po-create .totals-card .grand-total {
+  font-size: 1.05rem;
+}

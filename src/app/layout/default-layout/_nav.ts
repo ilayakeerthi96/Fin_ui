@@ -1,248 +1,133 @@
 import { INavData } from '@coreui/angular';
 
+/**
+ * Sidebar navigation for the Finance PO application.
+ *
+ * Scope is deliberately narrow: PO creation → release → supplier invoice → invoice
+ * approval → payment → closure. PO approval is currently auto-cleared on submit (see
+ * POApprovalService.APPROVAL_WORKFLOW_ENABLED) — there is no approver step in the live flow.
+ *
+ * Four audiences:
+ *   ORGANIZATION_ADMIN   — creates logins (Manage Users), plus Reports and the Audit Log.
+ *                           Does not touch day-to-day operations.
+ *   PROCUREMENT_OPERATOR — a hierarchy login (level "Procurement Operations") that runs
+ *                           every operational screen: PO Management, Invoice Management,
+ *                           Payment Tracking, Status Tracking, Supplier Management.
+ *   Approvers (CEO/COO/MANAGER/PROCUREMENT/FINANCE) — no menu entries at all. There is no
+ *                           approval step in the live flow (PurchaseOrder.isReleasable()
+ *                           allows release straight from DRAFT), so there is nothing for
+ *                           them to see or do. Their logins still exist in the DB, dormant.
+ *   ROLE_SUPPLIER         — their own POs and invoices only.
+ *
+ * Menu entries for RFQ, quotations, quote comparison, supplier selection, negotiation,
+ * evaluation criteria, Q&A libraries, registration and risk questionnaires, the supplier
+ * risk board, the Super Admin dashboard, Buyer Companies (single-buyer app), and everything
+ * specific to the approval hierarchy (Approval Levels, Reporting Structure, Approval
+ * Configuration — there is no approval step left to configure) have all been removed, along
+ * with the modules that fall outside this scope. Those screens are unreachable from here AND
+ * their routes are gone from app.routes.ts.
+ */
 export const navItems: INavData[] = [
+
   // ============================================
-  // SUPERADMIN MENU
+  // ADMIN — user & configuration management only
   // ============================================
   {
     name: 'Dashboard',
-    url: '/superadmin-dashboard',
-    iconComponent: { name: 'cil-shield-alt' },
-    attributes: { roles: ['SUPER_ADMIN'] }
-  },
-
-  // ============================================
-  // ORGANIZATION ADMIN MENU
-  // ============================================
-  {
-    name: 'Org Admin Dashboard',
     url: '/orgadmin-dashboard',
     iconComponent: { name: 'cil-speedometer' },
     attributes: { roles: ['ORGANIZATION_ADMIN'] }
   },
   {
-    name: 'Hierarchy Management',
-    url: '/hierarchy-management',
-    iconComponent: { name: 'cil-sitemap' },
-    attributes: { roles: ['ORGANIZATION_ADMIN'] },
-    children: [
-      {
-        name: 'Hierarchy Levels',
-        url: '/hierarchy-levels',
-        iconComponent: { name: 'cil-layers' }
-      },
-      {
-        name: 'Hierarchy Users',
-        url: '/hierarchy-users',
-        iconComponent: { name: 'cil-people' }
-      },
-      {
-        name: 'Reporting Structure',
-        url: '/reporting-structure',
-        iconComponent: { name: 'cil-sitemap' }
-      },
-      {
-        name: 'Approval Configuration',
-        url: '/approval-flow-config',
-        iconComponent: { name: 'cil-check-circle' }
-      }
-    ]
+    name: 'Manage Users',
+    url: '/hierarchy-users',
+    iconComponent: { name: 'cil-people' },
+    attributes: { roles: ['ORGANIZATION_ADMIN'] }
   },
   {
-    name: 'Management',
-    url: '/supplier-management',
-    iconComponent: { name: 'cil-sitemap' },
-    attributes: { roles: ['ORGANIZATION_ADMIN'] },
-    children: [
-      {
-        name: 'Dashboard',
-        url: '/dashboard',
-        iconComponent: { name: 'cil-layers' }
-      },
-      {
-        name: 'Buyer Management',
-        url: '/create-b',
-        iconComponent: { name: 'cil-people' },
-        attributes: { roles: ['ORGANIZATION_ADMIN'] }
-      },
-      {
-        name: 'Supplier Management',
-        url: '/create-s',
-        iconComponent: { name: 'cil-building' },
-           attributes: { roles: ['ORGANIZATION_ADMIN',] }
-      },
-      {
-        name: 'Evaluation Criteria',
-        url: '/evaluation-criteria',
-        iconComponent: { name: 'cil-star' },
-        attributes: { roles: ['ORGANIZATION_ADMIN'] }
-      },
-      {
-        name: 'Q&A Library',
-        url: '/faq',
-        iconComponent: { name: 'cil-question-mark' },
-        attributes: { roles: ['ORGANIZATION_ADMIN'] }
-      },
-      {
-        name: 'Registration Questionnaire',
-        url: '/registration-questionnaire',
-        iconComponent: { name: 'cil-clipboard' },
-        attributes: { roles: ['ORGANIZATION_ADMIN'] }
-      },
-      {
-        name: 'Risk Questions',
-        url: '/risk-questions',
-        iconComponent: { name: 'cil-warning' },
-        attributes: { roles: ['ORGANIZATION_ADMIN'] }
-      },
-      {
-        name: 'Supplier Risk Dashboard',
-        url: '/supplier-risk-dashboard',
-        iconComponent: { name: 'cil-shield-alt' },
-        attributes: { roles: ['ORGANIZATION_ADMIN'] }
-      }
-    ]
+    name: 'Reports',
+    url: '/spend-analysis',
+    iconComponent: { name: 'cil-chart-pie' },
+    attributes: { roles: ['ORGANIZATION_ADMIN'] }
   },
+  // {
+  //   name: 'Audit Log',
+  //   url: '/audit-log',
+  //   iconComponent: { name: 'cil-history' },
+  //   attributes: { roles: ['ORGANIZATION_ADMIN'] }
+  // },
 
   // ============================================
-  // DYNAMIC HIERARCHY USER DASHBOARD
+  // PROCUREMENT OPERATOR — everything day-to-day
   // ============================================
   {
-    name: 'Dashboard',
-    url: '/hierarchy-dashboard',
-    iconComponent: { name: 'cil-speedometer' },
-    attributes: { roles: ['ADMIN', 'CEO', 'COO', 'MANAGER', 'PROCUREMENT', 'FINANCE'] }
-  },
-
-  // ============================================
-  // LEGAL TEAM — contracts only, no RFQ/PO/Supplier
-  // ============================================
-  {
-    name: 'Dashboard',
-    url: '/legal-dashboard',
-    iconComponent: { name: 'cil-speedometer' },
-    attributes: { roles: ['LEGAL'] }
-  },
-
-  // ============================================
-  // FINANCE — BUDGET MANAGEMENT MODULE
-  // ============================================
-  {
-    name: 'Budget Management',
-    url: '/finance-dashboard',
-    iconComponent: { name: 'cil-money' },
-    attributes: { roles: ['FINANCE'] }
-  },
-
-  // ============================================
-  // BUYER MENU ITEMS
-  // ============================================
-  {
-    name: 'RFQ Dashboard',
-    url: '/rfq-dashboard',
-    iconComponent: { name: 'cil-layers' },
-    attributes: { roles: ['ROLE_BUYER'] }
-  },
-  {
-    name: 'Budget Dashboard',
-    url: '/budget-dashboard',
-    iconComponent: { name: 'cil-money' },
-    attributes: { roles: ['ROLE_BUYER'] }
-  },
-  {
-    name: 'Create RFQ',
-    url: '/create-rfq',
-    iconComponent: { name: 'cil-file' },
-    attributes: { roles: ['ROLE_BUYER'] }
-  },
-  {
-    name: 'RFI Dashboard',
-    url: '/rfi-dashboard',
-    iconComponent: { name: 'cil-question-mark' },
-    attributes: { roles: ['ROLE_BUYER'] }
-  },
-  {
-    name: 'Contracts',
-    url: '/contract-list',
+    name: 'PO Management',
+    url: '/po-list',
     iconComponent: { name: 'cil-description' },
-    attributes: { roles: ['ROLE_BUYER'] }
+    attributes: { roles: ['PROCUREMENT_OPERATOR'] },
+    children: [
+      {
+        name: 'All Purchase Orders',
+        url: '/po-list',
+        iconComponent: { name: 'cil-list' }
+      },
+      {
+        name: 'Create PO',
+        url: '/po-create',
+        iconComponent: { name: 'cil-plus' }
+      },
+      {
+        name: 'PO Closure',
+        url: '/po-closure',
+        iconComponent: { name: 'cil-lock-locked' }
+      }
+    ]
   },
-    {
+  {
+    name: 'Invoice Management',
+    url: '/invoices',
+    iconComponent: { name: 'cil-file' },
+    attributes: { roles: ['PROCUREMENT_OPERATOR'] }
+  },
+  {
+    name: 'Payment Tracking',
+    url: '/payment-tracking',
+    iconComponent: { name: 'cil-money' },
+    attributes: { roles: ['PROCUREMENT_OPERATOR'] }
+  },
+  {
+    name: 'Status Tracking',
+    url: '/status-tracking',
+    iconComponent: { name: 'cil-chart-line' },
+    attributes: { roles: ['PROCUREMENT_OPERATOR'] }
+  },
+  {
     name: 'Supplier Management',
     url: '/create-s',
     iconComponent: { name: 'cil-building' },
-    attributes: { roles: ['ROLE_BUYER'] }
+    attributes: { roles: ['PROCUREMENT_OPERATOR'] }
+  },
+  {
+    name: 'Reports',
+    url: '/spend-analysis',
+    iconComponent: { name: 'cil-chart-pie' },
+    attributes: { roles: ['PROCUREMENT_OPERATOR'] }
   },
   // {
-  //   name: 'Quote Comparison',
-  //   url: '/quote-comparison',
-  //   iconComponent: { name: 'cil-chart-line' },
-  //   attributes: { roles: ['ROLE_BUYER'] }
+  //   name: 'Audit Log',
+  //   url: '/audit-log',
+  //   iconComponent: { name: 'cil-history' },
+  //   attributes: { roles: ['PROCUREMENT_OPERATOR'] }
   // },
-  // ✅ NEW: Purchase Orders nav item
-  {
-    name: 'Purchase Orders',
-    url: '/po-list',
-    iconComponent: { name: 'cil-description' },
-    attributes: { roles: ['ROLE_BUYER'] }
-  },
-  {
-  name: 'Invoice Management',
-  url: '/invoices',
-  iconComponent: { name: 'cil-description' },
-  attributes: { roles: ['ROLE_BUYER'] }
-},
-  {
-  name: 'GRN',
-  url: '/grn-list',
-  iconComponent: { name: 'cil-description' },
-  attributes: { roles: ['ROLE_BUYER','ROLE_BUYER'] }
-},
-  {
-  name: '3-Way Match',
-  url: '/three-way-match',
-  iconComponent: { name: 'cil-description' },
-  attributes: { roles: ['ROLE_BUYER','ROLE_BUYER'] }
-},
-  {
-  name: 'Service Entry Sheets',
-  url: '/ses-list',
-  iconComponent: { name: 'cil-description' },
-  attributes: { roles: ['ROLE_BUYER'] }
-},
-  {
-  name: 'Service Planner',
-  url: '/service-calendar',
-  iconComponent: { name: 'cil-calendar' },
-  attributes: { roles: ['ROLE_BUYER'] }
-},
-  {
-  name: 'Spend Analysis',
-  url: '/spend-analysis',
-  iconComponent: { name: 'cil-chart-pie' },
-  attributes: { roles: ['ROLE_BUYER'] }
-},
-  {
-  name: 'Corrective Actions',
-  url: '/cap-list',
-  iconComponent: { name: 'cil-warning' },
-  attributes: { roles: ['ROLE_BUYER'] }
-},
-  {
-  name: 'Q&A Library',
-  url: '/faq',
-  iconComponent: { name: 'cil-question-mark' },
-  attributes: { roles: ['ROLE_BUYER'] }
-},
-  {
-    name: 'ASN Tracking',
-    url: '/asn-tracking',
-    iconComponent: { name: 'cil-location-pin' },
-    attributes: { roles: ['ROLE_BUYER'] }
-  },
 
   // ============================================
-  // SUPPLIER MENU
+  // APPROVERS (CEO/COO/MANAGER/PROCUREMENT/FINANCE) — no menu entries.
+  // Nothing to approve while APPROVAL_WORKFLOW_ENABLED is false. Their logins are untouched
+  // in the DB — restoring these two entries is all it takes to bring the screens back.
+  // ============================================
+
+  // ============================================
+  // SUPPLIER
   // ============================================
   {
     name: 'Supplier Dashboard',
@@ -251,73 +136,9 @@ export const navItems: INavData[] = [
     attributes: { roles: ['ROLE_SUPPLIER'] }
   },
   {
-    name: 'My Shipments (ASN)',
-    url: '/asn-list',
-    iconComponent: { name: 'cil-truck' },
-    attributes: { roles: ['ROLE_SUPPLIER'] }
-  },
-  {
-    name: 'Service Entry Sheets',
-    url: '/ses-list',
-    iconComponent: { name: 'cil-description' },
-    attributes: { roles: ['ROLE_SUPPLIER'] }
-  },
-  {
-    name: 'Service Planner',
-    url: '/service-calendar',
-    iconComponent: { name: 'cil-calendar' },
-    attributes: { roles: ['ROLE_SUPPLIER'] }
-  },
-  {
-    name: 'Revenue Analysis',
-    url: '/spend-analysis',
+    name: 'Reports',
+    url: '/supplier-reports',
     iconComponent: { name: 'cil-chart-pie' },
     attributes: { roles: ['ROLE_SUPPLIER'] }
-  },
-  {
-    name: 'Corrective Actions',
-    url: '/cap-list',
-    iconComponent: { name: 'cil-warning' },
-    attributes: { roles: ['ROLE_SUPPLIER'] }
-  },
-  {
-    name: 'Q&A Library',
-    url: '/faq',
-    iconComponent: { name: 'cil-question-mark' },
-    attributes: { roles: ['ROLE_SUPPLIER'] }
-  },
-  {
-    name: 'RFI Inbox',
-    url: '/rfi-inbox',
-    iconComponent: { name: 'cil-question-mark' },
-    attributes: { roles: ['ROLE_SUPPLIER'] }
-  },
-  {
-    name: 'My Contracts',
-    url: '/contract-inbox',
-    iconComponent: { name: 'cil-description' },
-    attributes: { roles: ['ROLE_SUPPLIER'] }
-  },
-
-  // ============================================
-  // APPROVAL WORKFLOWS
-  // ============================================
-  {
-    name: 'Pending Approvals',
-    url: '/pending-approvals',
-    iconComponent: { name: 'cil-task' },
-    attributes: { roles: ['CEO', 'COO', 'PROCUREMENT', 'MANAGER', 'ADMIN'] },
-  },
-  {
-    name: 'Contract Approvals',
-    url: '/contract-approvals',
-    iconComponent: { name: 'cil-description' },
-    attributes: { roles: ['CEO', 'COO', 'PROCUREMENT', 'MANAGER', 'ADMIN', 'LEGAL'] },
-  },
-  {
-    name: 'Budget Approvals',
-    url: '/budget-approvals',
-    iconComponent: { name: 'cil-money' },
-    attributes: { roles: ['CEO', 'COO', 'PROCUREMENT', 'MANAGER', 'ADMIN'] },
   }
 ];

@@ -1,488 +1,599 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { RouterModule } from '@angular/router';
+import { Router } from '@angular/router';
+import { ChartjsComponent } from '@coreui/angular-chartjs';
+import { InteractionItem } from 'chart.js';
 import { DataService } from '../../../shared/service/DataService';
-import { AuthService } from '../../../shared/service/AuthService';
 
-/** One donut segment, with its pre-computed SVG arc path. */
-interface Segment {
+interface FYOption {
+  value: string;
   label: string;
-  value: number;
-  percent: number;
-  color: string;
-  path: string;
+  from: Date;
+  to: Date;
 }
 
-interface Donut {
-  key: string;
-  title: string;
-  subtitle: string;
-  segments: Segment[];
-  total: number;
+interface BreakdownRow {
+  label: string;
+  count: number;
+  value: number;
+  percent: number;
 }
 
 /**
- * Consolidated spend analysis — where the money actually goes, across suppliers, categories and
- * business units.
+ * Purchase Order Report — what we've bought, from whom, and where the money is right now.
  *
- * Charts are hand-rolled inline SVG rather than a charting library: the palette, the 2px gaps
- * between segments and the label placement all have to be exact, and four small donuts plus one
- * bar chart is far less code than bending a library's defaults into the same shape.
+ * This replaced a much bigger multi-tenant "Spend Analysis" screen built for a marketplace
+ * where "buyer" meant one of many buyer accounts (supplier-side revenue view, spend by
+ * category/business-unit/spares, a buyerId read from localStorage that Admin and Procurement
+ * never have). None of that applies here: there is one company, one set of POs, and the ask
+ * is exactly that — our POs and what we're spending, nothing else.
+ *
+ * Everything below is computed client-side from the same PO list every other screen in this
+ * app already uses (getAllPurchaseOrders) — no new backend endpoint was needed.
  */
 @Component({
   selector: 'app-spend-analysis',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterModule],
+  imports: [CommonModule, FormsModule, ChartjsComponent],
   templateUrl: './spend-analysis.component.html',
   styleUrls: ['./spend-analysis.component.css']
 })
 export class SpendAnalysisComponent implements OnInit {
 
-  /** The same screen serves both sides — a buyer's spend and a supplier's income. */
-  isSupplierMode = false;
-  buyerId = 0;
-  supplierId = 0;
-  fyStartYear = 0;
-  fyOptions: number[] = [];
-  financialYear = '';
-
-  /** Sentinel value for the "All Time" option in the period selector — every year with committed
-   *  spend, not just one financial year. */
-  readonly ALL_TIME = -1;
-  get isAllTimeView(): boolean { return this.fyStartYear === this.ALL_TIME; }
-
-  /** Sentinel for the "Custom Range" option — an arbitrary From/To instead of a financial year. */
-  readonly CUSTOM_RANGE = -2;
-  get isCustomRangeView(): boolean { return this.fyStartYear === this.CUSTOM_RANGE; }
-  customFrom = '';
-  customTo = '';
-
-  kpis: any = null;
-  kpiTiles: { label: string; value: string; foot: string; primary?: boolean }[] = [];
-  donuts: Donut[] = [];
-  monthlyTrend: any[] = [];
-  supplierTable: any[] = [];
-
+  allPOs: any[] = [];
+  filteredPOs: any[] = [];
   isLoading = false;
   errorMessage = '';
 
-  // ── Copy that differs between the two sides ──
-  get pageTitle(): string { return this.isSupplierMode ? 'Revenue Analysis' : 'Spend Analysis'; }
-  get pageSubtitle(): string {
-    return this.isSupplierMode
-      ? 'Where your income comes from — by customer, order type and delivery site'
-      : 'Categorised spend across suppliers, categories and business units';
-  }
-  get trendTitle(): string {
-    if (this.isAllTimeView) {
-      return this.isSupplierMode ? 'Order Value Won by Month — All Time' : 'Committed Spend by Month — All Time';
-    }
-    return this.isSupplierMode ? 'Order Value Won by Month' : 'Committed Spend by Month';
-  }
-  get trendSubtitle(): string {
-    if (this.isAllTimeView) {
-      return this.isSupplierMode
-        ? 'Every month customers have raised orders on you, from the very first order'
-        : 'Every month you have raised orders in, from the very first order';
-    }
-    return this.isSupplierMode
-      ? 'When customers raised orders on you across ' + this.financialYear
-      : 'When orders were raised across ' + this.financialYear;
-  }
-  get rankingTitle(): string {
-    return this.isSupplierMode ? 'Customer Revenue Ranking' : 'Supplier Spend Ranking';
-  }
-  get rankingSubtitle(): string {
-    return this.isSupplierMode
-      ? 'Every customer, not just the top five shown in the chart'
-      : 'Every supplier, not just the top five shown in the chart';
-  }
-  get counterpartyColumn(): string { return this.isSupplierMode ? 'Customer' : 'Supplier'; }
-  get valueColumn(): string { return this.isSupplierMode ? 'Revenue' : 'Spend'; }
-  get emptyMessage(): string {
-    return this.isSupplierMode
-      ? 'No order value recorded for ' + this.financialYear + '.'
-      : 'No committed spend recorded for ' + this.financialYear + '.';
-  }
-  get emptyHint(): string {
-    return this.isSupplierMode
-      ? 'Income is counted from purchase orders your customers have approved or beyond — drafts, '
-        + 'cancellations and rejected orders are excluded. Try another financial year.'
-      : 'Spend is counted from purchase orders that have been approved or beyond — drafts, '
-        + 'cancellations and rejected orders are excluded. Try another financial year.';
-  }
-  get footNote(): string {
-    return this.isSupplierMode
-      ? 'Order Value Won is the value of purchase orders your customers have actually issued — approved '
-        + 'or beyond. Invoiced is what you have billed, and Received is what has been settled. Each '
-        + 'breakdown shows the top five with the remainder grouped as "Other" — the full customer list '
-        + 'is in the ranking table above.'
-      : 'Committed is the value of purchase orders actually issued — approved or beyond; drafts, '
-        + 'cancelled and rejected orders are excluded. Invoiced is what suppliers have billed, and Paid '
-        + 'is what has been settled. Each breakdown shows the top five with the remainder grouped as '
-        + '"Other" — the full supplier list is in the ranking table above.';
+  searchText = '';
+  statusFilter = 'ALL';
+  /** Set by clicking a chart segment, not a form control — see the three chart click handlers below. */
+  supplierFilter: string | null = null;
+  monthFilter: string | null = null;   // 'YYYY-MM', matched against po.createdDate
+
+  // ── Pagination — same pattern as the PO list ─────────────────────────────
+  currentPage = 1;
+  pageSize = 10;
+  pageSizeOptions: number[] = [5, 10, 25, 50];
+
+  get totalPages(): number { return Math.max(1, Math.ceil(this.filteredPOs.length / this.pageSize)); }
+
+  get paginatedPOs(): any[] {
+    const start = (this.currentPage - 1) * this.pageSize;
+    return this.filteredPOs.slice(start, start + this.pageSize);
   }
 
-  /** Show the full supplier ranking — the table view the capped charts fall back on. */
-  showTable = false;
+  get pageNumbers(): number[] {
+    const total = this.totalPages, current = this.currentPage;
+    const pages: number[] = [];
+    if (total <= 7) { for (let i = 1; i <= total; i++) pages.push(i); return pages; }
+    pages.push(1);
+    if (current > 3) pages.push(-1);
+    const start = Math.max(2, current - 1), end = Math.min(total - 1, current + 1);
+    for (let i = start; i <= end; i++) pages.push(i);
+    if (current < total - 2) pages.push(-1);
+    pages.push(total);
+    return pages;
+  }
 
-  // ── Spares card drill-down ──────────────────────────────────────────
-  showSparesModal = false;
-  isLoadingSpares = false;
-  sparesData: any = null;
-  sparesFrom = '';
-  sparesTo = '';
-  get sparesLabel(): string { return this.isSupplierMode ? 'Spares Revenue' : 'Spares Spend'; }
+  get startIndex(): number {
+    if (this.filteredPOs.length === 0) return 0;
+    return (this.currentPage - 1) * this.pageSize + 1;
+  }
+  get endIndex(): number { return Math.min(this.currentPage * this.pageSize, this.filteredPOs.length); }
 
-  /* Categorical slots in fixed order — a category keeps its colour regardless of how many
-   * series survive a filter, and slots are never cycled. "Other" always takes the grey. */
-  private readonly SERIES = ['#2a78d6', '#eb6834', '#1baf7a', '#eda100', '#e87ba4', '#008300'];
-  private readonly OTHER_COLOR = '#8d8d86';
+  goToPage(page: number): void {
+    if (page < 1 || page > this.totalPages) return;
+    this.currentPage = page;
+  }
+  onPageSizeChange(size: number): void { this.pageSize = size; this.currentPage = 1; }
+  statusOptions = [
+    'ALL', 'DRAFT', 'PENDING_APPROVAL', 'APPROVED', 'RELEASED', 'IN_PROGRESS',
+    'DELIVERED', 'COMPLETED', 'CLOSED', 'FORECLOSED', 'REJECTED', 'CANCELLED'
+  ];
 
-  constructor(private dataService: DataService, private authService: AuthService) {}
+  // ── Financial year filter — same pattern used across the rest of the app ───
+  financialYearOptions: FYOption[] = [];
+  selectedFYOption: string = '';
+  customFromDate: string = '';
+  customToDate: string = '';
+  activeDateRangeLabel: string = '';
+
+  constructor(
+    private dataService: DataService,
+    private router: Router
+  ) {}
 
   ngOnInit(): void {
-    this.isSupplierMode = this.authService.isSupplier();
-
-    const now = new Date();
-    const currentFy = now.getMonth() + 1 >= 4 ? now.getFullYear() : now.getFullYear() - 1;
-    this.fyOptions = [currentFy - 2, currentFy - 1, currentFy, currentFy + 1];
-    // Lands on the full history by default — a single financial year is still one click away
-    // via the Period dropdown, but the first thing shown is every year, not just the current one.
-    this.fyStartYear = this.ALL_TIME;
-
-    if (this.isSupplierMode) {
-      this.supplierId = this.authService.getSupplierId() || 0;
-      if (this.supplierId) this.load();
-      else this.errorMessage = 'No supplier account found. Please sign in again.';
-    } else {
-      this.buyerId = Number(localStorage.getItem('buyerId')) || 0;
-      if (this.buyerId) this.load();
-      else this.errorMessage = 'No buyer account found. Please sign in again.';
-    }
+    this.buildFinancialYearOptions();
+    this.selectedFYOption = 'ALL';   // the full history is the more useful default for a report
+    this.updateActiveDateRangeLabel();
+    this.load();
   }
 
   load(): void {
     this.isLoading = true;
     this.errorMessage = '';
 
-    const source$ = this.isCustomRangeView
-      ? (this.isSupplierMode
-          ? this.dataService.getSupplierRevenueAnalysisCustomRange(this.supplierId, this.customFrom, this.customTo)
-          : this.dataService.getSpendAnalysisCustomRange(this.buyerId, this.customFrom, this.customTo))
-      : this.isAllTimeView
-      ? (this.isSupplierMode
-          ? this.dataService.getSupplierRevenueAnalysisAllTime(this.supplierId)
-          : this.dataService.getSpendAnalysisAllTime(this.buyerId))
-      : (this.isSupplierMode
-          ? this.dataService.getSupplierRevenueAnalysis(this.supplierId, this.fyStartYear)
-          : this.dataService.getSpendAnalysis(this.buyerId, this.fyStartYear));
-
-    source$.subscribe({
+    this.dataService.getAllPurchaseOrders().subscribe({
       next: (res: any) => {
-        const d = res?.success ? res.data : (res?.data || res);
-        this.kpis = d?.kpis || null;
-        this.financialYear = d?.financialYear || '';
-        this.monthlyTrend = d?.monthlyTrend || [];
-        this.supplierTable = d?.counterpartyTable || d?.supplierTable || [];
-        this.donuts = this.isSupplierMode
-          ? [
-              this.buildDonut('counterparty', 'Revenue by Customer', 'Who your income comes from', d?.byCounterparty),
-              this.buildDonut('potype', 'Revenue by Order Type', 'Goods, service, contract or project', d?.byPoType),
-              this.buildDonut('unit', 'Revenue by Delivery Site', 'Where you deliver', d?.byBusinessUnit),
-              this.buildDonut('status', 'Order Book by Status', 'Where your orders sit in fulfilment', d?.byOrderStatus),
-              this.buildDonut('spares', 'Revenue from Spares', 'Which spare parts you are supplying', d?.bySparesItem)
-            ]
-          : [
-              this.buildDonut('counterparty', 'Spend by Supplier', 'Who the money goes to', d?.byCounterparty || d?.bySupplier),
-              this.buildDonut('category', 'Spend by Category', 'What kind of supply it is', d?.byCategory),
-              this.buildDonut('unit', 'Spend by Business Unit', 'Which site or unit is spending', d?.byBusinessUnit),
-              this.buildDonut('potype', 'Spend by Order Type', 'Goods, service, contract or project', d?.byPoType),
-              this.buildDonut('spares', 'Spend by Spares', 'Which spare parts you are buying', d?.bySparesItem)
-            ];
-        this.buildKpiTiles();
+        this.allPOs = this.unwrapList(res).map((po: any) => ({
+          ...po,
+          grandTotal:        Number(po.grandTotal) || 0,
+          totalPaidAmount:    Number(po.totalPaidAmount) || 0,
+          totalInvoicedAmount: Number(po.totalInvoicedAmount) || 0,
+          supplierName:       po.supplierName || 'Unknown Supplier',
+          createdDate:        po.createdAt || po.createdDate || po.poDate || null
+        }));
+        this.applyFilters();
         this.isLoading = false;
       },
       error: (err: any) => {
-        this.errorMessage = this.isSupplierMode
-          ? (err?.error?.message || 'Failed to load the revenue analysis.')
-          : (err?.error?.message || 'Failed to load the spend analysis.');
+        this.errorMessage = err?.error?.message || 'Could not load purchase orders.';
+        this.allPOs = [];
+        this.filteredPOs = [];
         this.isLoading = false;
       }
     });
   }
 
-  /** Tiles are built here rather than hardcoded in the template — the two sides use the same
-   *  five numbers under different names, so branching once in code beats duplicating markup. */
-  private buildKpiTiles(): void {
-    const k = this.kpis;
-    if (!k) { this.kpiTiles = []; return; }
+  // =========================================================================
+  // FINANCIAL YEAR HELPERS — identical pattern to po-list / hierarchy-dashboard
+  // =========================================================================
 
-    const orders = `${k.poCount} purchase order${k.poCount === 1 ? '' : 's'}`;
-    const invoices = `${k.invoiceCount} invoice${k.invoiceCount === 1 ? '' : 's'}`;
-    const counterparties = k.counterpartyCount ?? k.supplierCount ?? 0;
-
-    this.kpiTiles = this.isSupplierMode
-      ? [
-          { label: 'Order Value Won', value: this.compact(k.committed),   foot: orders, primary: true },
-          { label: 'Invoiced',        value: this.compact(k.invoiced),    foot: invoices },
-          { label: 'Received',        value: this.compact(k.paid),        foot: 'Settled by customers' },
-          { label: 'Awaiting Payment',value: this.compact(k.outstanding), foot: 'Invoiced, not yet received' },
-          { label: 'Active Customers',value: String(counterparties),      foot: 'Avg order ' + this.compact(k.averagePoValue) }
-        ]
-      : [
-          { label: 'Committed Spend', value: this.compact(k.committed),   foot: orders, primary: true },
-          { label: 'Invoiced',        value: this.compact(k.invoiced),    foot: invoices },
-          { label: 'Paid',            value: this.compact(k.paid),        foot: 'Settled with suppliers' },
-          { label: 'Outstanding',     value: this.compact(k.outstanding), foot: 'Invoiced, not yet paid' },
-          { label: 'Active Suppliers',value: String(counterparties),      foot: 'Avg order ' + this.compact(k.averagePoValue) }
-        ];
-  }
-
-  /** Picking a financial year or All Time loads immediately, same as before. Picking Custom Range
-   *  just reveals the From/To inputs — pre-filled with the current financial year so Apply works
-   *  right away — and waits for the user to press Apply rather than firing on an empty range. */
-  onYearChange(): void {
-    if (this.isCustomRangeView) {
-      if (!this.customFrom || !this.customTo) {
-        const now = new Date();
-        const currentFy = now.getMonth() + 1 >= 4 ? now.getFullYear() : now.getFullYear() - 1;
-        this.customFrom = `${currentFy}-04-01`;
-        this.customTo = `${currentFy + 1}-03-31`;
-      }
-      return;
-    }
-    this.load();
-  }
-
-  applyCustomRange(): void {
-    if (!this.customFrom || !this.customTo) {
-      this.errorMessage = 'Pick both a From and a To date for the custom range.';
-      return;
-    }
-    this.load();
-  }
-
-  // ── Spares card drill-down ──────────────────────────────────────────
-
-  /** Opens the Spares detail modal, defaulting the date filter to whatever period is currently
-   *  selected on the dashboard (a specific financial year, or blank/unbounded for All Time). */
-  openSparesModal(): void {
-    if (this.isAllTimeView) {
-      this.sparesFrom = '';
-      this.sparesTo = '';
-    } else if (this.isCustomRangeView) {
-      this.sparesFrom = this.customFrom;
-      this.sparesTo = this.customTo;
-    } else {
-      this.sparesFrom = `${this.fyStartYear}-04-01`;
-      this.sparesTo = `${this.fyStartYear + 1}-03-31`;
-    }
-    this.showSparesModal = true;
-    this.loadSparesDetail();
-  }
-
-  closeSparesModal(): void {
-    this.showSparesModal = false;
-    this.sparesData = null;
-  }
-
-  /** Re-runs the drill-down with whatever from/to the user has typed into the filter — lets them
-   *  narrow to a week, widen to years, or clear both for the full history. */
-  applySparesFilter(): void { this.loadSparesDetail(); }
-
-  clearSparesFilter(): void {
-    this.sparesFrom = '';
-    this.sparesTo = '';
-    this.loadSparesDetail();
-  }
-
-  private loadSparesDetail(): void {
-    this.isLoadingSpares = true;
-    this.errorMessage = '';
-
-    const from = this.sparesFrom || null;
-    const to = this.sparesTo || null;
-    const source$ = this.isSupplierMode
-      ? this.dataService.getSupplierSparesDetail(this.supplierId, from, to)
-      : this.dataService.getSparesDetail(this.buyerId, from, to);
-
-    source$.subscribe({
-      next: (res: any) => {
-        this.sparesData = res?.success ? res.data : (res?.data || res);
-        this.isLoadingSpares = false;
-      },
-      error: (err: any) => {
-        this.errorMessage = err?.error?.message || 'Failed to load the spares breakdown.';
-        this.isLoadingSpares = false;
-        this.showSparesModal = false;
-      }
-    });
-  }
-
-  // ── Donut card drill-down (Supplier/Customer, Category, Business Unit, Order Type, Status) ──
-  showBreakdownModal = false;
-  isLoadingBreakdown = false;
-  breakdownData: any = null;
-  breakdownDimension = '';
-  breakdownTitle = '';
-  breakdownFrom = '';
-  breakdownTo = '';
-
-  /** Every donut card is clickable — Spares reuses the existing Spares modal (it already has this
-   *  exact filter-by-date + detailed-view behaviour); every other donut opens the generic
-   *  breakdown modal, keyed by the same dimension the donut itself was grouped by. */
-  openDonutDetail(d: Donut): void {
-    if (d.key === 'spares') { this.openSparesModal(); return; }
-
-    this.breakdownDimension = d.key;
-    this.breakdownTitle = d.title;
-    if (this.isAllTimeView) {
-      this.breakdownFrom = '';
-      this.breakdownTo = '';
-    } else if (this.isCustomRangeView) {
-      this.breakdownFrom = this.customFrom;
-      this.breakdownTo = this.customTo;
-    } else {
-      this.breakdownFrom = `${this.fyStartYear}-04-01`;
-      this.breakdownTo = `${this.fyStartYear + 1}-03-31`;
-    }
-    this.showBreakdownModal = true;
-    this.loadBreakdownDetail();
-  }
-
-  closeBreakdownModal(): void {
-    this.showBreakdownModal = false;
-    this.breakdownData = null;
-  }
-
-  applyBreakdownFilter(): void { this.loadBreakdownDetail(); }
-
-  clearBreakdownFilter(): void {
-    this.breakdownFrom = '';
-    this.breakdownTo = '';
-    this.loadBreakdownDetail();
-  }
-
-  private loadBreakdownDetail(): void {
-    this.isLoadingBreakdown = true;
-    this.errorMessage = '';
-
-    const from = this.breakdownFrom || null;
-    const to = this.breakdownTo || null;
-    const source$ = this.isSupplierMode
-      ? this.dataService.getSupplierSpendBreakdownDetail(this.supplierId, this.breakdownDimension, from, to)
-      : this.dataService.getSpendBreakdownDetail(this.buyerId, this.breakdownDimension, from, to);
-
-    source$.subscribe({
-      next: (res: any) => {
-        this.breakdownData = res?.success ? res.data : (res?.data || res);
-        this.isLoadingBreakdown = false;
-      },
-      error: (err: any) => {
-        this.errorMessage = err?.error?.message || 'Failed to load the detailed breakdown.';
-        this.isLoadingBreakdown = false;
-        this.showBreakdownModal = false;
-      }
-    });
-  }
-
-  // ── Donut geometry ──────────────────────────────────────────────────
-
-  private buildDonut(key: string, title: string, subtitle: string, raw: any[]): Donut {
-    const rows = (raw || []).filter(r => Number(r.value) > 0);
-    const total = rows.reduce((s, r) => s + Number(r.value || 0), 0);
-
-    const segments: Segment[] = [];
-    let cursor = 0;
-    rows.forEach((r, i) => {
-      const value = Number(r.value || 0);
-      const fraction = total > 0 ? value / total : 0;
-      segments.push({
-        label: r.label,
-        value,
-        percent: Number(r.percent || 0),
-        color: r.isOther ? this.OTHER_COLOR : this.SERIES[i % this.SERIES.length],
-        path: this.arcPath(cursor, cursor + fraction)
+  private buildFinancialYearOptions(): void {
+    const today = new Date();
+    const currentFYStartYear = today.getMonth() >= 3 ? today.getFullYear() : today.getFullYear() - 1;
+    this.financialYearOptions = [];
+    for (let i = 0; i < 4; i++) {
+      const startYear = currentFYStartYear - i;
+      const endYear = startYear + 1;
+      this.financialYearOptions.push({
+        value: `FY${startYear}-${String(endYear).slice(-2)}`,
+        label: `FY ${startYear}-${String(endYear).slice(-2)} (Apr ${startYear} – Mar ${endYear})`,
+        from: new Date(startYear, 3, 1, 0, 0, 0, 0),
+        to: new Date(endYear, 2, 31, 23, 59, 59, 999)
       });
-      cursor += fraction;
+    }
+  }
+
+  onFYOptionChange(): void {
+    if (this.selectedFYOption !== 'CUSTOM') { this.customFromDate = ''; this.customToDate = ''; }
+    this.updateActiveDateRangeLabel();
+    this.applyFilters();
+  }
+
+  resetDateFilter(): void {
+    this.selectedFYOption = 'ALL';
+    this.customFromDate = '';
+    this.customToDate = '';
+    this.updateActiveDateRangeLabel();
+    this.applyFilters();
+  }
+
+  private updateActiveDateRangeLabel(): void {
+    if (this.selectedFYOption === 'ALL') { this.activeDateRangeLabel = 'All Time'; return; }
+    if (this.selectedFYOption === 'CUSTOM') {
+      if (this.customFromDate && this.customToDate)
+        this.activeDateRangeLabel = `${this.fmtDate(this.customFromDate)} – ${this.fmtDate(this.customToDate)}`;
+      else this.activeDateRangeLabel = 'Custom Range';
+      return;
+    }
+    const fy = this.financialYearOptions.find(f => f.value === this.selectedFYOption);
+    this.activeDateRangeLabel = fy ? fy.label : '';
+  }
+
+  private fmtDate(dateStr: string): string {
+    return new Date(dateStr + 'T00:00:00').toLocaleDateString('en-GB',
+      { day: '2-digit', month: 'short', year: 'numeric' });
+  }
+
+  private getActiveDateRange(): { from: Date; to: Date } | null {
+    if (this.selectedFYOption === 'ALL') return null;
+    if (this.selectedFYOption === 'CUSTOM') {
+      const from = this.customFromDate ? new Date(this.customFromDate + 'T00:00:00') : null;
+      const to = this.customToDate ? new Date(this.customToDate + 'T23:59:59') : null;
+      if (!from && !to) return null;
+      return { from: from ?? new Date(0), to: to ?? new Date(8640000000000000) };
+    }
+    const fy = this.financialYearOptions.find(f => f.value === this.selectedFYOption);
+    return fy ? { from: fy.from, to: fy.to } : null;
+  }
+
+  // =========================================================================
+  // FILTERING
+  // =========================================================================
+
+  applyFilters(): void {
+    const range = this.getActiveDateRange();
+    let data = [...this.allPOs];
+
+    if (range) {
+      data = data.filter(po => {
+        if (!po.createdDate) return false;
+        const d = new Date(po.createdDate);
+        return d >= range.from && d <= range.to;
+      });
+    }
+
+    if (this.statusFilter !== 'ALL') {
+      data = data.filter(po => po.status === this.statusFilter);
+    }
+
+    if (this.supplierFilter) {
+      data = data.filter(po => po.supplierName === this.supplierFilter);
+    }
+
+    if (this.monthFilter) {
+      data = data.filter(po => {
+        if (!po.createdDate) return false;
+        const d = new Date(po.createdDate);
+        const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+        return key === this.monthFilter;
+      });
+    }
+
+    const q = this.searchText.trim().toLowerCase();
+    if (q) {
+      data = data.filter(po =>
+        (po.poNumber || '').toLowerCase().includes(q) ||
+        (po.supplierName || '').toLowerCase().includes(q)
+      );
+    }
+
+    this.filteredPOs = data;
+    this.currentPage = 1;
+    this.rebuildChartConfigs();
+  }
+
+  // =========================================================================
+  // CHART CLICK-TO-FILTER — clicking a chart segment (or its matching legend
+  // row) drills the *entire* report into just that slice: KPI tiles, both pie
+  // charts, the monthly trend, and the table below all recompute from the
+  // narrowed set, since they're all derived from filteredPOs. Clicking the
+  // same segment again — or the chip's × in the active-filter bar — clears it.
+  // =========================================================================
+
+  onSupplierChartClick(items: InteractionItem[]): void {
+    const item = items?.[0];
+    if (!item) return;
+    const row = this.bySupplier[item.index];
+    if (row) this.filterBySupplier(row);
+  }
+
+  onStatusChartClick(items: InteractionItem[]): void {
+    const item = items?.[0];
+    if (!item) return;
+    const row = this.byStatus[item.index];
+    if (row) this.filterByStatus(row);
+  }
+
+  onMonthChartClick(items: InteractionItem[]): void {
+    const item = items?.[0];
+    if (!item) return;
+    const row = this.monthlyTrend[item.index];
+    if (row) this.filterByMonth(row);
+  }
+
+  /** Shared by both the pie slice click and the matching legend-row click, so either one filters the table the same way. */
+  filterBySupplier(row: BreakdownRow): void {
+    if (row.label.startsWith('Other')) return;   // "Other" isn't one real supplier to filter by
+    this.supplierFilter = this.supplierFilter === row.label ? null : row.label;
+    this.applyFilters();
+  }
+
+  filterByStatus(row: BreakdownRow): void {
+    this.statusFilter = this.statusFilter === row.label ? 'ALL' : row.label;
+    this.applyFilters();
+  }
+
+  filterByMonth(row: { key: string; label: string; value: number }): void {
+    this.monthFilter = this.monthFilter === row.key ? null : row.key;
+    this.applyFilters();
+  }
+
+  get hasClickFilters(): boolean {
+    return !!this.supplierFilter || !!this.monthFilter || this.statusFilter !== 'ALL';
+  }
+
+  clearSupplierFilter(): void { this.supplierFilter = null; this.applyFilters(); }
+  clearStatusFilter(): void { this.statusFilter = 'ALL'; this.applyFilters(); }
+  clearMonthFilter(): void { this.monthFilter = null; this.applyFilters(); }
+
+  clearAllClickFilters(): void {
+    this.supplierFilter = null;
+    this.statusFilter = 'ALL';
+    this.monthFilter = null;
+    this.applyFilters();
+  }
+
+  get monthFilterLabel(): string {
+    if (!this.monthFilter) return '';
+    return this.monthlyTrend.find(m => m.key === this.monthFilter)?.label || this.monthFilter;
+  }
+
+  // =========================================================================
+  // KPI TILES — committed value counts every non-cancelled/rejected PO in the
+  // filtered range; cancelled and rejected orders never became real spend.
+  // =========================================================================
+
+  private get committedPOs(): any[] {
+    return this.filteredPOs.filter(po => !['CANCELLED', 'REJECTED', 'DRAFT'].includes(po.status));
+  }
+
+  get totalPOCount(): number { return this.filteredPOs.length; }
+
+  get totalCommittedValue(): number {
+    return this.sum(this.committedPOs, 'grandTotal');
+  }
+
+  get totalPaidValue(): number {
+    return this.sum(this.filteredPOs, 'totalPaidAmount');
+  }
+
+  get totalOutstandingValue(): number {
+    const v = this.totalCommittedValue - this.totalPaidValue;
+    return v > 0 ? v : 0;
+  }
+
+  get activeSupplierCount(): number {
+    return new Set(this.committedPOs.map(po => po.supplierName)).size;
+  }
+
+  get averagePOValue(): number {
+    const n = this.committedPOs.length;
+    return n > 0 ? this.totalCommittedValue / n : 0;
+  }
+
+  private sum(list: any[], field: string): number {
+    return list.reduce((total, item) => total + (Number(item[field]) || 0), 0);
+  }
+
+  // =========================================================================
+  // BREAKDOWNS — sorted rows computed on the fly, fed to both the pie charts
+  // below and the clickable legend list next to each one (so a click on
+  // either the slice or the matching list row filters the same way).
+  // =========================================================================
+
+  private breakdownBy(keyFn: (po: any) => string): BreakdownRow[] {
+    const map = new Map<string, { count: number; value: number }>();
+    this.committedPOs.forEach(po => {
+      const key = keyFn(po) || 'Unspecified';
+      const entry = map.get(key) || { count: 0, value: 0 };
+      entry.count += 1;
+      entry.value += Number(po.grandTotal) || 0;
+      map.set(key, entry);
     });
 
-    return { key, title, subtitle, segments, total };
+    const total = this.totalCommittedValue;
+    const rows: BreakdownRow[] = Array.from(map.entries())
+      .map(([label, v]) => ({
+        label, count: v.count, value: v.value,
+        percent: total > 0 ? Math.round((v.value / total) * 100) : 0
+      }))
+      .sort((a, b) => b.value - a.value);
+
+    return rows;
   }
 
-  /**
-   * Donut arc between two fractions of the whole (0–1), as an SVG path on a 100×100 box.
-   * A small angular inset leaves a 2px surface gap between neighbouring segments so they read
-   * as separate marks rather than one continuous ring.
-   */
-  private arcPath(startFraction: number, endFraction: number): string {
-    const cx = 50, cy = 50, rOuter = 42, rInner = 26;
-    const GAP_DEG = 1.2;
-
-    let a0 = startFraction * 360;
-    let a1 = endFraction * 360;
-    const sweep = a1 - a0;
-
-    // Only inset when the slice is wide enough to survive it; a hairline slice keeps its width.
-    if (sweep > GAP_DEG * 2.5) {
-      a0 += GAP_DEG / 2;
-      a1 -= GAP_DEG / 2;
-    }
-    // A single full-circle segment has no neighbour to gap against — draw it as two half arcs.
-    if (sweep >= 359.99) {
-      return `M ${cx} ${cy - rOuter} A ${rOuter} ${rOuter} 0 1 1 ${cx - 0.01} ${cy - rOuter} Z`
-           + `M ${cx} ${cy - rInner} A ${rInner} ${rInner} 0 1 0 ${cx - 0.01} ${cy - rInner} Z`;
-    }
-
-    const p0 = this.pointOn(cx, cy, rOuter, a0);
-    const p1 = this.pointOn(cx, cy, rOuter, a1);
-    const p2 = this.pointOn(cx, cy, rInner, a1);
-    const p3 = this.pointOn(cx, cy, rInner, a0);
-    const largeArc = (a1 - a0) > 180 ? 1 : 0;
-
-    return `M ${p0.x} ${p0.y} `
-         + `A ${rOuter} ${rOuter} 0 ${largeArc} 1 ${p1.x} ${p1.y} `
-         + `L ${p2.x} ${p2.y} `
-         + `A ${rInner} ${rInner} 0 ${largeArc} 0 ${p3.x} ${p3.y} Z`;
+  get bySupplier(): BreakdownRow[] {
+    const rows = this.breakdownBy(po => po.supplierName);
+    return this.capWithOther(rows, 6);
   }
 
-  private pointOn(cx: number, cy: number, r: number, angleDeg: number) {
-    const rad = (angleDeg - 90) * Math.PI / 180;
-    return { x: +(cx + r * Math.cos(rad)).toFixed(3), y: +(cy + r * Math.sin(rad)).toFixed(3) };
+  get byStatus(): BreakdownRow[] {
+    return this.breakdownBy(po => po.status);
   }
 
-  // ── Monthly trend bars ──────────────────────────────────────────────
-
-  get maxMonthlyValue(): number {
-    return this.monthlyTrend.reduce((m, r) => Math.max(m, Number(r.value || 0)), 0);
+  /** Top N rows kept individually, the rest folded into a single "Other" row — same
+   *  convention the old spend-analysis screen used, just without the SVG machinery. */
+  private capWithOther(rows: BreakdownRow[], topN: number): BreakdownRow[] {
+    if (rows.length <= topN) return rows;
+    const top = rows.slice(0, topN);
+    const rest = rows.slice(topN);
+    const other: BreakdownRow = {
+      label: `Other (${rest.length})`,
+      count: rest.reduce((s, r) => s + r.count, 0),
+      value: rest.reduce((s, r) => s + r.value, 0),
+      percent: rest.reduce((s, r) => s + r.percent, 0)
+    };
+    return [...top, other];
   }
 
-  barHeightPercent(value: any): number {
-    const max = this.maxMonthlyValue;
+  get maxBreakdownValue(): number {
+    const rows = [...this.bySupplier];
+    return rows.reduce((m, r) => Math.max(m, r.value), 0);
+  }
+
+  barWidthPercent(row: BreakdownRow): number {
+    const max = this.maxBreakdownValue;
     if (!max) return 0;
-    const pct = (Number(value || 0) / max) * 100;
-    // Give a non-zero month at least a visible sliver rather than nothing at all.
-    return pct > 0 && pct < 1.5 ? 1.5 : pct;
+    const pct = (row.value / max) * 100;
+    return pct > 0 && pct < 2 ? 2 : pct;
   }
 
-  get hasAnySpend(): boolean {
-    return !!this.kpis && Number(this.kpis.committed) > 0;
+  // ── Monthly trend — committed value by calendar month, oldest first ────────
+
+  get monthlyTrend(): { key: string; label: string; value: number }[] {
+    const map = new Map<string, number>();
+    this.committedPOs.forEach(po => {
+      if (!po.createdDate) return;
+      const d = new Date(po.createdDate);
+      const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+      map.set(key, (map.get(key) || 0) + (Number(po.grandTotal) || 0));
+    });
+    return Array.from(map.entries())
+      .sort(([a], [b]) => a.localeCompare(b))
+      .map(([key, value]) => {
+        const [y, m] = key.split('-');
+        const label = new Date(Number(y), Number(m) - 1, 1)
+          .toLocaleDateString('en-GB', { month: 'short', year: '2-digit' });
+        return { key, label, value };
+      });
   }
 
-  /** Bare "Apr" repeats meaninglessly once the trend spans more than one year — All Time labels
-   *  carry the year too (compact, "Apr '26") so which April is which stays unambiguous. */
-  barLabel(m: any): string {
-    return this.isAllTimeView ? `${m.monthLabel} '${String(m.year).slice(-2)}` : m.monthLabel;
+  // =========================================================================
+  // CHART.JS CONFIG — three charts (supplier pie, status pie, monthly bar).
+  //
+  // IMPORTANT: data/options are cached plain fields, rebuilt only when
+  // applyFilters() runs — never getters. CoreUI's <c-chart> dirty-checks these
+  // inputs by reference; a getter (or a method call in the template) hands it
+  // a brand-new object on every Angular change-detection cycle, which this
+  // page has running once a second just from the "Session expires in" clock,
+  // so the chart would tear down and fully redraw non-stop. Caching avoids that.
+  // =========================================================================
+
+  /** A fixed, distinguishable palette — reused across all pie slices in order. */
+  private readonly chartPalette = [
+    '#6c63ff', '#00bcd4', '#43a047', '#ffb300', '#e53935',
+    '#3f51b5', '#8e24aa', '#00897b', '#fb8c00', '#607d8b'
+  ];
+
+  private readonly statusColorMap: Record<string, string> = {
+    DRAFT: '#94a3b8', PENDING_APPROVAL: '#f5b301', APPROVED: '#0dcaf0',
+    RELEASED: '#43a047', COMPLETED: '#43a047', CLOSED: '#2e7d32',
+    REJECTED: '#e53935', FORECLOSED: '#c62828', CANCELLED: '#78909c'
+  };
+
+  supplierChartData: any = { labels: [], datasets: [{ data: [] }] };
+  statusChartData: any = { labels: [], datasets: [{ data: [] }] };
+  monthChartData: any = { labels: [], datasets: [{ data: [] }] };
+  supplierChartOptions: any = {};
+  statusChartOptions: any = {};
+  monthChartOptions: any = {};
+
+  /** Called once at the end of applyFilters() — the single place all three charts' source data can change. */
+  private rebuildChartConfigs(): void {
+    const supplierRows = this.bySupplier;
+    this.supplierChartData = {
+      labels: supplierRows.map(r => r.label),
+      datasets: [{
+        data: supplierRows.map(r => r.value),
+        backgroundColor: supplierRows.map((r, i) => r.label.startsWith('Other') ? '#cfd3e6' : this.chartPalette[i % this.chartPalette.length]),
+        borderColor: '#fff',
+        borderWidth: 2
+      }]
+    };
+    this.supplierChartOptions = this.buildPieOptions(supplierRows);
+
+    const statusRows = this.byStatus;
+    this.statusChartData = {
+      labels: statusRows.map(r => r.label),
+      datasets: [{
+        data: statusRows.map(r => r.value),
+        backgroundColor: statusRows.map(r => this.statusColorMap[r.label] || '#94a3b8'),
+        borderColor: '#fff',
+        borderWidth: 2
+      }]
+    };
+    this.statusChartOptions = this.buildPieOptions(statusRows);
+
+    const monthRows = this.monthlyTrend;
+    this.monthChartData = {
+      labels: monthRows.map(r => r.label),
+      datasets: [{
+        label: 'Committed Spend',
+        data: monthRows.map(r => r.value),
+        backgroundColor: monthRows.map(r => r.key === this.monthFilter ? '#4c1d95' : '#6c63ff'),
+        borderRadius: 4,
+        maxBarThickness: 42
+      }]
+    };
+    this.monthChartOptions = {
+      plugins: {
+        legend: { display: false },
+        tooltip: { callbacks: { label: (ctx: any) => ` ${this.full(ctx.parsed.y)}` } }
+      },
+      scales: {
+        y: { ticks: { callback: (v: any) => this.compact(Number(v)) } }
+      },
+      onHover: (evt: any, elements: any[]) => {
+        const el = evt?.native?.target as HTMLElement | undefined;
+        if (el) el.style.cursor = elements.length ? 'pointer' : 'default';
+      }
+    };
   }
 
-  /** Compact money for axis/labels — full precision stays in the table. */
-  compact(value: any): string {
-    const n = Number(value || 0);
+  private buildPieOptions(rows: BreakdownRow[]): any {
+    const totalVal = this.totalCommittedValue;
+    return {
+      // The wrapper div is a fixed 180x180 square (see .chart-pie-wrap) — let the
+      // canvas fill it exactly rather than Chart.js trying to compute its own
+      // aspect ratio, which is what was rendering these as thin slivers inside
+      // the flex layout next to the legend list.
+      maintainAspectRatio: false,
+      plugins: {
+        // The breakdown list beside each chart already acts as a clickable legend
+        // with count/value/percent — showing Chart.js's own legend too would just
+        // repeat the same labels a second time.
+        legend: { display: false },
+        tooltip: {
+          callbacks: {
+            label: (ctx: any) => {
+              const row = rows[ctx.dataIndex];
+              const pct = totalVal > 0 ? Math.round((row.value / totalVal) * 100) : 0;
+              return ` ${row.label}: ${this.full(row.value)} (${pct}%)`;
+            }
+          }
+        }
+      },
+      onHover: (evt: any, elements: any[]) => {
+        const el = evt?.native?.target as HTMLElement | undefined;
+        if (el) el.style.cursor = elements.length ? 'pointer' : 'default';
+      }
+    };
+  }
+
+  // =========================================================================
+  // DISPLAY
+  // =========================================================================
+
+  compact(value: number): string {
+    const n = Number(value) || 0;
     if (n >= 10000000) return '₹' + (n / 10000000).toFixed(2) + ' Cr';
-    if (n >= 100000)   return '₹' + (n / 100000).toFixed(2) + ' L';
-    if (n >= 1000)     return '₹' + (n / 1000).toFixed(1) + 'K';
+    if (n >= 100000) return '₹' + (n / 100000).toFixed(2) + ' L';
+    if (n >= 1000) return '₹' + (n / 1000).toFixed(1) + 'K';
     return '₹' + n.toFixed(0);
   }
+
+  full(value: number): string {
+    return '₹' + (Number(value) || 0).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  }
+
+  statusColor(status: string): string {
+    switch (status) {
+      case 'DRAFT':                 return 'secondary';
+      case 'PENDING_APPROVAL':      return 'warning';
+      case 'APPROVED':              return 'info';
+      case 'RELEASED':
+      case 'COMPLETED':
+      case 'CLOSED':                return 'success';
+      case 'REJECTED':
+      case 'FORECLOSED':            return 'danger';
+      default:                      return 'primary';
+    }
+  }
+
+  /** "Unpaid" reads like something's wrong; it's just the normal starting state. */
+  paymentStatusLabel(status: string): string {
+    switch (status) {
+      case 'PAID':           return 'Paid';
+      case 'PARTIALLY_PAID': return 'Partially Paid';
+      default:               return 'Awaiting Payment';
+    }
+  }
+
+  viewPO(po: any): void {
+    this.router.navigate(['/po-details', po.id]);
+  }
+
+  private unwrapList(res: any): any[] {
+    if (Array.isArray(res)) return res;
+    if (Array.isArray(res?.data)) return res.data;
+    if (Array.isArray(res?.data?.content)) return res.data.content;
+    return [];
+  }
+
+  trackById(_i: number, row: any): any { return row?.id; }
 }

@@ -156,9 +156,9 @@
           <div *ngIf="purchaseOrders.length === 0" class="text-center py-5">
             <i class="bi bi-inbox display-1 text-muted mb-3 d-block opacity-25"></i>
             <h5 class="text-muted">No Purchase Orders Found</h5>
-            <p class="text-muted small">Create your first PO from Quote Comparison</p>
-            <button cButton color="primary" (click)="goToQuoteComparison()">
-              <i class="bi bi-plus-circle me-1"></i> Go to Quote Comparison
+            <p class="text-muted small">Create your first purchase order to get started</p>
+            <button cButton color="primary" (click)="createPO()">
+              <i class="bi bi-plus-circle me-1"></i> Create PO
             </button>
           </div>
 
@@ -180,6 +180,7 @@
                     </div>
                   </th>
                   <th class="text-center">Status</th>
+                  <th class="text-center">Payment</th>
                   <th class="text-center">Actions</th>
                 </tr>
               </thead>
@@ -250,15 +251,35 @@
                       <span class="badge" [ngClass]="getStatusBadgeClass(po.status)">{{ po.status | titlecase }}</span>
                       <span class="badge bg-secondary ms-1" *ngFor="let label of poTypeLabels(po.poType)">{{ label }}</span>
                     </td>
+                    <td class="text-center">
+                      <span class="badge" [ngClass]="paymentBadgeClass(po.paymentStatus)">
+                        {{ paymentStatusLabel(po.paymentStatus) }}
+                      </span>
+                      <div class="text-muted small mt-1" *ngIf="po.totalPaidAmount > 0">
+                        {{ po.currencySymbol }}{{ po.totalPaidAmount | number:'1.0-0' }} paid
+                      </div>
+                    </td>
                     <td class="text-center" (click)="$event.stopPropagation()">
                       <button class="btn btn-sm btn-light text-info me-1 shadow-sm"
                               (click)="viewPO(po.id)" title="View Details">
                         <i class="bi bi-eye"></i>
                       </button>
+                      <button *ngIf="canEdit(po)"
+                              class="btn btn-sm btn-light text-warning me-1 shadow-sm"
+                              (click)="editPO(po)" title="Edit PO">
+                        <i class="bi bi-pencil"></i>
+                      </button>
                       <button *ngIf="po.status === 'DRAFT'"
                               class="btn btn-sm btn-light text-primary me-1 shadow-sm"
                               (click)="submitForApproval(po)" title="Submit for Approval">
                         <i class="bi bi-send"></i>
+                      </button>
+                      <button *ngIf="canRelease(po)"
+                              class="btn btn-sm btn-light text-success me-1 shadow-sm"
+                              (click)="releasePO(po)" [disabled]="releasingId === po.id"
+                              title="Release to Supplier">
+                        <span *ngIf="releasingId === po.id" class="spinner-border spinner-border-sm"></span>
+                        <i *ngIf="releasingId !== po.id" class="bi bi-box-arrow-up-right"></i>
                       </button>
                       <button *ngIf="canRequestBudgetIncrease(po)"
                               class="btn btn-sm btn-light text-danger me-1 shadow-sm"
@@ -293,7 +314,7 @@
 
                   
                   <tr *ngIf="hasRemark(po)" class="remark-row">
-                    <td colspan="8" class="p-0 border-0">
+                    <td colspan="9" class="p-0 border-0">
                       <ng-container [ngSwitch]="getApprovalRemark(po.id)?.type">
                         <div *ngSwitchCase="'rejected'" class="remark-banner remark-rejected">
                           <div class="remark-icon"><i class="bi bi-x-circle-fill"></i></div>
@@ -450,9 +471,9 @@
                 <i class="bi bi-file-earmark-text me-2 text-primary"></i>Purchase Orders
               </h3>
               <p class="text-muted mb-0 mt-1">View and manage all your purchase orders</p>
-              <span class="badge bg-primary mt-1" style="font-size:0.8rem;">
+              <!-- <span class="badge bg-primary mt-1" style="font-size:0.8rem;">
                 <i class="bi bi-globe2 me-1"></i>{{ currencySymbol }} {{ currencyCode }}
-              </span>
+              </span> -->
             </div>
             <button cButton color="secondary" variant="outline" (click)="goBack()">
               <i class="bi bi-arrow-left me-1"></i> Back to Dashboard
@@ -584,7 +605,7 @@
         <div class="stat-info">
           <div class="stat-value stat-value-sm">
             <ng-container *ngIf="exchangeRatesLoaded || !hasCrossBorderPOs()">
-              {{ currencySymbol }}{{ getTotalValueInLocalCurrency() | number:'1.0-0' }}
+              {{ getTotalValueInLocalCurrency() | number:'1.0-0' }}
             </ng-container>
             <ng-container *ngIf="!exchangeRatesLoaded && hasCrossBorderPOs()">
               <span style="font-size:0.8rem;">Loading...</span>
@@ -604,7 +625,12 @@
   <!-- ===== SERVICE vs REGULAR TABS ===== -->
   <!-- "Service" = follow-up POs auto-created from an approved Service Entry Sheet's
        additional-items (spares) quote. "Regular" = everything else, exactly as before. -->
-  <div class="d-flex gap-2 mb-3" *ngIf="!isLoading">
+  <div class="d-flex gap-2 mb-3 align-items-center flex-wrap" *ngIf="!isLoading">
+    <!-- POs are created by hand in this application, so the primary action lives here
+         rather than behind a quote-comparison flow. -->
+    <button type="button" class="btn btn-sm btn-primary me-2" (click)="createPO()">
+      <i class="bi bi-plus-circle me-1"></i>Create PO
+    </button>
     <button type="button" class="btn btn-sm" [ngClass]="originFilter==='ALL' ? 'btn-dark' : 'btn-outline-secondary'"
             (click)="setOriginFilter('ALL')">
       All <span class="badge bg-light text-dark ms-1">{{ dateFilteredOrders.length }}</span>
@@ -634,9 +660,9 @@
           <div *ngIf="purchaseOrders.length === 0" class="text-center py-5">
             <i class="bi bi-inbox display-1 text-muted mb-3 d-block opacity-25"></i>
             <h5 class="text-muted">No Purchase Orders Found</h5>
-            <p class="text-muted small">Create your first PO from Quote Comparison</p>
-            <button cButton color="primary" (click)="goToQuoteComparison()">
-              <i class="bi bi-plus-circle me-1"></i> Go to Quote Comparison
+            <p class="text-muted small">Create your first purchase order to get started</p>
+            <button cButton color="primary" (click)="createPO()">
+              <i class="bi bi-plus-circle me-1"></i> Create PO
             </button>
           </div>
 
@@ -660,17 +686,18 @@
                 <tr>
                   <th>PO Number / Details</th>
                   <th>PO Date</th>
-                  <th>RFQ Reference</th>
+                  <!-- <th>RFQ Reference</th> -->
                   <th>Supplier</th>
                   <th class="text-center">Items</th>
                   <th class="text-end">
                     Grand Total
                     <div style="font-size:0.7rem; font-weight:400; opacity:0.8;">
-                      {{ currencySymbol }} {{ currencyCode }}
+                     {{ currencyCode }}
                       <span *ngIf="exchangeRatesLoaded" style="opacity:0.7;">· cross-border shows original + ({{ currencyCode }})</span>
                     </div>
                   </th>
                   <th class="text-center">Status</th>
+                  <th class="text-center">Payment</th>
                   <th class="text-center">Actions</th>
                 </tr>
               </thead>
@@ -690,10 +717,10 @@
                     <td>
                       <small class="text-muted"><i class="bi bi-calendar3 me-1"></i>{{ formatDate(po.poDate) }}</small>
                     </td>
-                    <td>
+                    <!-- <td>
                       <div class="fw-semibold text-dark">{{ po.rfqNumber || 'N/A' }}</div>
                       <small class="text-muted">{{ po.rfqTitle || '' }}</small>
-                    </td>
+                    </td> -->
                     <td>
                       <div class="fw-semibold">{{ po.supplierName || 'N/A' }}</div>
                       <small class="text-muted">{{ po.supplierContactEmail || '' }}</small>
@@ -736,15 +763,34 @@
                       <span class="badge" [ngClass]="getStatusBadgeClass(po.status)">{{ po.status | titlecase }}</span>
                       <span class="badge bg-secondary ms-1" *ngFor="let label of poTypeLabels(po.poType)">{{ label }}</span>
                     </td>
+                    <!-- Payment status is rolled up onto the PO by the server whenever an
+                         invoice is paid, so this needs no per-row invoice lookup. -->
+                    <td class="text-center">
+                      <span class="badge" [ngClass]="paymentBadgeClass(po.paymentStatus)">
+                        {{ paymentStatusLabel(po.paymentStatus) }}
+                      </span>
+                      <div class="text-muted small mt-1" *ngIf="po.totalPaidAmount > 0">
+                        {{ po.currencySymbol }}{{ po.totalPaidAmount | number:'1.0-0' }} paid
+                      </div>
+                    </td>
                     <td class="text-center" (click)="$event.stopPropagation()">
                       <button class="btn btn-sm btn-light text-info me-1 shadow-sm"
                               (click)="viewPO(po.id)" title="View Details">
                         <i class="bi bi-eye"></i>
                       </button>
-                      <button *ngIf="po.status === 'DRAFT'"
-                              class="btn btn-sm btn-light text-primary me-1 shadow-sm"
-                              (click)="submitForApproval(po)" title="Submit for Approval">
-                        <i class="bi bi-send"></i>
+                      <button *ngIf="canEdit(po)"
+                              class="btn btn-sm btn-light text-warning me-1 shadow-sm"
+                              (click)="editPO(po)" title="Edit PO">
+                        <i class="bi bi-pencil"></i>
+                      </button>
+                      <!-- No approval step: a DRAFT PO releases straight to the supplier.
+                           Release is what makes it visible to them. -->
+                      <button *ngIf="canRelease(po)"
+                              class="btn btn-sm btn-light text-success me-1 shadow-sm"
+                              (click)="releasePO(po)" [disabled]="releasingId === po.id"
+                              title="Release to Supplier">
+                        <span *ngIf="releasingId === po.id" class="spinner-border spinner-border-sm"></span>
+                        <i *ngIf="releasingId !== po.id" class="bi bi-box-arrow-up-right"></i>
                       </button>
                       <button *ngIf="canRequestBudgetIncrease(po)"
                               class="btn btn-sm btn-light text-danger me-1 shadow-sm"
@@ -761,11 +807,11 @@
                         <span *ngIf="downloadingPdfId === po.id" class="spinner-border spinner-border-sm"></span>
                         <i *ngIf="downloadingPdfId !== po.id" class="bi bi-file-earmark-pdf"></i>
                       </button>
-                      <button class="btn btn-sm btn-light text-primary me-1 shadow-sm"
+                      <!-- <button class="btn btn-sm btn-light text-primary me-1 shadow-sm"
                               (click)="downloadPOCxml(po)" [disabled]="downloadingXmlId === po.id" title="Download cXML">
                         <span *ngIf="downloadingXmlId === po.id" class="spinner-border spinner-border-sm"></span>
                         <i *ngIf="downloadingXmlId !== po.id" class="bi bi-filetype-xml"></i>
-                      </button>
+                      </button> -->
                       <button *ngIf="po.status === 'DRAFT'"
                               class="btn btn-sm btn-light text-danger shadow-sm"
                               (click)="deletePO(po)"
@@ -779,7 +825,7 @@
 
                   <!-- Approval Remark Row -->
                   <tr *ngIf="hasRemark(po)" class="remark-row">
-                    <td colspan="8" class="p-0 border-0">
+                    <td colspan="9" class="p-0 border-0">
                       <ng-container [ngSwitch]="getApprovalRemark(po.id)?.type">
                         <div *ngSwitchCase="'rejected'" class="remark-banner remark-rejected">
                           <div class="remark-icon"><i class="bi bi-x-circle-fill"></i></div>
@@ -819,7 +865,7 @@
                 </ng-container>
 
                 <tr *ngIf="filteredOrders.length === 0">
-                  <td colspan="8" class="text-center py-5">
+                  <td colspan="9" class="text-center py-5">
                     <i class="bi bi-inbox display-6 mb-3 d-block opacity-25"></i>
                     <p class="text-muted mb-0">No purchase orders found for this period.</p>
                   </td>

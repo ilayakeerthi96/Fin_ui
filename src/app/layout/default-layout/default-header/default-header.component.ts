@@ -301,9 +301,10 @@ import { SessionTimerComponent } from '../../../views/session-timer/session-time
 import { SessionExpiryDialogComponent } from '../../../shared/session-expiry-dialog/session-expiry-dialog.component';
 import { DataService } from '../../../shared/service/DataService';
 import { AuthService } from '../../../shared/service/AuthService';
-import { ThemeSwitcherComponent } from '../../../shared/components/theme-switcher/theme-switcher.component';
-import { LanguageSwitcherComponent } from '../../../shared/components/language-switcher/language-switcher.component';
 import { TranslatePipe } from '../../../shared/pipes/translate.pipe';
+// Theme and language switching have been removed from the header per requirement — the
+// underlying ThemeService/TranslatePipe machinery stays (change-password and other screens
+// still use translate), only the two header controls that let a user change them are gone.
 
 @Component({
   selector: 'app-default-header',
@@ -327,8 +328,6 @@ import { TranslatePipe } from '../../../shared/pipes/translate.pipe';
     SessionTimerComponent,
     BreadcrumbRouterComponent,
     SessionExpiryDialogComponent,
-    ThemeSwitcherComponent,
-    LanguageSwitcherComponent,
     TranslatePipe
   ]
 })
@@ -618,6 +617,7 @@ if (role === 'SUPER_ADMIN') {
       COO: 'COO',
       MANAGER: 'Manager',
       PROCUREMENT: 'Procurement Manager',
+      PROCUREMENT_OPERATOR: 'Procurement',
       FINANCE: 'Finance Manager',
       ADMIN: 'Administrator',
       ROLE_BUYER: 'RFQ Creator',

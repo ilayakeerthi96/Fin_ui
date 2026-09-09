@@ -13,6 +13,30 @@
 // @use "fixes"; // Uncomment if needed
 @use "examples";
 
+/* ============================================================================
+   MessageService alert stacking fix
+   ============================================================================
+   MessageService (shared/service/message.service.ts) shows every success/error/
+   warning/info alert app-wide through Angular Material's MatDialog, which is
+   built on the CDK overlay — z-index 1000 by default. CoreUI's own <c-modal>
+   sits at z-index 1055 (backdrop 1040). Since 1000 < 1055, any alert fired
+   while a CoreUI modal is open (Create Invoice, Mark as Paid, Approve, etc. —
+   this happens constantly, since most actions live inside a modal) rendered
+   BEHIND that modal: present in the DOM, completely invisible, until the
+   modal was closed and the alert underneath was revealed. Raising the CDK
+   overlay above CoreUI's modal layer fixes every such alert at once, everywhere
+   in the app, rather than patching each call site individually.
+   ============================================================================ */
+.cdk-overlay-container,
+.cdk-global-overlay-wrapper,
+.cdk-overlay-pane,
+.cdk-overlay-connected-position-bounding-box {
+  z-index: 2000 !important;
+}
+.cdk-overlay-backdrop {
+  z-index: 1999 !important;
+}
+
 /* Make only main parent menu items bold */
 .sidebar .nav-item > .nav-link,
 .sidebar .nav-group > .nav-link {

@@ -1,643 +1,284 @@
- import { Routes } from '@angular/router';
+import { Routes } from '@angular/router';
 
-  export const routes: Routes = [
-    {
-      path: '',
-      redirectTo: 'login',
-      pathMatch: 'full'
-    },
+/**
+ * Routing for the Finance PO application.
+ *
+ * Scope: PO creation → PO release → supplier PO access → supplier invoice → invoice
+ * approval → payment tracking → mark as paid → PO closure. PO approval is currently
+ * auto-cleared on submit (see POApprovalService.APPROVAL_WORKFLOW_ENABLED) — there is no
+ * approver step in the live flow, though the screens and roles below still exist dormant.
+ *
+ * Two internal roles now split what used to be one Admin doing everything:
+ *   ORGANIZATION_ADMIN     — creates/manages every login (Approver Users, Approval Levels,
+ *                             Reporting Structure, Approval Configuration), Reports, Audit Log.
+ *   PROCUREMENT_OPERATOR   — a hierarchy login (level "Procurement Operations", distinct from
+ *                             the approver level "PROCUREMENT") that runs every operational
+ *                             screen day-to-day: PO Management, Invoice Management, Payment
+ *                             Tracking, Status Tracking, Supplier Management. Created by the
+ *                             Admin from Approver Users the same way any hierarchy login is.
+ *
+ * Routes for every out-of-scope module have been removed, not merely hidden from the menu:
+ * RFQ creation, quotations, quote comparison, comparison statement, supplier selection,
+ * negotiation, evaluation criteria, Q&A library, registration questionnaires, risk
+ * questionnaires, the supplier risk board, the Super Admin dashboard, Buyer Companies
+ * (single-buyer app — nothing left to register), and the modules outside the new scope
+ * (contracts, legal, RFI, ASN, GRN, 3-way match, service entry sheets, service calendar,
+ * budget management, corrective actions, meetings, chat).
+ *
+ * Removing the menu entry alone would have left every one of those URLs working for anyone
+ * who typed or bookmarked it. With the route gone they fall through to the wildcard and
+ * land on 404. The component files still exist on disk pending a separate cleanup pass —
+ * they are simply no longer part of the compiled route graph, so Angular never loads them.
+ */
+export const routes: Routes = [
   {
-    path: 'register',
-    loadComponent: () =>
-      import('./views/pages/supplier-register/supplier-register.component')
-        .then(m => m.SupplierRegisterComponent),
-    data: { title: 'Supplier Registration' }
+    path: '',
+    redirectTo: 'login',
+    pathMatch: 'full'
   },
-    {
-      path: '',
-      loadComponent: () =>
-        import('./layout').then(m => m.DefaultLayoutComponent),
-      data: { title: 'Home' },
-      children: [
-        {
-          path: '',
-          redirectTo: 'hierarchy-dashboard',
-          pathMatch: 'full'
-        },
-        {
-          path: 'hierarchy-dashboard',
-          loadComponent: () =>
-            import('./views/base/hierarchy-dashboard/hierarchy-dashboard.component')
-              .then(m => m.HierarchyDashboardComponent),
-          data: {
-            title: 'Dashboard',
-            roles: ['CEO', 'COO', 'MANAGER', 'PROCUREMENT', 'FINANCE', 'ADMIN']
-          }
-        },
-        // ✅ NEW: Legal Team dashboard — contracts only, no RFQ/PO/Supplier overview
-        {
-          path: 'legal-dashboard',
-          loadComponent: () =>
-            import('./views/base/legal-dashboard/legal-dashboard.component')
-              .then(m => m.LegalDashboardComponent),
-          data: {
-            title: 'Legal Dashboard',
-            roles: ['LEGAL']
-          }
-        },
-        {
-          path: 'change-password',
-          loadComponent: () =>
-            import('./views/base/change-password/change-password.component')
-              .then(m => m.ChangePasswordComponent),
-          data: { title: 'Change Password' }
-        },
-        {
-          path: 'superadmin-dashboard',
-          loadComponent: () =>
-            import('./views/base/superadmin-dashboard/superadmin-dashboard.component')
-              .then(m => m.SuperAdminDashboardComponent),
-          data: {
-            title: 'Super Admin Dashboard',
-            roles: ['SUPER_ADMIN']
-          }
-        },
-        {
-          path: 'orgadmin-dashboard',
-          loadComponent: () =>
-            import('./views/base/orgadmin-dashboard/orgadmin-dashboard.component')
-              .then(m => m.OrgAdminDashboardComponent),
-          data: {
-            title: 'Organization Admin Dashboard',
-            roles: ['ORGANIZATION_ADMIN']
-          }
-        },
-        {
-          path: 'hierarchy-levels',
-          loadComponent: () =>
-            import('./views/base/hierarchy-levels/hierarchy-level-management.component')
-              .then(m => m.HierarchyLevelManagementComponent),
-          data: {
-            title: 'Hierarchy Levels',
-            roles: ['ORGANIZATION_ADMIN']
-          }
-        },
-        {
-          path: 'hierarchy-users',
-          loadComponent: () =>
-            import('./views/base/hierarchy-users/hierarchy-user-management.component')
-              .then(m => m.HierarchyUserManagementComponent),
-          data: {
-            title: 'Hierarchy Users',
-            roles: ['ORGANIZATION_ADMIN']
-          }
-        },
-        {
-          path: 'reporting-structure',
-          loadComponent: () =>
-            import('./views/base/reporting-structure/reporting-structure.component')
-              .then(m => m.ReportingStructureComponent),
-          data: {
-            title: 'Reporting Structure',
-            roles: ['ORGANIZATION_ADMIN']
-          }
-        },
-        {
-          path: 'approval-flow-config',
-          loadComponent: () =>
-            import('./views/base/approval-flow-config/approval-flow-config.component')
-              .then(m => m.ApprovalFlowConfigComponent),
-          data: {
-            title: 'Approval Configuration',
-            roles: ['ORGANIZATION_ADMIN']
-          }
-        },
-
-        {
-          path: 'supplier-dashboard',
-          loadComponent: () =>
-            import('./views/base/supplier-dashboard/supplier-dashboard.component').then(m => m.SupplierDashboardComponent),
-          data: {
-            title: 'Supplier Dashboard',
-            roles: ['ROLE_SUPPLIER']
-          }
-        },
-        {
-          path: 'dashboard',
-          loadChildren: () =>
-            import('./views/base/dashboard/routes').then(m => m.routes),
-          data: {
-            roles: ['ADMIN', 'CEO', 'COO', 'PROCUREMENT', 'FINANCE']
-          }
-        },
-        {
-          path: 'lead-create',
-          loadChildren: () =>
-            import('./views/base/lead-create/routes').then(m => m.routes),
-          data: {
-            roles: ['ADMIN', 'CEO', 'COO', 'PROCUREMENT', 'FINANCE']
-          }
-        },
-        {
-          path: 'pending-approvals',
-          loadChildren: () =>
-            import('./views/base/pending-approvals/routes').then(m => m.routes),
-          data: {
-            roles: ['CEO', 'COO', 'PROCUREMENT', 'MANAGER', 'ADMIN']
-          }
-        },
-        { path: 'ceo-dashboard', redirectTo: 'hierarchy-dashboard', pathMatch: 'full' },
-        { path: 'coo-dashboard', redirectTo: 'hierarchy-dashboard', pathMatch: 'full' },
-        { path: 'procurement-dashboard', redirectTo: 'hierarchy-dashboard', pathMatch: 'full' },
-        { path: 'manager-dashboard', redirectTo: 'hierarchy-dashboard', pathMatch: 'full' },
-
-        // ✅ NEW: Finance Dashboard (Budget Management module for FINANCE users)
-        {
-          path: 'finance-dashboard',
-          loadComponent: () =>
-            import('./views/base/finance-dashboard/finance-dashboard.component')
-              .then(m => m.FinanceDashboardComponent),
-          data: {
-            title: 'Finance Dashboard',
-            roles: ['FINANCE']
-          }
-        },
-
-        // ✅ NEW: Budget Dashboard for RFQ Creators (buyers)
-        {
-          path: 'budget-dashboard',
-          loadComponent: () =>
-            import('./views/base/budget-dashboard/budget-dashboard.component')
-              .then(m => m.BudgetDashboardComponent),
-          data: {
-            title: 'My Department Budget',
-            roles: ['ROLE_BUYER']
-          }
-        },
-
-        // ✅ NEW: Budget Increase Request (RFQ creator, when RFQ exceeds budget)
-        {
-          path: 'budget-increase-request/:rfqId',
-          loadComponent: () =>
-            import('./views/base/budget-increase-request/budget-increase-request.component')
-              .then(m => m.BudgetIncreaseRequestComponent),
-          data: {
-            title: 'Request Budget Increase',
-            roles: ['ROLE_BUYER']
-          }
-        },
-
-        // ✅ NEW: Budget Increase Request from a PO (when PO amount exceeds budget)
-        {
-          path: 'budget-increase-request-po/:poId',
-          loadComponent: () =>
-            import('./views/base/budget-increase-request/budget-increase-request.component')
-              .then(m => m.BudgetIncreaseRequestComponent),
-          data: {
-            title: 'Request Budget Increase',
-            roles: ['ROLE_BUYER']
-          }
-        },
-
-        // ✅ NEW: Budget Increase Approvals (hierarchy users above Finance)
-        {
-          path: 'budget-approvals',
-          loadComponent: () =>
-            import('./views/base/budget-approvals/budget-approvals.component')
-              .then(m => m.BudgetApprovalsComponent),
-          data: {
-            title: 'Budget Increase Approvals',
-            roles: ['CEO', 'COO', 'PROCUREMENT', 'MANAGER', 'ADMIN']
-          }
-        },
-        {
-          path: 'rfq-dashboard',
-          loadChildren: () =>
-            import('./views/base/rfq-dashboard/routes').then(m => m.routes),
-          data: { roles: ['ROLE_BUYER'] }
-        },
-        {
-          path: 'create-rfq',
-          loadChildren: () =>
-            import('./views/base/create-rfq/routes').then(m => m.routes),
-          data: { roles: ['ROLE_BUYER'] }
-        },
-        {
-          path: 'quote-comparison',
-          loadChildren: () =>
-            import('./views/base/rfq-quote-comparison/routes').then(m => m.routes),
-          data: {
-            roles: ['ROLE_BUYER'],
-            title: 'Quote Comparison'
-          }
-        },
-        {
-          path: 'supplier-quote',
-          loadChildren: () =>
-            import('./views/base/supplier-quote-submission/routes').then(m => m.routes),
-          data: {
-            roles: ['ROLE_SUPPLIER'],
-            title: 'Submit Quote'
-          }
-        },
-        {
-          path: 'supplier-evaluation',
-          loadChildren: () =>
-            import('./views/base/supplier-evaluation/routes').then(m => m.routes),
-          data: {
-            roles: ['ROLE_BUYER'],
-            title: 'Evaluate Suppliers'
-          }
-        },
-
-        // ✅ NEW: Supplier Final Selection (after evaluation)
+  {
+    path: '',
+    loadComponent: () =>
+      import('./layout').then(m => m.DefaultLayoutComponent),
+    data: { title: 'Home' },
+    children: [
       {
-          path: 'supplier-selection/:rfqId',
-          loadComponent: () =>
-            import('./views/base/supplier-selection/supplier-selection.component')
-              .then(m => m.SupplierSelectionComponent),
-          data: {
-            title: 'Select Supplier',
-            roles: ['ROLE_BUYER']
-          }
-        },
+        path: '',
+        redirectTo: 'hierarchy-dashboard',
+        pathMatch: 'full'
+      },
 
-        // ✅ NEW: PO Price Negotiation (after supplier selection)
-          {
-          path: 'po-negotiation/:rfqId/:supplierId/:selectionId',
-          loadComponent: () =>
-            import('./views/base/po-negotiation/po-negotiation.component')
-              .then(m => m.PONegotiationComponent),
-          data: {
-            title: 'PO Price Negotiation',
-            roles: ['ROLE_BUYER']
-          }
-        },
-
-        // Purchase Order Routes
-        {
-          path: 'po-list',
-          loadComponent: () =>
-            import('./views/base/po-list/po-list.component')
-              .then(m => m.POListComponent),
-          data: {
-            title: 'Purchase Orders',
-            roles: ['ROLE_BUYER']
-          }
-        },
-        {
-          path: 'po-details/:id',
-          loadComponent: () =>
-            import('./views/base/po-details/po-details.component')
-              .then(m => m.PODetailsComponent),
-          data: {
-            title: 'Purchase Order Details',
-            roles: ['ROLE_BUYER']
-          }
-        },
-            // ✅ NEW: GRN Routes (Goods Receipt Note)
+      // ==================================================================
+      // DASHBOARDS
+      // ==================================================================
       {
-        path: 'grn-list',
+        path: 'orgadmin-dashboard',
         loadComponent: () =>
-          import('./views/base/grn-list/grn-list.component')
-            .then(m => m.GrnListComponent),
+          import('./views/base/orgadmin-dashboard/orgadmin-dashboard.component')
+            .then(m => m.OrgAdminDashboardComponent),
         data: {
-          title: 'Goods Receipt Notes',
-          roles: ['ROLE_BUYER']
+          title: 'Admin Dashboard',
+          roles: ['ORGANIZATION_ADMIN']
         }
       },
       {
-        path: 'grn-create',
+        path: 'hierarchy-dashboard',
         loadComponent: () =>
-          import('./views/base/grn-create/grn-create.component')
-            .then(m => m.GrnCreateComponent),
+          import('./views/base/hierarchy-dashboard/hierarchy-dashboard.component')
+            .then(m => m.HierarchyDashboardComponent),
         data: {
-          title: 'Create GRN',
-          roles: ['ROLE_BUYER']
+          title: 'Dashboard',
+          roles: ['CEO', 'COO', 'MANAGER', 'PROCUREMENT', 'FINANCE', 'ADMIN']
         }
       },
       {
-        path: 'grn-view/:id',
+        path: 'supplier-dashboard',
         loadComponent: () =>
-          import('./views/base/grn-list/grn-list.component')
-            .then(m => m.GrnListComponent),
+          import('./views/base/supplier-dashboard/supplier-dashboard.component')
+            .then(m => m.SupplierDashboardComponent),
         data: {
-          title: 'View GRN',
-          roles: ['ROLE_BUYER']
+          title: 'Supplier Dashboard',
+          roles: ['ROLE_SUPPLIER']
         }
       },
-            {
-        path: 'grn-qa/:id',
+      {
+        path: 'supplier-reports',
         loadComponent: () =>
-          import('./views/base/grn-qa/grn-qa.component')
-            .then(m => m.GrnQaComponent),
+          import('./views/base/supplier-reports/supplier-reports.component')
+            .then(m => m.SupplierReportsComponent),
         data: {
-          title: 'View GRN',
-          roles: ['ROLE_BUYER']
+          title: 'Reports',
+          roles: ['ROLE_SUPPLIER']
         }
       },
 
-      // ✅ NEW: 3-Way Match Route
+      // ==================================================================
+      // PO MANAGEMENT
+      // ==================================================================
       {
-        path: 'three-way-match',
+        path: 'po-list',
         loadComponent: () =>
-          import('./views/base/three-way-match/three-way-match.component')
-            .then(m => m.ThreeWayMatchComponent),
+          import('./views/base/po-list/po-list.component')
+            .then(m => m.POListComponent),
         data: {
-          title: '3-Way Match',
-          roles: ['ROLE_BUYER']
+          title: 'Purchase Orders',
+          roles: ['PROCUREMENT_OPERATOR', 'ROLE_SUPPLIER']
+        }
+      },
+      {
+        path: 'po-create',
+        loadComponent: () =>
+          import('./views/base/po-create/po-create.component')
+            .then(m => m.PoCreateComponent),
+        data: {
+          title: 'Create Purchase Order',
+          roles: ['PROCUREMENT_OPERATOR']
+        }
+      },
+      {
+        path: 'po-edit/:id',
+        loadComponent: () =>
+          import('./views/base/po-create/po-create.component')
+            .then(m => m.PoCreateComponent),
+        data: {
+          title: 'Edit Purchase Order',
+          roles: ['PROCUREMENT_OPERATOR']
+        }
+      },
+      {
+        path: 'po-details/:id',
+        loadComponent: () =>
+          import('./views/base/po-details/po-details.component')
+            .then(m => m.PODetailsComponent),
+        data: {
+          title: 'Purchase Order Details',
+          roles: ['PROCUREMENT_OPERATOR', 'ROLE_SUPPLIER', 'CEO', 'COO', 'MANAGER', 'PROCUREMENT', 'FINANCE']
+        }
+      },
+      {
+        path: 'po-closure',
+        loadComponent: () =>
+          import('./views/base/po-closure/po-closure.component')
+            .then(m => m.PoClosureComponent),
+        data: {
+          title: 'PO Closure',
+          roles: ['PROCUREMENT_OPERATOR']
         }
       },
 
-      // ✅ NEW: Service Entry Sheet (SES) Routes — Service-PO counterpart to GRN.
-      // Either the buyer/RFQ creator or the supplier can create/fill one in; approving one
-      // stays buyer-only (enforced in ses-list.component — that's the independent-confirmation
-      // gate before the matching invoice can be approved, so it can't be self-approved).
+      // ==================================================================
+      // APPROVALS — PO only
+      // ==================================================================
       {
-        path: 'ses-list',
-        loadComponent: () =>
-          import('./views/base/ses-list/ses-list.component')
-            .then(m => m.SesListComponent),
+        path: 'pending-approvals',
+        loadChildren: () =>
+          import('./views/base/pending-approvals/routes').then(m => m.routes),
         data: {
-          title: 'Service Entry Sheets',
-          roles: ['ROLE_BUYER', 'ROLE_SUPPLIER']
-        }
-      },
-      {
-        path: 'ses-create',
-        loadComponent: () =>
-          import('./views/base/ses-create/ses-create.component')
-            .then(m => m.SesCreateComponent),
-        data: {
-          title: 'Create Service Entry Sheet',
-          roles: ['ROLE_BUYER', 'ROLE_SUPPLIER']
+          roles: ['ORGANIZATION_ADMIN', 'CEO', 'COO', 'PROCUREMENT', 'MANAGER', 'FINANCE', 'ADMIN']
         }
       },
 
-      // Yearly supplier ↔ buyer activity calendar (planned vs actual) and the shared Q&A
-      // library. Both sides open the same screens; the buyer edits, the supplier reads and asks.
+      // ==================================================================
+      // INVOICES & PAYMENT
+      // ==================================================================
       {
-        path: 'service-calendar',
+        path: 'invoices',
         loadComponent: () =>
-          import('./views/base/service-calendar/service-calendar.component')
-            .then(m => m.ServiceCalendarComponent),
+          import('./views/base/buyer-invoices/buyer-invoices.component')
+            .then(m => m.BuyerInvoicesComponent),
         data: {
-          title: 'Service Planner',
-          roles: ['ROLE_BUYER', 'ROLE_SUPPLIER']
+          title: 'Invoice Management',
+          roles: ['PROCUREMENT_OPERATOR']
         }
       },
-      // Consolidated spend analysis. One component serves both sides: a buyer sees their spend
-      // across suppliers/categories/units; a supplier sees the same money as their own income.
+      {
+        path: 'payment-tracking',
+        loadComponent: () =>
+          import('./views/base/payment-tracking/payment-tracking.component')
+            .then(m => m.PaymentTrackingComponent),
+        data: {
+          title: 'Payment Tracking',
+          roles: ['PROCUREMENT_OPERATOR']
+        }
+      },
+      {
+        path: 'status-tracking',
+        loadComponent: () =>
+          import('./views/base/status-tracking/status-tracking.component')
+            .then(m => m.StatusTrackingComponent),
+        data: {
+          title: 'Status Tracking',
+          roles: ['PROCUREMENT_OPERATOR']
+        }
+      },
+
+      // ==================================================================
+      // MASTER DATA & USERS
+      // ==================================================================
+      {
+        path: 'create-s',
+        loadChildren: () =>
+          import('./views/base/create-s/routes').then(m => m.routes),
+        data: { roles: ['PROCUREMENT_OPERATOR'] }
+      },
+      // 'create-b' (Buyer Companies) route removed — this is a single-buyer app, so there is
+      // nothing left to register. The component files stay on disk; only the route is gone.
+      // 'hierarchy-levels', 'reporting-structure' and 'approval-flow-config' routes removed —
+      // all three are specific to the approval hierarchy, and there is no approval step left
+      // to configure (see PurchaseOrder.isReleasable()). Component files stay on disk.
+      {
+        path: 'hierarchy-users',
+        loadComponent: () =>
+          import('./views/base/hierarchy-users/hierarchy-user-management.component')
+            .then(m => m.HierarchyUserManagementComponent),
+        data: {
+          title: 'Manage Users',
+          roles: ['ORGANIZATION_ADMIN']
+        }
+      },
+
+      // ==================================================================
+      // REPORTS & AUDIT
+      // ==================================================================
       {
         path: 'spend-analysis',
         loadComponent: () =>
           import('./views/base/spend-analysis/spend-analysis.component')
             .then(m => m.SpendAnalysisComponent),
         data: {
-          title: 'Spend Analysis',
-          roles: ['ROLE_BUYER', 'ROLE_SUPPLIER']
-        }
-      },
-
-      // Company-wide Q&A library — the admin raises/answers; RFQ creators and suppliers read.
-      {
-        path: 'faq',
-        loadComponent: () =>
-          import('./views/base/faq/faq.component')
-            .then(m => m.FaqComponent),
-        data: {
-          title: 'Q&A Library',
-          roles: ['SUPER_ADMIN', 'ORGANIZATION_ADMIN', 'ADMIN', 'ROLE_BUYER', 'ROLE_SUPPLIER']
-        }
-      },
-      // Corrective Action Plan (CAP) — creation and tracking. Buyer QA raises a CAP against a
-      // supplier when a defective/rejected delivery needs more than just a replacement; both
-      // sides track root cause, actions, evidence and effectiveness verification through to close.
-      {
-        path: 'cap-list',
-        loadComponent: () =>
-          import('./views/base/cap-list/cap-list.component')
-            .then(m => m.CapListComponent),
-        data: {
-          title: 'Corrective Action Plans',
-          roles: ['ROLE_BUYER', 'ROLE_SUPPLIER']
+          title: 'Reports',
+          roles: ['ORGANIZATION_ADMIN', 'PROCUREMENT_OPERATOR']
         }
       },
       {
-        path: 'cap-detail/:id',
+        path: 'audit-log',
         loadComponent: () =>
-          import('./views/base/cap-detail/cap-detail.component')
-            .then(m => m.CapDetailComponent),
+          import('./views/base/audit-log/audit-log.component')
+            .then(m => m.AuditLogComponent),
         data: {
-          title: 'Corrective Action Plan',
-          roles: ['ROLE_BUYER', 'ROLE_SUPPLIER']
+          title: 'Audit Log',
+          roles: ['ORGANIZATION_ADMIN', 'PROCUREMENT_OPERATOR']
         }
       },
 
-      // Edit-and-resubmit an existing (REJECTED, or APPROVED-with-a-rejected-additional-items-
-      // quote) Service Entry Sheet — same component, just pre-loads sesId's data instead of
-      // starting blank. See ses-create.component.ts's editSesId handling.
+      // ==================================================================
+      // ACCOUNT
+      // ==================================================================
       {
-        path: 'ses-create/:sesId',
+        path: 'change-password',
         loadComponent: () =>
-          import('./views/base/ses-create/ses-create.component')
-            .then(m => m.SesCreateComponent),
-        data: {
-          title: 'Edit Service Entry Sheet',
-          roles: ['ROLE_BUYER', 'ROLE_SUPPLIER']
-        }
-      },
+          import('./views/base/change-password/change-password.component')
+            .then(m => m.ChangePasswordComponent),
+        data: { title: 'Change Password' }
+      }
+    ]
+  },
 
-        {
-          path: 'create-b',
-          loadChildren: () =>
-            import('./views/base/create-b/routes').then(m => m.routes),
-          data: { roles: ['ORGANIZATION_ADMIN'] }
-        },
-        {
-          path: 'create-s',
-          loadChildren: () =>
-            import('./views/base/create-s/routes').then(m => m.routes),
-          data: { roles: ['ADMIN', 'ORGANIZATION_ADMIN'] }
-        },
-        {
-          path: 'evaluation-criteria',
-          loadComponent: () =>
-            import('./views/base/evaluation-criteria/evaluation-criteria.component')
-              .then(m => m.EvaluationCriteriaComponent),
-          data: {
-            title: 'Evaluation Criteria Management',
-            roles: ['ORGANIZATION_ADMIN']
-          }
-        },
-        {
-          path: 'registration-questionnaire',
-          loadComponent: () =>
-            import('./views/base/registration-questionnaire/registration-questionnaire.component')
-              .then(m => m.RegistrationQuestionnaireComponent),
-          data: {
-            title: 'Registration Questionnaire',
-            roles: ['ORGANIZATION_ADMIN']
-          }
-        },
-        {
-          path: 'risk-questions',
-          loadComponent: () =>
-            import('./views/base/risk-questions/risk-questions.component')
-              .then(m => m.RiskQuestionsComponent),
-          data: {
-            title: 'Risk Assessment Questions',
-            roles: ['ORGANIZATION_ADMIN']
-          }
-        },
-        {
-          path: 'supplier-risk-dashboard',
-          loadComponent: () =>
-            import('./views/base/supplier-risk-dashboard/supplier-risk-dashboard.component')
-              .then(m => m.SupplierRiskDashboardComponent),
-          data: {
-            title: 'Supplier Risk Dashboard',
-            roles: ['ORGANIZATION_ADMIN']
-          }
-        },
-        {
-          path: 'rfi-dashboard',
-          loadComponent: () =>
-            import('./views/base/rfi-dashboard/rfi-dashboard.component')
-              .then(m => m.RfiDashboardComponent),
-          data: { title: 'RFI Dashboard', roles: ['ROLE_BUYER'] }
-        },
-        {
-          path: 'rfi-create',
-          loadComponent: () =>
-            import('./views/base/rfi-create/rfi-create.component')
-              .then(m => m.RfiCreateComponent),
-          data: { title: 'Create RFI', roles: ['ROLE_BUYER'] }
-        },
-        {
-          path: 'rfi-responses/:rfiId',
-          loadComponent: () =>
-            import('./views/base/rfi-responses/rfi-responses.component')
-              .then(m => m.RfiResponsesComponent),
-          data: { title: 'RFI Responses', roles: ['ROLE_BUYER'] }
-        },
-        {
-          path: 'rfi-inbox',
-          loadComponent: () =>
-            import('./views/base/rfi-inbox/rfi-inbox.component')
-              .then(m => m.RfiInboxComponent),
-          data: { title: 'RFI Inbox', roles: ['ROLE_SUPPLIER'] }
-        },
-        {
-          path: 'rfi-response/:rfiId',
-          loadComponent: () =>
-            import('./views/base/rfi-response-form/rfi-response-form.component')
-              .then(m => m.RfiResponseFormComponent),
-          data: { title: 'Respond to RFI', roles: ['ROLE_SUPPLIER'] }
-        },
-
-        // ✅ NEW: ASN (Advance Shipping Notice) tracking
-        {
-          path: 'asn-create',
-          loadComponent: () =>
-            import('./views/base/asn-create/asn-create.component')
-              .then(m => m.AsnCreateComponent),
-          data: { title: 'Create ASN', roles: ['ROLE_SUPPLIER'] }
-        },
-        {
-          path: 'asn-list',
-          loadComponent: () =>
-            import('./views/base/asn-list/asn-list.component')
-              .then(m => m.AsnListComponent),
-          data: { title: 'My Shipments', roles: ['ROLE_SUPPLIER'] }
-        },
-        {
-          path: 'asn-tracking',
-          loadComponent: () =>
-            import('./views/base/asn-tracking/asn-tracking.component')
-              .then(m => m.AsnTrackingComponent),
-          data: { title: 'ASN Tracking', roles: ['ROLE_BUYER'] }
-        },
-        {
-          path: 'contract-create/:rfqId/:supplierId',
-          loadComponent: () =>
-            import('./views/base/contract-create/contract-create.component')
-              .then(m => m.ContractCreateComponent),
-          data: { title: 'Create Contract', roles: ['ROLE_BUYER'] }
-        },
-        {
-          path: 'contract-list',
-          loadComponent: () =>
-            import('./views/base/contract-list/contract-list.component')
-              .then(m => m.ContractListComponent),
-          data: { title: 'Contracts', roles: ['ROLE_BUYER'] }
-        },
-        {
-          path: 'contract-detail/:contractId',
-          loadComponent: () =>
-            import('./views/base/contract-detail/contract-detail.component')
-              .then(m => m.ContractDetailComponent),
-          data: { title: 'Contract', roles: ['ROLE_BUYER', 'ROLE_SUPPLIER'] }
-        },
-        {
-          path: 'contract-approvals',
-          loadComponent: () =>
-            import('./views/base/contract-approvals/contract-approvals.component')
-              .then(m => m.ContractApprovalsComponent),
-          data: { title: 'Contract Approvals', roles: ['CEO', 'COO', 'PROCUREMENT', 'MANAGER', 'ADMIN', 'LEGAL'] }
-        },
-        {
-          path: 'contract-inbox',
-          loadComponent: () =>
-            import('./views/base/contract-inbox/contract-inbox.component')
-              .then(m => m.ContractInboxComponent),
-          data: { title: 'My Contracts', roles: ['ROLE_SUPPLIER'] }
-        },
-        {
-          path: 'rfq-feedback/:rfqId',
-          loadComponent: () =>
-            import('./views/base/rfq-feedback/rfq-feedback.component')
-              .then(m => m.RfqFeedbackComponent),
-          data: {
-            title: 'Supplier Performance Feedback',
-            roles: ['ROLE_BUYER']
-          }
-        },
-        {
-          path: 'invoices',
-          loadComponent: () =>
-            import('./views/base/buyer-invoices/buyer-invoices.component')
-              .then(m => m.BuyerInvoicesComponent),
-          data: {
-            title: 'Invoice Management',
-            roles: ['ROLE_BUYER']
-          }
-        },
-      ]
-    },
-
-    {
-      path: 'login',
-      loadComponent: () =>
-        import('./views/pages/login/login.component')
-          .then(m => m.LoginComponent),
-      data: { title: 'Login Page' }
-    },
-    // "Forgot password" now lives as a modal directly on the login page (see
-    // login.component.ts's fpStep state machine) — no separate route needed.
-    {
-      path: '404',
-      loadComponent: () =>
-        import('./views/pages/page404/page404.component')
-          .then(m => m.Page404Component),
-      data: { title: 'Page Not Found' }
-    },
-    {
-      path: '500',
-      loadComponent: () =>
-        import('./views/pages/page500/page500.component')
-          .then(m => m.Page500Component),
-      data: { title: 'Server Error' }
-    },
-    { path: '**', redirectTo: '404' }
-  ];
+  {
+    path: 'login',
+    loadComponent: () =>
+      import('./views/pages/login/login.component')
+        .then(m => m.LoginComponent),
+    data: { title: 'Login Page' }
+  },
+  // "Forgot password" lives as a modal directly on the login page (see login.component.ts's
+  // fpStep state machine) — no separate route needed.
+  //
+  // The public /register route for supplier self-registration has been removed: suppliers
+  // are created by the Admin, and its gateway allowlist entries went with it.
+  {
+    path: '404',
+    loadComponent: () =>
+      import('./views/pages/page404/page404.component')
+        .then(m => m.Page404Component),
+    data: { title: 'Page Not Found' }
+  },
+  {
+    path: '500',
+    loadComponent: () =>
+      import('./views/pages/page500/page500.component')
+        .then(m => m.Page500Component),
+    data: { title: 'Server Error' }
+  },
+  { path: '**', redirectTo: '404' }
+];

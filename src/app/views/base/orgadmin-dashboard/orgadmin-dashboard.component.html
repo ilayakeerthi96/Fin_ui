@@ -1,137 +1,70 @@
 
+<c-container class="admin-dash mt-4 p-4" fluid>
 
-<c-container class="mt-4 p-4" fluid>
+  <!-- ── WELCOME STRIP ──────────────────────────────────────────── -->
+  <div class="welcome-card mb-4">
+    <div class="welcome-main">
+      <div class="avatar-circle">{{ getInitials(fullName) }}</div>
+      <div>
+        <div class="welcome-greeting">{{ greeting }}, {{ fullName.split(' ')[0] }}</div>
+        <span class="role-pill"><i class="cil-shield-alt me-1"></i>{{ role }}</span>
+      </div>
+    </div>
+    <div class="welcome-meta">
+      <span class="meta-item"><i class="cil-envelope-closed"></i>{{ email }}</span>
+      <span class="meta-item"><i class="cil-building"></i>{{ companyName }}</span>
+      <span class="meta-item"><i class="cil-phone"></i>{{ phone }}</span>
+    </div>
+  </div>
 
-  <!-- ── PROFILE HEADER ─────────────────────────────────────────── -->
-  <c-row class="mb-4">
-    <c-col xs="12">
-      <c-card class="border-0 shadow-lg" style="border-radius: 12px; overflow: hidden;">
-        <div class="gradient-header">
-          <c-card-body class="p-3">
-            <c-row class="align-items-center">
+  <!-- ── ADMIN ROLE NOTE ───────────────────────────────────────────── -->
+  <div class="scope-note mb-4">
+    <i class="cil-info"></i>
+    <span>
+      You create and manage every login on this system — Procurement's day-to-day account
+      included — plus Reports and the Audit Log. PO creation, invoices and payments are
+      handled by Procurement, not from here.
+    </span>
+  </div>
 
-              <!-- Avatar + Name -->
-              <c-col xs="12" lg="3" class="text-center text-lg-start mb-3 mb-lg-0">
-                <div class="d-flex align-items-center justify-content-center justify-content-lg-start">
-                  <div class="avatar-circle-large me-3">
-                    {{ getInitials(fullName) }}
-                  </div>
-                  <div>
-                    <div class="user-name">{{ fullName }}</div>
-                    <div class="user-role">
-                      <i class="cil-shield-alt me-1"></i>{{ role }}
-                    </div>
-                  </div>
-                </div>
-              </c-col>
-
-              <!-- Info Cards -->
-              <c-col xs="12" lg="9">
-                <c-row class="g-2">
-                  <c-col xs="12" md="4">
-                    <div class="info-card">
-                      <div class="info-card-icon">
-                        <i class="cil-envelope-closed"></i>
-                      </div>
-                      <div class="info-card-content">
-                        <div class="info-label">Email Address</div>
-                        <div class="info-value">{{ email }}</div>
-                      </div>
-                    </div>
-                  </c-col>
-                  <c-col xs="12" md="4">
-                    <div class="info-card">
-                      <div class="info-card-icon">
-                        <i class="cil-building"></i>
-                      </div>
-                      <div class="info-card-content">
-                        <div class="info-label">Company</div>
-                        <div class="info-value">{{ companyName }}</div>
-                      </div>
-                    </div>
-                  </c-col>
-                  <c-col xs="12" md="4">
-                    <div class="info-card">
-                      <div class="info-card-icon">
-                        <i class="cil-phone"></i>
-                      </div>
-                      <div class="info-card-content">
-                        <div class="info-label">Phone</div>
-                        <div class="info-value">{{ phone }}</div>
-                      </div>
-                    </div>
-                  </c-col>
-                </c-row>
-              </c-col>
-
-            </c-row>
-          </c-card-body>
-        </div>
-      </c-card>
-    </c-col>
-  </c-row>
-
-  <!-- ── ADMIN ROLE ALERT ───────────────────────────────────────── -->
-  <c-row class="mb-4">
-    <c-col xs="12">
-      <c-alert color="info" class="modern-alert">
-        <div class="d-flex align-items-center">
-          <div>
-            <strong>ℹ️ Admin Role:</strong>
-            You can create organization hierarchy levels and manage organization users based on location and department across the entire system for RFQ creation.
-          </div>
-        </div>
-      </c-alert>
-    </c-col>
-  </c-row>
-
-  <!-- ── STAT CARDS — 3 cards, same compact style as RFQ dashboard ── -->
+  <!-- ── STAT CARDS ──────────────────────────────────────────────── -->
   <c-row class="mb-4 g-3">
 
-    <!-- Hierarchy Levels -->
     <c-col xs="12" sm="6" lg="4">
-      <div class="stat-card">
-        <div class="stat-icon-wrap stat-purple">
-          <i class="cil-layers"></i>
-        </div>
-        <div class="stat-info">
-          <div class="stat-value">{{ stats.hierarchyLevels }}</div>
-          <div class="stat-label">Hierarchy Levels</div>
-          <div class="stat-footer">
-            <span class="text-primary">↑ Active</span>
-          </div>
-        </div>
-      </div>
-    </c-col>
-
-    <!-- Total Users -->
-    <c-col xs="12" sm="6" lg="4">
-      <div class="stat-card">
-        <div class="stat-icon-wrap stat-teal">
+      <div class="stat-card accent-indigo">
+        <div class="stat-icon-badge tint-indigo">
           <i class="cil-people"></i>
         </div>
         <div class="stat-info">
-          <div class="stat-value">{{ stats.hierarchyUsers }}</div>
+          <div class="stat-value">{{ stats.totalUsers }}</div>
           <div class="stat-label">Total Users</div>
-          <div class="stat-footer">
-            <span class="text-muted">All hierarchy users</span>
-          </div>
+          <div class="stat-footer">Every login you've created</div>
         </div>
       </div>
     </c-col>
 
-    <!-- Active Users -->
     <c-col xs="12" sm="6" lg="4">
-      <div class="stat-card">
-        <div class="stat-icon-wrap stat-green">
+      <div class="stat-card accent-emerald">
+        <div class="stat-icon-badge tint-emerald">
           <i class="cil-check-circle"></i>
         </div>
         <div class="stat-info">
           <div class="stat-value">{{ stats.activeUsers }}</div>
           <div class="stat-label">Active Users</div>
-          <div class="stat-footer">
-            <span class="text-success">{{ getActivePercentage() }}% active</span>
-          </div>
+          <div class="stat-footer footer-positive">{{ getActivePercentage() }}% active</div>
+        </div>
+      </div>
+    </c-col>
+
+    <c-col xs="12" sm="6" lg="4">
+      <div class="stat-card accent-slate">
+        <div class="stat-icon-badge tint-slate">
+          <i class="cil-x-circle"></i>
+        </div>
+        <div class="stat-info">
+          <div class="stat-value">{{ stats.inactiveUsers }}</div>
+          <div class="stat-label">Inactive Users</div>
+          <div class="stat-footer">Deactivated, not deleted</div>
         </div>
       </div>
     </c-col>
@@ -139,64 +72,100 @@
   </c-row>
 
   <!-- ── QUICK ACTIONS ──────────────────────────────────────────── -->
-  <c-row class="mb-4">
-    <c-col xs="12">
-      <c-card class="border-0 shadow-sm" style="border-radius: 12px;">
-        <c-card-header class="bg-white border-bottom px-4 pt-4 pb-3">
-          <div class="d-flex align-items-center">
-            <i class="cil-bolt me-2 text-primary"></i>
-            <h5 class="mb-0 fw-bold">Quick Actions</h5>
-          </div>
-        </c-card-header>
-        <c-card-body class="p-4">
-          <c-row class="g-3">
+  <div class="panel mb-4">
+    <div class="panel-header">
+      <i class="cil-bolt"></i>
+      <h5>Quick Actions</h5>
+    </div>
+    <div class="panel-body action-row">
 
-            <c-col xs="12" md="4">
-              <button
-                cButton
-                color="light"
-                class="action-button"
-                (click)="navigateTo('/hierarchy-levels')">
-                <div class="action-icon bg-primary">
-                  <i class="cil-layers"></i>
-                </div>
-                <h6 class="mb-1 fw-bold text-dark">Manage Hierarchy Levels</h6>
-                <p class="mb-0 text-muted small">Create and organize levels</p>
-              </button>
-            </c-col>
+      <button type="button" class="action-item" (click)="navigateTo('/hierarchy-users')">
+        <div class="action-icon-badge tint-indigo"><i class="cil-user-follow"></i></div>
+        <div class="action-text">
+          <div class="action-title">Manage Users</div>
+          <div class="action-subtitle">Create and edit logins</div>
+        </div>
+        <i class="cil-arrow-right action-arrow"></i>
+      </button>
 
-            <c-col xs="12" md="4">
-              <button
-                cButton
-                color="light"
-                class="action-button"
-                (click)="navigateTo('/hierarchy-users')">
-                <div class="action-icon bg-success">
-                  <i class="cil-user-follow"></i>
-                </div>
-                <h6 class="mb-1 fw-bold text-dark">Manage Users</h6>
-                <p class="mb-0 text-muted small">Add and manage users</p>
-              </button>
-            </c-col>
+      <button type="button" class="action-item" (click)="navigateTo('/spend-analysis')">
+        <div class="action-icon-badge tint-emerald"><i class="cil-chart-pie"></i></div>
+        <div class="action-text">
+          <div class="action-title">Reports</div>
+          <div class="action-subtitle">Purchase order spend</div>
+        </div>
+        <i class="cil-arrow-right action-arrow"></i>
+      </button>
 
-            <c-col xs="12" md="4">
-              <button
-                cButton
-                color="light"
-                class="action-button"
-                (click)="navigateTo('/reporting-structure')">
-                <div class="action-icon bg-warning">
-                  <i class="cil-sitemap"></i>
-                </div>
-                <h6 class="mb-1 fw-bold text-dark">Setup Reporting</h6>
-                <p class="mb-0 text-muted small">Configure reporting structure</p>
-              </button>
-            </c-col>
+      <button type="button" class="action-item" (click)="navigateTo('/audit-log')">
+        <div class="action-icon-badge tint-amber"><i class="cil-history"></i></div>
+        <div class="action-text">
+          <div class="action-title">Audit Log</div>
+          <div class="action-subtitle">Everything that's happened</div>
+        </div>
+        <i class="cil-arrow-right action-arrow"></i>
+      </button>
 
-          </c-row>
-        </c-card-body>
-      </c-card>
-    </c-col>
-  </c-row>
+    </div>
+  </div>
+
+  <!-- ── RECENT USERS ─────────────────────────────────────────────── -->
+  <div class="panel">
+
+    <div class="text-center py-5" *ngIf="isLoading">
+      <div class="spinner-border text-primary"></div>
+      <p class="mt-2 text-muted">Loading users…</p>
+    </div>
+
+    <div class="alert alert-danger m-3" *ngIf="!isLoading && errorMessage">{{ errorMessage }}</div>
+
+    <div class="text-center py-5 text-muted" *ngIf="!isLoading && !errorMessage && recentUsers.length === 0">
+      No users yet — create the first one from Manage Users.
+    </div>
+
+    <div class="table-responsive" *ngIf="!isLoading && recentUsers.length > 0">
+
+      <div class="panel-header justify-content-between">
+        <div class="d-flex align-items-center">
+          <i class="cil-list"></i>
+          <h5>Recently Added Users</h5>
+        </div>
+        <button cButton color="link" size="sm" class="p-0 view-all-link" (click)="navigateTo('/hierarchy-users')">
+          View All <i class="cil-arrow-right ms-1"></i>
+        </button>
+      </div>
+
+      <table class="table users-table mb-0">
+        <thead>
+          <tr>
+            <th>Name</th>
+            <th>Email</th>
+            <th>Level</th>
+            <th class="text-center">Status</th>
+            <th>Added</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let user of recentUsers; trackBy: trackById">
+            <td>
+              <div class="d-flex align-items-center gap-2">
+                <div class="avatar-circle-sm">{{ getInitials(user.fullName) }}</div>
+                <span class="fw-semibold">{{ user.fullName }}</span>
+              </div>
+            </td>
+            <td class="text-muted">{{ user.email }}</td>
+            <td>{{ user.hierarchyLevelName || '—' }}</td>
+            <td class="text-center">
+              <span class="status-chip" [class.chip-active]="user.isActive" [class.chip-inactive]="!user.isActive">
+                {{ user.isActive ? 'Active' : 'Inactive' }}
+              </span>
+            </td>
+            <td class="small text-muted">{{ formatDate(user.createdAt) }}</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+  </div>
 
 </c-container>

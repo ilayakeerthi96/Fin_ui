@@ -965,14 +965,10 @@ export class PendingApprovalsComponent implements OnInit {
   filteredHoldSupplierApprovals: any[] = [];
   filteredNeedMoreInfoApprovals: any[] = [];
 
-  activeTab:
-    | 'rfq-pending'
-    | 'rfq-hold'
-    | 'po-pending'
-    | 'po-hold'
-    | 'supplier-pending'
-    | 'supplier-hold'
-    | 'supplier-info' = 'rfq-pending';
+  // PO approvals only. The RFQ, Supplier and Info-Requested tabs went with their modules;
+  // narrowing the union (rather than just hiding the buttons) means the compiler now
+  // rejects any leftover code that tries to switch to one of them.
+  activeTab: 'po-pending' | 'po-hold' = 'po-pending';
 
   isLoading = false;
   searchText = '';
@@ -1223,13 +1219,17 @@ export class PendingApprovalsComponent implements OnInit {
   //  DATA LOADING
   // =========================================================================
 
+  /**
+   * Loads only the PO approval queues.
+   *
+   * The RFQ and Supplier loaders are deliberately not called: their modules are out of
+   * scope, and every one of those calls would hit an endpoint this application no longer
+   * uses — four failing requests on every visit to this screen. The methods themselves are
+   * left in place for now; they are simply never invoked.
+   */
   private loadAllData(): void {
-    this.loadPendingApprovals();
-    this.loadHoldApprovals();
     this.loadPendingPOApprovals();
     this.loadHoldPOApprovals();
-    this.loadPendingSupplierApprovals();
-    this.loadHoldSupplierApprovals();
   }
 
   loadPendingApprovals(): void {
@@ -1673,10 +1673,7 @@ export class PendingApprovalsComponent implements OnInit {
     this.router.navigate([`/po-details/${poId}`]);
   }
 
-  switchTab(
-    tab: 'rfq-pending' | 'rfq-hold' | 'po-pending' | 'po-hold'
-       | 'supplier-pending' | 'supplier-hold' | 'supplier-info'
-  ): void {
+  switchTab(tab: 'po-pending' | 'po-hold'): void {
     this.activeTab  = tab;
     this.searchText = '';
     this.applyDateAndSearchFilters();
@@ -1688,8 +1685,9 @@ export class PendingApprovalsComponent implements OnInit {
     this.loadAllData();
   }
 
+  /** PO approvals are the only kind now, so the header badge counts just those. */
   get totalBadgeCount(): number {
-    return this.filteredApprovals.length + this.pendingPOCount + this.pendingSupplierCount;
+    return this.pendingPOCount;
   }
 
   // =========================================================================
@@ -1816,8 +1814,11 @@ export class PendingApprovalsComponent implements OnInit {
     return m[status] || 'bg-light text-dark';
   }
 
-  // Expose activeTab-aware flag for the supplier detail footer buttons
-  isSupplierPendingTab(): boolean  { return this.activeTab === 'supplier-pending'; }
-  isSupplierHoldTab(): boolean     { return this.activeTab === 'supplier-hold'; }
-  isSupplierInfoTab(): boolean     { return this.activeTab === 'supplier-info'; }
+  // These three used to drive the supplier-detail modal footer. The supplier approval tabs
+  // are gone, so the tab can never be one of those values — they now always report false
+  // rather than comparing against statuses that no longer exist in the union. The modal
+  // markup that calls them is retained for the moment and simply renders no footer buttons.
+  isSupplierPendingTab(): boolean  { return false; }
+  isSupplierHoldTab(): boolean     { return false; }
+  isSupplierInfoTab(): boolean     { return false; }
 }

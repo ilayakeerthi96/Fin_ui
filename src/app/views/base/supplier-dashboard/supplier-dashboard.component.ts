@@ -1159,6 +1159,7 @@ import { MeetingListComponent }     from '../meeting-list/meeting-list.component
 import { environment } from '../../../environments/environment';
 import { MeetingRoomComponent }     from '../meeting-room/meeting-room.component';
 import { MeetingService, MeetingParticipantInfo } from '../../../shared/service/meeting.service';
+import { ExcelService } from '../../../shared/service/ExcelService';
 
 interface FYOption {
   value: string;
@@ -1202,7 +1203,11 @@ export class SupplierDashboardComponent implements OnInit, OnDestroy {
   userInitials  : string = 'SU';
 
   // ── Tab state ─────────────────────────────────────────────────────────────
-  activeTab: 'rfq' | 'po' | 'invoice' = 'rfq';
+  // The RFQ tab was removed with the RFQ module — suppliers now work directly from
+  // released Purchase Orders, so the dashboard opens on 'po'. The union still allows
+  // 'rfq' only because the (now unreachable) RFQ panel markup is still in the template
+  // pending the file-level cleanup pass; nothing can switch to it.
+  activeTab: 'rfq' | 'po' | 'invoice' = 'po';
 
   // ── Statistics ────────────────────────────────────────────────────────────
   statistics = {
@@ -1372,6 +1377,7 @@ export class SupplierDashboardComponent implements OnInit, OnDestroy {
     private router        : Router,
     private chatService   : ChatService,
     private meetingService: MeetingService,
+    private excelService  : ExcelService,
   ) {}
 
   ngOnInit(): void {
@@ -1591,7 +1597,8 @@ export class SupplierDashboardComponent implements OnInit, OnDestroy {
   loadDashboardData(): void {
     if (!this.supplierId) { this.errorMessage = 'Supplier ID not found. Please login again.'; return; }
     this.loadStatistics();
-    this.loadRFQs();
+    // loadRFQs() is no longer called: the RFQ tab is gone, so fetching that list would be
+    // a failing request on every dashboard load with nowhere to display the result.
     this.loadPOs();
     this.loadInvoices();
   }
@@ -1871,12 +1878,18 @@ export class SupplierDashboardComponent implements OnInit, OnDestroy {
     this.isInvoiceModalOpen   = true;
     this.invoiceInputMode     = 'write';
     this.pendingInvoiceAttachments = [];
+    this.itemUploadSummary = null;
     this.poLocationCurrencyCode   = po.currencyCode   || 'INR';
     this.poLocationCurrencySymbol = po.currencySymbol || '₹';
     this.invoiceForm = {
       invoiceDate: this.getTodayStr(), dueDate: this.getDueDateStr(30), taxPercentage: 18,
-      paymentTerms: 'Net 30 days from invoice date', notes: '',
-      termsAndConditions: 'Payment is due within 30 days. Late payment attracts 2% per month interest.',
+      // Left blank rather than pre-filled with boilerplate text — the supplier states their
+      // own terms per invoice, or leaves it blank, rather than editing canned wording every
+      // time.
+      paymentTerms: '', notes: '', termsAndConditions: '',
+      // Placeholder until the PO/supplier lookup below resolves — bank details were already
+      // collected when the supplier was onboarded, so this is only ever shown for the instant
+      // before that real data arrives (or as a last-resort fallback if it's genuinely missing).
       bankName: localStorage.getItem('bankName') || '',
       accountHolderName: localStorage.getItem('accountHolderName') || this.supplierName,
       accountNumber: localStorage.getItem('accountNumber') || '',
@@ -1895,6 +1908,14 @@ export class SupplierDashboardComponent implements OnInit, OnDestroy {
             this.poLocationCurrencyCode   = d.currencyCode;
             this.poLocationCurrencySymbol = d.currencySymbol || this.getSymbolForCode(d.currencyCode);
           }
+          // Bank details already on file from when the supplier was onboarded — shown here so
+          // nobody retypes the same account number on every invoice. Still a normal editable
+          // field on the form: a one-off payment to a different account is still possible.
+          if (d.supplierBankName)              this.invoiceForm.bankName = d.supplierBankName;
+          if (d.supplierBankAccountHolderName) this.invoiceForm.accountHolderName = d.supplierBankAccountHolderName;
+          if (d.supplierBankAccountNumber)     this.invoiceForm.accountNumber = d.supplierBankAccountNumber;
+          if (d.supplierBankIfscCode)          this.invoiceForm.ifscCode = d.supplierBankIfscCode;
+          if (d.supplierBankBranchName)        this.invoiceForm.branchName = d.supplierBankBranchName;
           this.invoiceForm.lineItems = (d.lineItems || []).map((item: any) => {
             const poQty       = Number(item.quantity) || 0;
             const invoicedQty = Number(item.invoicedQty || item.alreadyInvoicedQty || 0);
@@ -2067,6 +2088,9 @@ export class SupplierDashboardComponent implements OnInit, OnDestroy {
       }))
     };
     this.resubmitRemarks = '';
+    // Attachments are per-editing-session, not per-invoice — start empty so a leftover
+    // selection from a previous invoice's Create/Resubmit modal is never sent on this one.
+    this.pendingInvoiceAttachments = [];
   }
 
   closeResubmitModal(): void {
@@ -2125,7 +2149,14 @@ export class SupplierDashboardComponent implements OnInit, OnDestroy {
       accountNumber: this.editInvoiceForm.accountNumber, ifscCode: this.editInvoiceForm.ifscCode,
       branchName: this.editInvoiceForm.branchName, upiId: this.editInvoiceForm.upiId,
       overallDiscountAmount: this.editInvoiceForm.overallDiscountAmount || 0,
-      lineItems: this.editInvoiceForm.lineItems
+      lineItems: this.editInvoiceForm.lineItems,
+      // Additive on the backend (saveAttachments never clears existing ones) — anything
+      // attached during this resubmit joins whatever was already on the invoice.
+      attachments: this.pendingInvoiceAttachments.map(a => ({
+        filename: a.file.name,
+        contentType: a.file.type || 'application/octet-stream',
+        base64: a.base64
+      }))
     };
 
     const doResubmit = () => {
@@ -2242,9 +2273,9 @@ export class SupplierDashboardComponent implements OnInit, OnDestroy {
         hsnSacCode: it.hsnSacCode, uom: it.uom, quantity: it.qtyToInvoice,
         unitPrice: it.unitPrice, discountPercentage: it.discountPercentage, taxPercentage: it.taxPercentage
       })),
-      // "Upload" alternative to writing the invoice in by hand — optional, only meaningful
-      // on Blanket/Contract POs (see invoiceInputMode / pendingInvoiceAttachments). Sent as
-      // an empty array whenever nothing was attached, which the backend treats as a no-op.
+      // Supporting documents alongside the line items above — optional, available on every
+      // invoice regardless of PO type (see pendingInvoiceAttachments). Sent as an empty array
+      // whenever nothing was attached, which the backend treats as a no-op.
       attachments: this.pendingInvoiceAttachments.map(a => ({
         filename: a.file.name,
         contentType: a.file.type || 'application/octet-stream',
@@ -2277,6 +2308,116 @@ export class SupplierDashboardComponent implements OnInit, OnDestroy {
 
   removeInvoiceAttachment(index: number): void {
     this.pendingInvoiceAttachments.splice(index, 1);
+  }
+
+  // =========================================================================
+  //  UPLOAD LINE ITEMS FROM SPREADSHEET
+  //
+  // A second way to fill in Qty to Invoice / Discount % / Tax % besides typing them into the
+  // grid by hand — for a long line-item list, editing a spreadsheet is faster than a form.
+  // Unit Price stays fixed from the PO everywhere in this app (the grid renders it read-only
+  // for the same reason), so the upload never touches it even if a row's Price column was
+  // edited — only Qty/Discount/Tax are ever applied. The template is generated FROM this PO's
+  // actual line items, so "download template → fill in → upload" always matches on Item Code;
+  // any row that doesn't match one of this PO's items is reported, never silently guessed at.
+  // =========================================================================
+
+  itemUploadSummary: { matched: number; total: number; unmatched: string[] } | null = null;
+  isProcessingItemUpload = false;
+
+  /** The exact header text used below doubles as the column keys importFromExcel() reads back
+   *  on upload — keep the two in lockstep if either ever changes. */
+  private static readonly ITEM_TEMPLATE_HEADERS = {
+    itemCode: 'Item Code', description: 'Description', uom: 'UOM',
+    poQty: 'PO Qty', remainingQty: 'Remaining Qty',
+    unitPrice: 'Unit Price (reference only — fixed from PO)',
+    qtyToInvoice: 'Qty To Invoice', discountPct: 'Discount %', taxPct: 'Tax %'
+  };
+
+  downloadInvoiceItemTemplate(): void {
+    const h = SupplierDashboardComponent.ITEM_TEMPLATE_HEADERS;
+    if (!this.invoiceForm.lineItems.length) {
+      this.messageService.showMessage('warning', 'No items', 'This PO has no line items to build a template from.');
+      return;
+    }
+    const rows = this.invoiceForm.lineItems.map((it: any, i: number) => ({
+      [h.itemCode]:     it.itemCode || `ITEM-${i + 1}`,
+      [h.description]:  it.itemDescription || '',
+      [h.uom]:          it.uom || '',
+      [h.poQty]:        it.poQuantity ?? 0,
+      [h.remainingQty]: it.remainingQty ?? 0,
+      [h.unitPrice]:    it.unitPrice ?? 0,
+      [h.qtyToInvoice]: it.qtyToInvoice ?? it.remainingQty ?? 0,
+      [h.discountPct]:  it.discountPercentage ?? 0,
+      [h.taxPct]:       it.taxPercentage ?? 0
+    }));
+    const poNumber = this.selectedPOForInvoice?.poNumber || 'PO';
+    this.excelService.exportAsExcelFile(rows, `Invoice_Items_Template_${poNumber}`);
+    this.messageService.showMessage('success', 'Template downloaded',
+      'Fill in Qty To Invoice / Discount % / Tax % and upload it back — do not change the Item Code column.');
+  }
+
+  onInvoiceItemsFileSelected(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    const file = input.files && input.files[0];
+    input.value = ''; // allow re-selecting the same file after fixing it
+    if (!file) return;
+
+    const h = SupplierDashboardComponent.ITEM_TEMPLATE_HEADERS;
+    this.isProcessingItemUpload = true;
+    this.itemUploadSummary = null;
+
+    this.excelService.importFromExcel(file, (rows: any[]) => {
+      let matched = 0;
+      const unmatched: string[] = [];
+
+      rows.forEach((row, i) => {
+        const code = String(row[h.itemCode] ?? '').trim();
+
+        // A blank Item Code is exactly what a brand-new row looks like — someone added an item
+        // that isn't on this PO. It must be reported the same as a wrong code, never dropped
+        // silently: an invoice can only ever bill for items the PO actually has.
+        if (!code) { unmatched.push(`Row ${i + 2} (no Item Code)`); return; }
+
+        const target = this.invoiceForm.lineItems.find((it: any) =>
+          (it.itemCode || '').trim().toLowerCase() === code.toLowerCase());
+
+        if (!target) { unmatched.push(code); return; }
+
+        // Only the fields the grid itself lets a supplier edit — Unit Price is fixed from the
+        // PO everywhere else in this form, so a spreadsheet upload does not get to change it.
+        if (row[h.qtyToInvoice] !== undefined && row[h.qtyToInvoice] !== '') {
+          const qty = Number(row[h.qtyToInvoice]);
+          if (!isNaN(qty) && qty >= 0) target.qtyToInvoice = qty;
+        }
+        if (row[h.discountPct] !== undefined && row[h.discountPct] !== '') {
+          const d = Number(row[h.discountPct]);
+          if (!isNaN(d) && d >= 0) target.discountPercentage = d;
+        }
+        if (row[h.taxPct] !== undefined && row[h.taxPct] !== '') {
+          const t = Number(row[h.taxPct]);
+          if (!isNaN(t) && t >= 0) target.taxPercentage = t;
+        }
+        matched++;
+      });
+
+      this.itemUploadSummary = { matched, total: rows.length, unmatched };
+      this.isProcessingItemUpload = false;
+
+      if (unmatched.length > 0) {
+        this.messageService.showMessage('warning', 'Some rows were skipped',
+          `${matched} of ${rows.length} item(s) updated. An invoice can only bill for items already `
+          + `on this PO, so new rows or unrecognized Item Codes cannot be added this way — they were `
+          + `skipped, not invoiced: ${unmatched.join(', ')}`);
+      } else {
+        this.messageService.showMessage('success', 'Items updated',
+          `${matched} of ${rows.length} item(s) updated from the uploaded sheet. Review the grid below before submitting.`);
+      }
+    }, () => {
+      this.isProcessingItemUpload = false;
+      this.messageService.showMessage('error', 'Could not read file',
+        'That file could not be read as a spreadsheet. Please use the downloaded template unchanged.');
+    });
   }
 
   getInvoiceAttachmentDownloadUrl(attachmentId: number): string {
@@ -2361,7 +2502,35 @@ export class SupplierDashboardComponent implements OnInit, OnDestroy {
   previousPage(): void { if (this.currentPage > 1) this.currentPage--; }
 
   get paginatedPOs(): any[]   { return this.filteredPOList.slice((this.poCurrentPage - 1) * this.poPageSize, this.poCurrentPage * this.poPageSize); }
-  get totalPOPages(): number  { return Math.ceil(this.filteredPOList.length / this.poPageSize); }
+  get totalPOPages(): number  { return Math.max(1, Math.ceil(this.filteredPOList.length / this.poPageSize)); }
+
+  // ── PO table pagination bar — same pattern as the PO list ────────────────
+  poPageSizeOptions: number[] = [5, 10, 25, 50];
+
+  get poPageNumbers(): number[] {
+    const total = this.totalPOPages, current = this.poCurrentPage;
+    const pages: number[] = [];
+    if (total <= 7) { for (let i = 1; i <= total; i++) pages.push(i); return pages; }
+    pages.push(1);
+    if (current > 3) pages.push(-1);
+    const start = Math.max(2, current - 1), end = Math.min(total - 1, current + 1);
+    for (let i = start; i <= end; i++) pages.push(i);
+    if (current < total - 2) pages.push(-1);
+    pages.push(total);
+    return pages;
+  }
+
+  get poStartIndex(): number {
+    if (this.filteredPOList.length === 0) return 0;
+    return (this.poCurrentPage - 1) * this.poPageSize + 1;
+  }
+  get poEndIndex(): number { return Math.min(this.poCurrentPage * this.poPageSize, this.filteredPOList.length); }
+
+  goToPOPage(page: number): void {
+    if (page < 1 || page > this.totalPOPages) return;
+    this.poCurrentPage = page;
+  }
+  onPOPageSizeChange(size: number): void { this.poPageSize = size; this.poCurrentPage = 1; }
 
   get paginatedInvoices(): any[] { return this.filteredInvoiceList.slice((this.invoiceCurrentPage - 1) * this.invoicePageSize, this.invoiceCurrentPage * this.invoicePageSize); }
   get totalInvoicePages(): number { return Math.ceil(this.filteredInvoiceList.length / this.invoicePageSize); }

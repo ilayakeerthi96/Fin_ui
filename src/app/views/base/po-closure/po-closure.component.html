@@ -1,0 +1,226 @@
+<c-container fluid class="po-closure">
+
+  <c-row class="mb-3">
+    <c-col [md]="8">
+      <h4 class="page-title mb-1">PO Closure</h4>
+      <p class="page-subtitle mb-0">
+        Close a purchase order once everything has been supplied, invoiced and paid — or
+        foreclose it early with a reason. Closing stops the supplier invoicing further.
+      </p>
+    </c-col>
+    <c-col [md]="4" class="text-end">
+      <button cButton color="secondary" variant="outline" size="sm"
+              (click)="load()" [disabled]="isLoading">Refresh</button>
+    </c-col>
+  </c-row>
+
+  <!-- ===================== VIEW SWITCH + SEARCH ===================== -->
+  <c-card class="mb-3">
+    <c-card-body>
+      <c-row class="align-items-end">
+        <c-col [md]="5" class="mb-2">
+          <label class="form-label">View</label>
+          <div>
+            <button cButton size="sm" class="me-2"
+                    [color]="view === 'OPEN' ? 'primary' : 'secondary'"
+                    [variant]="view === 'OPEN' ? undefined : 'outline'"
+                    (click)="switchView('OPEN')">Open POs</button>
+            <button cButton size="sm"
+                    [color]="view === 'CLOSED' ? 'primary' : 'secondary'"
+                    [variant]="view === 'CLOSED' ? undefined : 'outline'"
+                    (click)="switchView('CLOSED')">Closed / Foreclosed</button>
+          </div>
+        </c-col>
+        <c-col [md]="5" class="mb-2">
+          <label class="form-label">Search</label>
+          <input class="form-control form-control-sm" [(ngModel)]="searchText" name="searchText"
+                 (input)="applyFilters()" placeholder="PO number or supplier">
+        </c-col>
+        <c-col [md]="2" class="mb-2 text-end">
+          <span class="text-muted small">{{ filtered.length }} PO(s)</span>
+        </c-col>
+      </c-row>
+    </c-card-body>
+  </c-card>
+
+  <div class="alert alert-danger" *ngIf="errorMessage">{{ errorMessage }}</div>
+
+  <!-- ===================== TABLE ===================== -->
+  <div class="card po-style-card">
+
+    <div class="text-center py-5" *ngIf="isLoading">
+      <c-spinner color="primary"></c-spinner>
+      <p class="mt-2 text-muted">Loading purchase orders…</p>
+    </div>
+
+    <div class="text-center py-5 text-muted" *ngIf="!isLoading && filtered.length === 0">
+      <span *ngIf="view === 'OPEN'">
+        No released purchase orders are currently open. Only a released PO can be closed —
+        drafts and POs still in approval are cancelled instead.
+      </span>
+      <span *ngIf="view === 'CLOSED'">No purchase orders have been closed yet.</span>
+    </div>
+
+    <div class="table-responsive" *ngIf="!isLoading && filtered.length > 0">
+
+      <!-- Table header with result count -->
+      <div class="px-4 pt-3 pb-2 d-flex align-items-center justify-content-between">
+        <h5 class="fw-bold text-dark mb-0">
+          <i class="bi bi-table me-2 text-primary"></i>
+          {{ view === 'OPEN' ? 'Purchase Orders Open for Closure' : 'Closed Purchase Orders' }}
+        </h5>
+        <small class="text-muted">{{ filtered.length }} result{{ filtered.length !== 1 ? 's' : '' }}</small>
+      </div>
+
+      <table class="table po-table mb-0">
+        <thead class="table-header">
+          <tr>
+            <th>PO Number / Details</th>
+            <th>Supplier</th>
+            <th class="text-end">PO Value</th>
+            <th class="text-end">Paid</th>
+            <th class="text-center">Status</th>
+            <th class="text-center">Payment</th>
+            <th class="text-center" *ngIf="view === 'OPEN'">Readiness</th>
+            <th *ngIf="view === 'CLOSED'">Closed On</th>
+            <th *ngIf="view === 'CLOSED'">Reason / Remarks</th>
+            <th class="text-center" *ngIf="view === 'OPEN'">Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr class="po-main-row" *ngFor="let po of paginated; trackBy: trackById">
+            <td>
+              <a class="po-number-link" href="javascript:void(0)" (click)="viewPO(po)">
+                <i class="bi bi-file-earmark-text me-1"></i>{{ po.poNumber }}
+              </a>
+            </td>
+            <td>{{ po.supplierName }}</td>
+            <td class="text-end">
+              <div class="fw-bold text-success fs-6">{{ po.currencySymbol }}{{ po.grandTotal | number:'1.2-2' }}</div>
+            </td>
+            <td class="text-end text-muted">
+              {{ po.currencySymbol }}{{ po.totalPaidAmount | number:'1.2-2' }}
+            </td>
+            <td class="text-center"><span class="badge" [ngClass]="'bg-' + statusColor(po.status)">{{ po.status }}</span></td>
+            <td class="text-center"><span class="badge" [ngClass]="'bg-' + paymentColor(po.paymentStatus)">{{ paymentStatusLabel(po.paymentStatus) }}</span></td>
+
+            <td class="text-center" *ngIf="view === 'OPEN'">
+              <span class="badge" [ngClass]="'bg-' + readinessColor(po)">{{ readinessLabel(po) }}</span>
+            </td>
+
+            <td class="small text-muted" *ngIf="view === 'CLOSED'">
+              {{ (po.closedAt || po.foreclosedAt) | date:'dd MMM yy' }}
+            </td>
+            <td class="small text-muted" *ngIf="view === 'CLOSED'">
+              {{ po.closureRemarks || po.foreclosureReason || '—' }}
+            </td>
+
+            <td class="text-center" *ngIf="view === 'OPEN'">
+              <button cButton color="success" size="sm" class="me-1"
+                      (click)="openClose(po)">Close</button>
+              <button cButton color="danger" variant="outline" size="sm"
+                      (click)="openForeclose(po)">Foreclose</button>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+
+      <!-- ===== PAGINATION BAR ===== -->
+      <div class="pagination-bar d-flex align-items-center justify-content-between flex-wrap gap-3 px-4 py-3">
+        <div class="d-flex align-items-center gap-3 flex-wrap">
+          <span class="text-muted small">
+            Showing <strong>{{ startIndex }}–{{ endIndex }}</strong> of <strong>{{ filtered.length }}</strong> orders
+          </span>
+          <div class="d-flex align-items-center gap-2">
+            <label class="text-muted small mb-0 text-nowrap">Rows per page:</label>
+            <div class="page-size-group">
+              <button *ngFor="let size of pageSizeOptions" class="page-size-btn"
+                      [class.active]="pageSize === size" (click)="onPageSizeChange(size)">{{ size }}</button>
+            </div>
+          </div>
+        </div>
+        <div class="d-flex align-items-center gap-1">
+          <button class="page-nav-btn" [disabled]="currentPage === 1" (click)="goToPage(1)" title="First page">
+            <i class="bi bi-chevron-double-left"></i>
+          </button>
+          <button class="page-nav-btn" [disabled]="currentPage === 1" (click)="goToPage(currentPage - 1)" title="Previous page">
+            <i class="bi bi-chevron-left"></i>
+          </button>
+          <ng-container *ngFor="let page of pageNumbers">
+            <span *ngIf="page === -1" class="page-ellipsis">…</span>
+            <button *ngIf="page !== -1" class="page-num-btn" [class.active]="currentPage === page" (click)="goToPage(page)">{{ page }}</button>
+          </ng-container>
+          <button class="page-nav-btn" [disabled]="currentPage === totalPages" (click)="goToPage(currentPage + 1)" title="Next page">
+            <i class="bi bi-chevron-right"></i>
+          </button>
+          <button class="page-nav-btn" [disabled]="currentPage === totalPages" (click)="goToPage(totalPages)" title="Last page">
+            <i class="bi bi-chevron-double-right"></i>
+          </button>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ===================== CLOSE / FORECLOSE DIALOG ===================== -->
+  <div class="modal-backdrop-custom" *ngIf="showModal" (click)="closeModal()"></div>
+  <div class="modal-custom" *ngIf="showModal">
+    <c-card>
+      <c-card-header>
+        <strong>{{ modalMode === 'close' ? 'Close Purchase Order' : 'Foreclose Purchase Order' }}</strong>
+      </c-card-header>
+      <c-card-body>
+
+        <p class="mb-3">
+          <strong>{{ target?.poNumber }}</strong> — {{ target?.supplierName }}<br>
+          <span class="text-muted small">
+            Value {{ target?.currencySymbol }}{{ target?.grandTotal | number:'1.2-2' }} ·
+            Paid {{ target?.currencySymbol }}{{ target?.totalPaidAmount | number:'1.2-2' }} ·
+            Payment status {{ paymentStatusLabel(target?.paymentStatus) }}
+          </span>
+        </p>
+
+        <!-- Outstanding-payment warning, close mode only -->
+        <div class="alert alert-warning py-2" *ngIf="modalMode === 'close' && !isFullyPaid(target)">
+          This PO still has an outstanding payment. Closing it stops the supplier invoicing
+          further. Confirm below only if the remaining balance will never be paid.
+          <div class="form-check mt-2">
+            <input class="form-check-input" type="checkbox" id="forceClose"
+                   [(ngModel)]="forceClose" name="forceClose">
+            <label class="form-check-label" for="forceClose">
+              Close anyway, with the balance outstanding
+            </label>
+          </div>
+        </div>
+
+        <div class="alert alert-danger py-2" *ngIf="modalMode === 'foreclose'">
+          Foreclosing ends this PO before it has been fully supplied. The remaining quantity
+          will never be delivered against it.
+        </div>
+
+        <label class="form-label">
+          {{ modalMode === 'close' ? 'Closure Remarks' : 'Foreclosure Reason' }}
+          <span class="req" *ngIf="modalMode === 'foreclose'">*</span>
+        </label>
+        <textarea class="form-control" rows="3" [(ngModel)]="remarks" name="remarks"
+                  [placeholder]="modalMode === 'close'
+                    ? 'Optional — anything worth recording about this closure'
+                    : 'Required — why is this PO being ended early?'"></textarea>
+        <small class="text-muted">This is recorded permanently in the audit trail.</small>
+
+        <div class="text-end mt-4">
+          <button cButton color="secondary" variant="outline" class="me-2"
+                  (click)="closeModal()" [disabled]="isSubmitting">Cancel</button>
+          <button cButton [color]="modalMode === 'close' ? 'success' : 'danger'"
+                  (click)="confirm()"
+                  [disabled]="isSubmitting || (modalMode === 'close' && !isFullyPaid(target) && !forceClose)">
+            <c-spinner size="sm" *ngIf="isSubmitting"></c-spinner>
+            {{ modalMode === 'close' ? 'Confirm Close' : 'Confirm Foreclose' }}
+          </button>
+        </div>
+
+      </c-card-body>
+    </c-card>
+  </div>
+
+</c-container>

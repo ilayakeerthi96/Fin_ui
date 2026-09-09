@@ -1,204 +1,199 @@
-/* Chart surface + ink roles. Dark values are declared under both the OS media query and the
-   theme stamp so a viewer toggle wins either way — see the data-viz palette guidance. */
 .sa-page {
-  --surface-1:      #fcfcfb;
-  --surface-page:   #f6f8fc;
-  --border:         #e6eaf3;
-  --text-primary:   #0b0b0b;
-  --text-secondary: #52514e;
-  --text-muted:     #94a3b8;
-  --grid:           #eef1f8;
-  --accent:         #2a78d6;
-
-  padding: 22px; background: var(--surface-page); min-height: 100vh;
-}
-@media (prefers-color-scheme: dark) {
-  :root:not([data-theme="light"]) .sa-page {
-    --surface-1:      #1e293b;
-    --surface-page:   #0f172a;
-    --border:         #334155;
-    --text-primary:   #e2e8f0;
-    --text-secondary: #cbd5e1;
-    --text-muted:     #94a3b8;
-    --grid:           #334155;
-    --accent:         #3987e5;
-  }
-}
-:root[data-theme="dark"] .sa-page {
-  --surface-1:      #1e293b;
-  --surface-page:   #0f172a;
-  --border:         #334155;
-  --text-primary:   #e2e8f0;
-  --text-secondary: #cbd5e1;
-  --text-muted:     #94a3b8;
-  --grid:           #334155;
-  --accent:         #3987e5;
+  padding: 22px;
 }
 
-/* ── Top bar ── */
-.sa-topbar {
-  background: var(--surface-1); border: 1px solid var(--border); border-radius: 14px;
-  padding: 18px 22px; margin-bottom: 16px;
-  display: flex; align-items: center; justify-content: space-between; gap: 20px; flex-wrap: wrap;
-}
-.topbar-title-main { font-size: 18px; font-weight: 800; color: var(--text-primary); }
-.topbar-sub { font-size: 13px; color: var(--text-secondary); margin-top: 3px; }
-.sa-label {
-  font-size: 11px; font-weight: 700; color: var(--text-muted);
-  text-transform: uppercase; letter-spacing: .03em; display: block; margin-bottom: 4px;
-}
-.sa-input {
-  border: 1px solid var(--border); border-radius: 8px; padding: 8px 12px; font-size: 13.5px;
-  color: var(--text-primary); background: var(--surface-1); min-width: 160px;
-}
-.sa-input:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px rgba(42,120,214,.15); }
-.sa-custom-range { display: flex; align-items: flex-end; gap: 10px; flex-wrap: wrap; }
-
-.sa-alert {
-  background: #fef2f2; color: #b91c1c; border: 1px solid #fecaca;
-  border-radius: 10px; padding: 11px 16px; margin-bottom: 14px; font-size: 13.5px;
-}
-.sa-loading { text-align: center; padding: 44px; color: var(--text-secondary); font-weight: 600; }
-
-/* ── KPI tiles ── */
-.sa-kpis { display: grid; grid-template-columns: repeat(auto-fit, minmax(168px, 1fr)); gap: 12px; margin-bottom: 16px; }
-.sa-kpi { background: var(--surface-1); border: 1px solid var(--border); border-radius: 12px; padding: 15px 17px; }
-.sa-kpi-primary { border-left: 4px solid var(--accent); }
-.sa-kpi-label {
-  font-size: 11px; font-weight: 700; color: var(--text-muted);
-  text-transform: uppercase; letter-spacing: .03em;
-}
-.sa-kpi-value { font-size: 23px; font-weight: 800; color: var(--text-primary); margin-top: 5px; line-height: 1.15; }
-.sa-kpi-primary .sa-kpi-value { color: var(--accent); }
-.sa-kpi-foot { font-size: 11.5px; color: var(--text-secondary); margin-top: 4px; }
-.sa-kpi-clickable { cursor: pointer; transition: border-color .15s ease, transform .1s ease; }
-.sa-kpi-clickable:hover { border-color: var(--accent); }
-.sa-kpi-clickable:active { transform: translateY(1px); }
-
-/* ── Cards ── */
-.sa-charts { display: grid; grid-template-columns: repeat(auto-fit, minmax(340px, 1fr)); gap: 14px; margin-bottom: 14px; }
-.sa-card {
-  background: var(--surface-1); border: 1px solid var(--border);
-  border-radius: 12px; padding: 16px 18px;
-}
-.sa-card-wide { margin-bottom: 14px; }
-.sa-card-head { margin-bottom: 12px; }
-.sa-card-head-row { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; flex-wrap: wrap; }
-.sa-card-title { font-size: 14.5px; font-weight: 800; color: var(--text-primary); }
-.sa-card-sub { font-size: 12px; color: var(--text-secondary); margin-top: 2px; }
-.sa-card-empty { color: var(--text-muted); font-size: 12.5px; font-style: italic; padding: 20px 0; text-align: center; }
-.sa-card-clickable { cursor: pointer; transition: border-color .15s ease, transform .1s ease; }
-.sa-card-clickable:hover { border-color: var(--accent); }
-.sa-card-clickable:active { transform: translateY(1px); }
-.sa-card-click-hint { font-size: 11px; color: var(--text-muted); margin-top: 10px; text-align: right; }
-
-/* ── Donut ── */
-.sa-donut-wrap { display: flex; align-items: center; gap: 18px; flex-wrap: wrap; }
-.sa-donut { width: 158px; height: 158px; flex-shrink: 0; }
-/* 2px surface ring so neighbouring segments read as separate marks */
-.sa-donut path { stroke: var(--surface-1); stroke-width: 1.2; }
-.sa-donut-center-value {
-  text-anchor: middle; font-size: 9.5px; font-weight: 800;
-  fill: var(--text-primary); font-family: inherit;
-}
-.sa-donut-center-label {
-  text-anchor: middle; font-size: 5px; fill: var(--text-muted);
-  font-family: inherit; text-transform: uppercase; letter-spacing: .08em;
+.page-title { font-weight: 600; }
+.page-subtitle { font-size: 0.875rem; color: var(--cui-secondary-color, #6c757d); }
+.form-label {
+  font-size: 0.75rem; font-weight: 500; text-transform: uppercase;
+  letter-spacing: 0.02em; margin-bottom: 0.25rem; color: var(--cui-secondary-color, #6c757d);
 }
 
-/* Legend carries the values, so identity never rests on colour alone */
-.sa-legend { list-style: none; margin: 0; padding: 0; flex: 1; min-width: 168px; }
-.sa-legend li {
-  display: grid; grid-template-columns: 12px 1fr auto auto; align-items: center;
-  gap: 8px; padding: 3px 0; font-size: 12px;
-}
-.sa-swatch { width: 10px; height: 10px; border-radius: 3px; display: inline-block; }
-.sa-legend-label {
-  color: var(--text-primary); font-weight: 600;
-  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
-}
-.sa-legend-value { color: var(--text-primary); font-weight: 700; font-variant-numeric: tabular-nums; }
-.sa-legend-pct { color: var(--text-muted); font-variant-numeric: tabular-nums; min-width: 42px; text-align: right; }
+/* ── Summary tiles — same visual language as the PO dashboard ────────────── */
 
-/* ── Monthly bars ── */
-/* Few bars (a single FY, or All Time with a short history) stretch to fill the card, exactly like
-   before — width stays 100% and flex-grow does the work. Only once there are enough months that
-   34px-min columns can no longer all fit does the row overflow its container width, and
-   sa-bars-wrap's horizontal scroll takes over instead of squeezing every bar down to illegibility. */
-.sa-bars-wrap { overflow-x: auto; }
-.sa-bars { display: flex; align-items: flex-end; gap: 10px; height: 210px; padding-top: 6px; width: 100%; }
-.sa-bar-col { flex: 1 1 34px; display: flex; flex-direction: column; align-items: center; height: 100%; min-width: 34px; }
-.sa-bar-value {
-  font-size: 10px; color: var(--text-secondary); font-weight: 700;
-  height: 16px; white-space: nowrap; font-variant-numeric: tabular-nums;
+.stat-card {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  background: #ffffff;
+  border-radius: 16px;
+  padding: 20px 22px;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.07);
+  border: 1px solid rgba(0, 0, 0, 0.04);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  height: 100%;
 }
-.sa-bar-track { flex: 1; width: 100%; display: flex; align-items: flex-end; border-bottom: 1px solid var(--grid); }
-.sa-bar-fill {
-  width: 100%; background: var(--accent);
-  border-radius: 4px 4px 0 0; /* rounded data-end, anchored to the baseline */
-  min-height: 0; transition: height .2s ease;
-}
-.sa-bar-label { font-size: 10.5px; color: var(--text-secondary); margin-top: 6px; font-weight: 600; white-space: nowrap; }
+.stat-card:hover { transform: translateY(-3px); box-shadow: 0 8px 24px rgba(0, 0, 0, 0.11); }
 
-/* ── Table ── */
-.btn-sa-secondary {
-  background: var(--surface-1); border: 1px solid var(--border); color: var(--text-primary);
-  border-radius: 8px; padding: 7px 14px; font-weight: 700; font-size: 12.5px; cursor: pointer;
+.stat-icon-wrap {
+  width: 52px; height: 52px; border-radius: 14px;
+  display: flex; align-items: center; justify-content: center;
+  color: #ffffff; flex-shrink: 0;
 }
-.sa-table-wrap { overflow-x: auto; margin-top: 12px; }
-/* Fixed layout — every row uses the exact same column widths as the header, so numeric columns
-   land on a straight vertical edge instead of auto-layout re-measuring width row by row. */
-.sa-table { width: 100%; border-collapse: collapse; table-layout: fixed; }
-.sa-table thead th {
-  text-align: left; font-size: 11px; font-weight: 800; color: var(--text-muted);
-  text-transform: uppercase; letter-spacing: .03em;
-  padding: 8px 10px; border-bottom: 1px solid var(--border);
-}
-.sa-table tbody td {
-  padding: 8px 10px; font-size: 12.5px; color: var(--text-primary);
-  border-bottom: 1px solid var(--grid);
-  overflow: hidden; text-overflow: ellipsis;
-}
-.sa-table .num { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
-.sa-table .strong { font-weight: 700; }
-.sa-supplier-name { font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.stat-purple { background: linear-gradient(135deg, #6c63ff, #9b59b6); }
+.stat-teal   { background: linear-gradient(135deg, #43cea2, #185a9d); }
+.stat-green  { background: linear-gradient(135deg, #56ab2f, #a8e063); }
+.stat-hold   { background: linear-gradient(135deg, #f7971e, #ffd200); }
 
-/* ── Empty state & note ── */
-.sa-empty { text-align: center; padding: 50px 20px; color: var(--text-muted); }
-.sa-empty i { font-size: 40px; display: block; margin-bottom: 12px; }
-.sa-empty-hint { font-size: 12.5px; max-width: 520px; margin: 6px auto 0; }
-.sa-note { font-size: 12px; color: var(--text-secondary); margin-top: 4px; line-height: 1.6; }
-
-/* ── Spares drill-down modal ── */
-.sa-modal-backdrop {
-  position: fixed; inset: 0; background: rgba(15,23,42,.55); z-index: 1100;
-  display: flex; align-items: center; justify-content: center; padding: 20px;
+.stat-info { display: flex; flex-direction: column; justify-content: center; min-width: 0; }
+.stat-value { font-size: 2rem; font-weight: 800; color: #1a1a2e; line-height: 1.1; letter-spacing: -0.5px; }
+.stat-value-sm { font-size: 1.35rem; }
+.stat-label {
+  font-size: 0.72rem; font-weight: 500; color: #8a8a9a;
+  text-transform: uppercase; letter-spacing: 0.4px; margin-top: 2px;
 }
-.sa-modal {
-  background: var(--surface-1); border-radius: 14px; width: 100%; max-width: 900px;
-  max-height: 88vh; display: flex; flex-direction: column;
-}
-.sa-modal-header {
-  display: flex; align-items: flex-start; justify-content: space-between;
-  padding: 18px 22px; border-bottom: 1px solid var(--border);
-}
-.sa-modal-title { font-size: 16.5px; font-weight: 800; color: var(--text-primary); }
-.sa-modal-sub { font-size: 12.5px; color: var(--text-secondary); margin-top: 2px; }
-.sa-modal-close { border: none; background: none; font-size: 18px; color: var(--text-muted); cursor: pointer; }
-.sa-modal-body { padding: 18px 22px; overflow-y: auto; }
-.sa-modal-footer { display: flex; justify-content: flex-end; padding: 14px 22px; border-top: 1px solid var(--border); }
 
-.sa-spares-filter { display: flex; align-items: flex-end; gap: 12px; flex-wrap: wrap; margin-bottom: 16px; }
-.sa-spares-total {
-  display: flex; align-items: center; justify-content: space-between;
-  background: var(--grid); border-radius: 10px; padding: 12px 16px; margin-bottom: 14px;
-  font-size: 13.5px; color: var(--text-secondary);
+/* ── Mini stat strips ──────────────────────────────────────────────────── */
+
+.mini-stat {
+  display: flex; justify-content: space-between; align-items: center;
+  background: #ffffff; border: 1px solid rgba(0,0,0,0.06); border-radius: 10px;
+  padding: 12px 18px;
 }
-.sa-spares-total strong { font-size: 18px; color: var(--text-primary); }
+.mini-stat-label { font-size: 0.8rem; color: var(--cui-secondary-color, #6c757d); }
+.mini-stat-value { font-size: 1.1rem; font-weight: 700; color: #1a1a2e; }
 
-/* Breakdown modal's segment legend has no swatch column — three columns, not the donut's four. */
-.sa-legend-modal { margin-bottom: 16px; border: 1px solid var(--border); border-radius: 10px; padding: 4px 12px; }
-.sa-legend-modal li { grid-template-columns: 1fr auto auto; }
+/* ── Breakdown bars (Spend by Supplier) ───────────────────────────────── */
 
-.spin { display: inline-block; animation: sa-spin 1s linear infinite; }
-@keyframes sa-spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+.breakdown-row { margin-bottom: 14px; }
+.breakdown-row:last-child { margin-bottom: 0; }
+.breakdown-label { font-size: 0.85rem; font-weight: 500; }
+.breakdown-value { font-size: 0.8rem; color: var(--cui-secondary-color, #6c757d); }
+.breakdown-track {
+  height: 8px; border-radius: 4px; background: var(--cui-tertiary-bg, #f1f2f5); overflow: hidden;
+}
+.breakdown-fill { height: 100%; border-radius: 4px; transition: width 0.4s ease; }
+.fill-purple { background: linear-gradient(90deg, #6c63ff, #9b59b6); }
+
+/* ── Status chips list ────────────────────────────────────────────────── */
+
+.status-chip-row {
+  display: flex; align-items: center; padding: 8px 0;
+  border-bottom: 1px solid var(--cui-border-color, #eef0f4);
+}
+.status-chip-row:last-child { border-bottom: none; }
+
+/* ── Pie chart + clickable legend, side by side ──────────────────────────── */
+
+.chart-legend-layout {
+  display: flex; gap: 20px; align-items: center;
+}
+.chart-pie-wrap {
+  width: 180px; height: 180px; flex-shrink: 0;
+  position: relative;   /* Chart.js needs a positioned ancestor with a fixed size to resize against */
+}
+/* CoreUI's <c-chart> host element carries its own "chart-wrapper" class (a host binding),
+   which is what Chart.js actually measures for responsive sizing — without an explicit size
+   on it, it was defaulting to a 2:1 box (180x90) instead of filling this 180x180 square. */
+.chart-pie-wrap c-chart {
+  display: block; width: 100%; height: 100%;
+}
+.chart-legend-list {
+  flex: 1; min-width: 0;
+}
+
+.breakdown-clickable {
+  cursor: pointer; border-radius: 8px; padding: 6px 8px; margin: -6px -8px 8px -8px;
+  transition: background 0.15s ease;
+}
+.breakdown-clickable:hover { background: var(--cui-tertiary-bg, #f5f6fa); }
+.breakdown-clickable.breakdown-active {
+  background: #eef0ff; box-shadow: inset 3px 0 0 #6c63ff;
+}
+.status-chip-row.breakdown-clickable { margin: 0; padding: 8px; border-radius: 8px; }
+
+/* ── Monthly trend — real Chart.js bar chart ─────────────────────────────── */
+
+.month-chart-wrap {
+  height: 220px;
+  position: relative;   /* Chart.js needs a positioned ancestor with a fixed size to resize against */
+  overflow: hidden;     /* belt-and-braces: never let the canvas bleed into content below it */
+}
+.month-chart-wrap c-chart {
+  display: block; width: 100%; height: 100%;
+}
+
+/* ── Active filter chips (set by clicking a chart segment) ──────────────── */
+
+.active-filter-bar {
+  display: flex; align-items: center; flex-wrap: wrap; gap: 8px;
+  background: #fff; border: 1px solid var(--cui-border-color, #eef0f4);
+  border-radius: 10px; padding: 10px 14px;
+}
+.filter-chip {
+  display: inline-flex; align-items: center; gap: 8px;
+  background: #eef0ff; color: #4c1d95; border-radius: 20px;
+  padding: 5px 12px; font-size: 0.8rem; font-weight: 600;
+}
+.filter-chip i { cursor: pointer; font-size: 0.7rem; opacity: 0.7; }
+.filter-chip i:hover { opacity: 1; }
+
+/* ── Table — same look as the PO list ──────────────────────────────────── */
+
+.po-style-card { border-radius: 12px; overflow: hidden; }
+
+.po-table { font-size: 0.88rem; border-collapse: collapse; }
+
+.table-header th {
+  background: #e8eaf6 !important;
+  color: #1a237e !important;
+  font-weight: 700;
+  font-size: 0.78rem;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+  padding: 12px 14px;
+  border-bottom: 2px solid #c5cae9 !important;
+}
+
+.po-table tbody .po-main-row { cursor: pointer; }
+.po-table tbody .po-main-row td {
+  padding: 12px 14px;
+  vertical-align: middle;
+  border-top: 1px solid #e9ecef !important;
+  border-bottom: none !important;
+}
+.po-table tbody .po-main-row:first-child td { border-top: none !important; }
+.po-main-row:hover td { background: #f8f9ff !important; }
+
+.po-number-link { font-weight: 700; color: #1976d2; cursor: pointer; text-decoration: none; }
+.po-number-link:hover { text-decoration: underline; }
+
+/* ── Pagination bar ─────────────────────────────────────────────────────── */
+
+.pagination-bar { border-top: 1px solid #e9ecef; background: #fafbff; }
+
+.page-size-group { display: flex; border: 1px solid #d0d5dd; border-radius: 8px; overflow: hidden; }
+.page-size-btn {
+  background: #fff; border: none; border-right: 1px solid #d0d5dd;
+  padding: 5px 12px; font-size: 0.8rem; font-weight: 500; color: #555;
+  cursor: pointer; transition: background 0.15s, color 0.15s; line-height: 1;
+}
+.page-size-btn:last-child { border-right: none; }
+.page-size-btn:hover { background: #f0f4ff; color: #1976d2; }
+.page-size-btn.active { background: linear-gradient(135deg, #667eea, #764ba2); color: #fff; font-weight: 700; }
+
+.page-num-btn {
+  min-width: 34px; height: 34px; border-radius: 8px; border: 1px solid #d0d5dd;
+  background: #fff; color: #444; font-size: 0.82rem; font-weight: 500;
+  cursor: pointer; transition: all 0.15s; padding: 0 4px;
+}
+.page-num-btn:hover { background: #f0f4ff; border-color: #667eea; color: #1976d2; }
+.page-num-btn.active {
+  background: linear-gradient(135deg, #667eea, #764ba2); border-color: #667eea;
+  color: #fff; font-weight: 700; box-shadow: 0 2px 8px rgba(102, 126, 234, 0.4);
+}
+
+.page-nav-btn {
+  width: 34px; height: 34px; border-radius: 8px; border: 1px solid #d0d5dd;
+  background: #fff; color: #555; font-size: 0.85rem; cursor: pointer;
+  display: flex; align-items: center; justify-content: center; transition: all 0.15s;
+}
+.page-nav-btn:hover:not(:disabled) { background: #f0f4ff; border-color: #667eea; color: #667eea; }
+.page-nav-btn:disabled { opacity: 0.35; cursor: not-allowed; }
+
+.page-ellipsis { padding: 0 4px; color: #aaa; font-size: 0.9rem; line-height: 34px; user-select: none; }
+
+@media (max-width: 768px) {
+  .pagination-bar { flex-direction: column; align-items: flex-start !important; }
+  .page-size-btn { padding: 5px 9px; }
+}

@@ -45765,6 +45765,15 @@ body {
 [data-coreui-theme=dark] .example .tab-content {
   background-color: var(--cui-secondary-bg);
 }
+.cdk-overlay-container,
+.cdk-global-overlay-wrapper,
+.cdk-overlay-pane,
+.cdk-overlay-connected-position-bounding-box {
+  z-index: 2000 !important;
+}
+.cdk-overlay-backdrop {
+  z-index: 1999 !important;
+}
 .sidebar .nav-item > .nav-link,
 .sidebar .nav-group > .nav-link {
   font-weight: 550;

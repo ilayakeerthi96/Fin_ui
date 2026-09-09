@@ -1,213 +1,335 @@
-/* ============================================
-   ORG ADMIN DASHBOARD — Styled to match RFQ Dashboard
-   ============================================ */
+/* ============================================================================
+   ADMIN DASHBOARD — enterprise-SaaS restyle
+   ============================================================================
+   Scoped entirely to this component (Angular view encapsulation) — nothing here
+   touches any other screen. Deliberately restrained: soft-tint icon badges
+   instead of loud full-saturation gradients, a slate/indigo palette, generous
+   whitespace, thin colour accents rather than big blocks of colour. The rest
+   of the app keeps its existing look; only this page changed.
+   ============================================================================ */
 
-/* ── GRADIENT HEADER ─────────────────────────────────────────── */
-.gradient-header {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+.admin-dash {
+  --ink:        #0f172a;
+  --ink-muted:  #64748b;
+  --ink-faint:  #94a3b8;
+  --border:     #e2e8f0;
+  --surface:    #ffffff;
+  --surface-2:  #f8fafc;
+
+  --indigo:      #4f46e5;
+  --indigo-tint: #eef2ff;
+  --emerald:      #059669;
+  --emerald-tint: #ecfdf5;
+  --amber:      #d97706;
+  --amber-tint: #fffbeb;
+  --slate:      #475569;
+  --slate-tint: #f1f5f9;
+}
+
+/* ── WELCOME STRIP ─────────────────────────────────────────────────────── */
+
+.welcome-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-left: 4px solid var(--indigo);
   border-radius: 12px;
-  padding: 10px;
-}
-
-/* ── AVATAR ──────────────────────────────────────────────────── */
-.avatar-circle-large {
-  width: 70px;
-  height: 70px;
-  border-radius: 50%;
-  background: rgba(255, 255, 255, 0.25);
+  padding: 20px 24px;
   display: flex;
   align-items: center;
-  justify-content: center;
-  font-size: 1.8rem;
-  font-weight: 700;
-  color: white;
-  border: 3px solid rgba(255, 255, 255, 0.45);
-  flex-shrink: 0;
-}
-
-/* ── INFO CARDS (inside header) ──────────────────────────────── */
-.info-card {
-  display: flex;
-  align-items: center;
-  padding: 12px 14px;
-  background: rgba(255, 255, 255, 0.15);
-  border-radius: 8px;
-  backdrop-filter: blur(10px);
-  height: 100%;
-}
-
-.info-card-icon {
-  width: 40px;
-  height: 40px;
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  margin-right: 12px;
-  font-size: 1.1rem;
-  color: white;
-  flex-shrink: 0;
-}
-
-.info-card-content { flex: 1; min-width: 0; }
-
-.info-label {
-  font-size: 0.7rem;
-  opacity: 0.85;
-  color: white;
-  text-transform: uppercase;
-  font-weight: 600;
-  letter-spacing: 0.5px;
-}
-
-.info-value {
-  font-size: 0.9rem;
-  font-weight: 600;
-  color: white;
-  margin-top: 2px;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-/* ── MODERN ALERT ────────────────────────────────────────────── */
-.modern-alert {
-  color: #1565C0;
-  padding: 14px 0;
-  box-shadow: none;
-  margin-bottom: 12px;
-}
-
-/* ── STAT CARDS — compact RFQ style ──────────────────────────── */
-.stat-card {
-  display: flex;
-  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
   gap: 16px;
-  background: #ffffff;
-  border-radius: 16px;
-  padding: 20px 20px;
-  box-shadow: 0 2px 12px rgba(0,0,0,0.07);
-  border: 1px solid rgba(0,0,0,0.05);
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
-  width: 100%;
-  height: 100%;
+  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.04);
 }
 
-.stat-card:hover {
-  transform: translateY(-3px);
-  box-shadow: 0 8px 24px rgba(0,0,0,0.11);
+.welcome-main {
+  display: flex;
+  align-items: center;
+  gap: 14px;
 }
 
-/* Rounded square icon — same as RFQ dashboard */
-.stat-icon-wrap {
-  width: 60px;
-  height: 60px;
-  border-radius: 14px;
+.avatar-circle {
+  width: 52px;
+  height: 52px;
+  border-radius: 50%;
+  background: var(--indigo);
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 1.6rem;
+  font-size: 1.15rem;
+  font-weight: 700;
   color: #fff;
   flex-shrink: 0;
 }
 
-/* Gradient colours matching RFQ */
-.stat-purple { background: linear-gradient(135deg, #6c63ff, #9b59b6); }
-.stat-teal   { background: linear-gradient(135deg, #43cea2, #185a9d); }
-.stat-green  { background: linear-gradient(135deg, #56ab2f, #a8e063); }
-
-/* Text block to the right of icon */
-.stat-info {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-end;
-  flex: 1;
+.welcome-greeting {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: var(--ink);
+  margin-bottom: 4px;
 }
 
+.role-pill {
+  display: inline-flex;
+  align-items: center;
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: var(--indigo);
+  background: var(--indigo-tint);
+  padding: 3px 10px;
+  border-radius: 999px;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+}
+
+.welcome-meta {
+  display: flex;
+  gap: 20px;
+  flex-wrap: wrap;
+}
+
+.meta-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.82rem;
+  color: var(--ink-muted);
+}
+
+.meta-item i { color: var(--ink-faint); font-size: 0.9rem; }
+
+/* ── SCOPE NOTE ────────────────────────────────────────────────────────── */
+
+.scope-note {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  background: var(--indigo-tint);
+  border: 1px solid #c7d2fe;
+  border-radius: 10px;
+  padding: 12px 16px;
+  font-size: 0.85rem;
+  color: #3730a3;
+  line-height: 1.5;
+}
+
+.scope-note i { font-size: 1rem; margin-top: 1px; flex-shrink: 0; }
+
+/* ── STAT CARDS ────────────────────────────────────────────────────────── */
+
+.stat-card {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-top: 3px solid transparent;
+  border-radius: 12px;
+  padding: 20px;
+  height: 100%;
+  transition: box-shadow 0.2s ease, transform 0.2s ease;
+}
+
+.stat-card:hover {
+  box-shadow: 0 4px 16px rgba(15, 23, 42, 0.08);
+  transform: translateY(-2px);
+}
+
+.stat-card.accent-indigo  { border-top-color: var(--indigo); }
+.stat-card.accent-emerald { border-top-color: var(--emerald); }
+.stat-card.accent-slate   { border-top-color: var(--slate); }
+
+.stat-icon-badge {
+  width: 48px;
+  height: 48px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.3rem;
+  flex-shrink: 0;
+}
+
+.tint-indigo  { background: var(--indigo-tint);  color: var(--indigo); }
+.tint-emerald { background: var(--emerald-tint); color: var(--emerald); }
+.tint-amber   { background: var(--amber-tint);   color: var(--amber); }
+.tint-slate   { background: var(--slate-tint);   color: var(--slate); }
+
+.stat-info { flex: 1; min-width: 0; }
+
 .stat-value {
-  font-size: 2rem;
-  font-weight: 800;
-  color: #1a1a2e;
-  line-height: 1;
+  font-size: 1.85rem;
+  font-weight: 700;
+  color: var(--ink);
+  line-height: 1.1;
 }
 
 .stat-label {
   font-size: 0.78rem;
   font-weight: 600;
-  color: #8a8a9a;
+  color: var(--ink-muted);
   text-transform: uppercase;
   letter-spacing: 0.4px;
-  margin-top: 4px;
+  margin-top: 2px;
 }
 
 .stat-footer {
-  font-size: 0.8rem;
-  font-weight: 600;
-  margin-top: 8px;
-  padding-top: 8px;
-  border-top: 1px solid rgba(0,0,0,0.05);
+  font-size: 0.78rem;
+  color: var(--ink-faint);
+  margin-top: 6px;
 }
 
-/* ── QUICK ACTIONS ───────────────────────────────────────────── */
-.action-button {
-  border: 2px solid #e9ecef;
+.footer-positive { color: var(--emerald); font-weight: 600; }
+
+/* ── SHARED PANEL (Quick Actions + Recent Users) ──────────────────────── */
+
+.panel {
+  background: var(--surface);
+  border: 1px solid var(--border);
   border-radius: 12px;
-  transition: all 0.25s ease;
-  cursor: pointer;
-  text-align: center;
-  background: white;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  padding: 28px 16px;
-  width: 100%;
+  overflow: hidden;
 }
 
-.action-button:hover {
-  border-color: #667eea;
-  transform: translateY(-4px);
-  box-shadow: 0 8px 24px rgba(102, 126, 234, 0.18);
-}
-
-.action-icon {
-  width: 90px;
-  height: 90px;
-  border-radius: 50%;
+.panel-header {
   display: flex;
   align-items: center;
-  justify-content: center;
-  color: white;
-  font-size: 2.2rem;
-  margin-bottom: 14px;
+  gap: 10px;
+  padding: 18px 22px;
+  border-bottom: 1px solid var(--border);
+  background: var(--surface-2);
 }
 
-.action-icon.bg-primary { background: linear-gradient(135deg, #667eea, #764ba2); }
-.action-icon.bg-success { background: linear-gradient(135deg, #43e97b, #38f9d7); }
-.action-icon.bg-warning { background: linear-gradient(135deg, #f093fb, #f5576c); }
+.panel-header i { color: var(--indigo); font-size: 1.05rem; }
 
-/* ── UTILITIES ───────────────────────────────────────────────── */
-.user-name {
+.panel-header h5 {
+  margin: 0;
+  font-size: 1rem;
   font-weight: 700;
-  color: #ffffff;
-  font-size: 1.4rem;
-  margin-bottom: 2px;
+  color: var(--ink);
 }
 
-.user-role {
+.panel-body { padding: 18px 22px; }
+
+.view-all-link {
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--indigo) !important;
+  text-decoration: none;
+}
+
+/* ── QUICK ACTIONS — compact horizontal row, not big circular buttons ──── */
+
+.action-row {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 12px;
+}
+
+.action-item {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 14px 16px;
+  text-align: left;
+  cursor: pointer;
+  transition: border-color 0.15s ease, background 0.15s ease;
+}
+
+.action-item:hover {
+  border-color: var(--indigo);
+  background: var(--surface-2);
+}
+
+.action-icon-badge {
+  width: 40px;
+  height: 40px;
+  border-radius: 9px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.05rem;
+  flex-shrink: 0;
+}
+
+.action-text { flex: 1; min-width: 0; }
+
+.action-title {
   font-size: 0.9rem;
-  opacity: 0.88;
-  color: white;
+  font-weight: 700;
+  color: var(--ink);
 }
 
-/* ── RESPONSIVE ──────────────────────────────────────────────── */
+.action-subtitle {
+  font-size: 0.78rem;
+  color: var(--ink-muted);
+  margin-top: 1px;
+}
+
+.action-arrow {
+  color: var(--ink-faint);
+  font-size: 0.85rem;
+  flex-shrink: 0;
+}
+
+/* ── RECENT USERS TABLE ────────────────────────────────────────────────── */
+
+.users-table { font-size: 0.87rem; }
+
+.users-table thead th {
+  background: var(--surface-2);
+  color: var(--ink-muted);
+  font-weight: 700;
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+  padding: 12px 22px;
+  border-bottom: 1px solid var(--border);
+  border-top: none;
+}
+
+.users-table tbody td {
+  padding: 12px 22px;
+  vertical-align: middle;
+  border-top: 1px solid var(--border);
+  color: var(--ink);
+}
+
+.users-table tbody tr:first-child td { border-top: none; }
+.users-table tbody tr:hover td { background: var(--surface-2); }
+
+.avatar-circle-sm {
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  background: var(--indigo-tint);
+  color: var(--indigo);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.68rem;
+  font-weight: 700;
+  flex-shrink: 0;
+}
+
+.status-chip {
+  display: inline-block;
+  font-size: 0.72rem;
+  font-weight: 600;
+  padding: 3px 10px;
+  border-radius: 999px;
+}
+
+.chip-active   { background: var(--emerald-tint); color: var(--emerald); }
+.chip-inactive { background: var(--slate-tint);   color: var(--slate); }
+
+/* ── RESPONSIVE ────────────────────────────────────────────────────────── */
+
 @media (max-width: 768px) {
-  .avatar-circle-large { width: 56px; height: 56px; font-size: 1.4rem; }
-  .stat-value          { font-size: 1.7rem; }
-  .action-icon         { width: 68px; height: 68px; font-size: 1.8rem; }
-}
-
-@media (max-width: 576px) {
-  .gradient-header { padding: 12px; }
-  .avatar-circle-large { width: 48px; height: 48px; font-size: 1.2rem; }
+  .welcome-card { padding: 16px 18px; }
+  .avatar-circle { width: 44px; height: 44px; font-size: 1rem; }
+  .stat-value { font-size: 1.5rem; }
+  .action-row { grid-template-columns: 1fr; }
 }

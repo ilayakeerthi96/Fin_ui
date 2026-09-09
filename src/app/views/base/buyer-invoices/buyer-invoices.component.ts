@@ -776,12 +776,35 @@ export class BuyerInvoicesComponent implements OnInit {
   // =========================================================================
 
   loadInvoices(): void {
+    this.isLoading = true;
+
     if (!this.buyerId || isNaN(this.buyerId)) {
-      this.messageService.showMessage('error', 'Error',
-        'Buyer account not found. Please logout and login again.');
+      // Admin (ORGANIZATION_ADMIN) has no buyerId. Fall back to company-name scope so
+      // they see all invoices raised against their organisation without needing a buyer
+      // account. companyName is always stored in localStorage by handleOrgAdminLogin().
+      const companyName = localStorage.getItem('companyName') || '';
+      if (!companyName) {
+        this.isLoading = false;
+        return;
+      }
+      this.dataService.getBuyerInvoices(companyName).subscribe({
+        next: (response: any) => {
+          const raw = response?.success
+            ? (response.data || [])
+            : (Array.isArray(response) ? response : []);
+          this.invoiceList = raw.map((inv: any) => ({
+            ...inv,
+            currencyCode:   inv.currencyCode   || inv.currency || 'INR',
+            currencySymbol: inv.currencySymbol || this.getSymbolForCode(inv.currencyCode || inv.currency || 'INR')
+          }));
+          this.applyFilters();
+          this.isLoading = false;
+        },
+        error: () => { this.invoiceList = []; this.isLoading = false; }
+      });
       return;
     }
-    this.isLoading = true;
+
     this.dataService.getBuyerInvoicesByBuyerId(this.buyerId).subscribe({
       next: (response: any) => {
         const raw = response?.success ? (response.data || []) : [];
@@ -972,6 +995,17 @@ export class BuyerInvoicesComponent implements OnInit {
   //  VIEW INVOICE
   // =========================================================================
 
+  /** Set right before viewInvoice() when the caller wants the PDF immediately, without the
+   *  user manually reopening the invoice and clicking Download inside the modal. */
+  private downloadAfterOpen = false;
+
+  /** Download straight from the table row — opens the invoice (downloadPDF() needs its
+   *  print DOM node to exist) and downloads the instant it has rendered. */
+  downloadInvoiceFromRow(invoice: any): void {
+    this.downloadAfterOpen = true;
+    this.viewInvoice(invoice);
+  }
+
   viewInvoice(invoice: any): void {
     this.isLoading = true;
     this.dataService.getInvoiceById(invoice.id).subscribe({
@@ -984,6 +1018,12 @@ export class BuyerInvoicesComponent implements OnInit {
         };
         this.isViewModalOpen = true;
         this.isLoading = false;
+        if (this.downloadAfterOpen) {
+          this.downloadAfterOpen = false;
+          // downloadPDF() reads the print DOM node, which only exists once the view modal has
+          // actually painted — one tick after isViewModalOpen flips is enough for that to happen.
+          setTimeout(() => this.downloadPDF(), 150);
+        }
       },
       error: () => {
         this.selectedInvoice = {
@@ -1006,11 +1046,19 @@ export class BuyerInvoicesComponent implements OnInit {
   //  ACTION MODAL
   // =========================================================================
 
+  /** Every payment rail this app actually accepts. "Other" covers anything that doesn't
+   *  fit neatly (barter, adjustment) — same list Payment Tracking's own dialog offers. */
+  paymentModeOptions = ['NEFT', 'RTGS', 'IMPS', 'UPI', 'Cheque', 'Cash', 'Bank Transfer', 'Other'];
+  paymentMode = '';
+  paymentRemarks = '';
+
   openActionModal(invoice: any, action: 'approve' | 'reject' | 'rejectClose' | 'paid'): void {
     this.selectedInvoice  = invoice;
     this.pendingAction    = action;
     this.actionRemarks    = '';
     this.paymentReference = '';
+    this.paymentMode      = '';
+    this.paymentRemarks   = '';
     this.isActionModalOpen = true;
   }
 
@@ -1023,13 +1071,28 @@ export class BuyerInvoicesComponent implements OnInit {
       return;
     }
 
+    // A payment with no reference is unauditable — the one thing this dialog cannot skip.
+    // Who recorded it (buyerName) and exactly when (server timestamp) are captured
+    // automatically, not typed in, so reference and mode are the only fields that actually
+    // need entering — remarks stays optional.
+    if (this.pendingAction === 'paid' && !this.paymentReference.trim()) {
+      this.messageService.showMessage('warning', 'Reference required',
+        'Enter the payment reference (UTR / NEFT / cheque number) so this payment can be traced back to a bank record later.');
+      return;
+    }
+    if (this.pendingAction === 'paid' && !this.paymentMode) {
+      this.messageService.showMessage('warning', 'Payment mode required',
+        'Select how this payment was made (NEFT, UPI, cheque, etc.).');
+      return;
+    }
+
     this.isPerformingAction = true;
     let action$: any;
 
     switch (this.pendingAction) {
       case 'approve':
         action$ = this.dataService.approveInvoice(this.selectedInvoice.id, this.buyerName, this.actionRemarks);
-        break; 
+        break;
       case 'reject':
         action$ = this.dataService.rejectInvoice(this.selectedInvoice.id, this.buyerName, this.actionRemarks);
         break;
@@ -1037,7 +1100,9 @@ export class BuyerInvoicesComponent implements OnInit {
         action$ = this.dataService.rejectInvoicePermanent(this.selectedInvoice.id, this.buyerName, this.actionRemarks);
         break;
       case 'paid':
-        action$ = this.dataService.markInvoicePaid(this.selectedInvoice.id, this.buyerName, this.paymentReference);
+        action$ = this.dataService.markInvoicePaid(
+          this.selectedInvoice.id, this.buyerName, this.paymentReference, this.paymentMode, this.paymentRemarks.trim()
+        );
         break;
     }
 
@@ -1231,7 +1296,10 @@ export class BuyerInvoicesComponent implements OnInit {
     const m: Record<string, string> = {
       DRAFT:           'Draft',
       SUBMITTED:       'Pending Review',
-      APPROVED:        'Approved',
+      // "Approved" reads as "done" — it isn't; the money hasn't moved yet. This is what's
+      // actually true of the state: the invoice cleared review and is now just waiting on
+      // Mark as Paid.
+      APPROVED:        'Ready for Payment',
       REJECTED:        'Returned for Correction',
       REJECTED_CLOSED: 'Permanently Closed',
       PAID:            'Paid'
@@ -1267,6 +1335,17 @@ export class BuyerInvoicesComponent implements OnInit {
   formatDate(d: string): string {
     if (!d) return 'N/A';
     try { return new Date(d).toLocaleDateString('en-GB'); } catch { return 'N/A'; }
+  }
+
+  /** Date + time, for moments that matter down to the minute — who marked an invoice paid
+   *  and exactly when, not just which day. */
+  formatDateTime(d: string): string {
+    if (!d) return 'N/A';
+    try {
+      return new Date(d).toLocaleString('en-GB', {
+        day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit'
+      });
+    } catch { return 'N/A'; }
   }
 
   formatCurrency(amount: number | null, currencyCode?: string): string {

@@ -1,0 +1,154 @@
+/* PO closure screen. Theme variables carry the colours so this follows the app's
+   light/dark setting rather than hard-coding a palette. */
+
+.po-closure .page-title {
+  font-weight: 600;
+}
+
+.po-closure .page-subtitle {
+  font-size: 0.875rem;
+  color: var(--cui-secondary-color, #6c757d);
+}
+
+.po-closure .form-label {
+  font-size: 0.75rem;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+  margin-bottom: 0.25rem;
+  color: var(--cui-secondary-color, #6c757d);
+}
+
+.po-closure .req {
+  color: var(--cui-danger, #e55353);
+  font-weight: 700;
+}
+
+/* ── Summary tiles ─────────────────────────────────────────────────── */
+
+.po-closure .stat-card {
+  height: 100%;
+  border-left: 3px solid var(--cui-border-color, #dee2e6);
+}
+
+.po-closure .stat-card.stat-success {
+  border-left-color: var(--cui-success, #2eb85c);
+}
+
+.po-closure .stat-card.stat-warning {
+  border-left-color: var(--cui-warning, #f9b115);
+}
+
+.po-closure .stat-label {
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  color: var(--cui-secondary-color, #6c757d);
+  margin-bottom: 0.25rem;
+}
+
+.po-closure .stat-value {
+  font-size: 1.5rem;
+  font-weight: 600;
+  line-height: 1.2;
+}
+
+.po-closure table th {
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+  white-space: nowrap;
+  font-weight: 600;
+}
+
+/* ── Table — same look as the PO list ──────────────────────────────────── */
+
+.po-closure .po-style-card { border-radius: 12px; overflow: hidden; }
+
+.po-closure .po-table { font-size: 0.88rem; border-collapse: collapse; }
+
+.po-closure .table-header th {
+  background: #e8eaf6 !important;
+  color: #1a237e !important;
+  font-weight: 700;
+  font-size: 0.78rem;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+  padding: 12px 14px;
+  border-bottom: 2px solid #c5cae9 !important;
+}
+
+.po-closure .po-table tbody .po-main-row td {
+  padding: 12px 14px;
+  vertical-align: middle;
+  border-top: 1px solid #e9ecef !important;
+  border-bottom: none !important;
+}
+.po-closure .po-table tbody .po-main-row:first-child td { border-top: none !important; }
+.po-closure .po-main-row:hover td { background: #f8f9ff !important; }
+
+.po-closure .po-number-link { font-weight: 700; color: #1976d2; cursor: pointer; text-decoration: none; }
+.po-closure .po-number-link:hover { text-decoration: underline; }
+
+/* ── Pagination bar ─────────────────────────────────────────────────────── */
+
+.po-closure .pagination-bar { border-top: 1px solid #e9ecef; background: #fafbff; }
+
+.po-closure .page-size-group { display: flex; border: 1px solid #d0d5dd; border-radius: 8px; overflow: hidden; }
+.po-closure .page-size-btn {
+  background: #fff; border: none; border-right: 1px solid #d0d5dd;
+  padding: 5px 12px; font-size: 0.8rem; font-weight: 500; color: #555;
+  cursor: pointer; transition: background 0.15s, color 0.15s; line-height: 1;
+}
+.po-closure .page-size-btn:last-child { border-right: none; }
+.po-closure .page-size-btn:hover { background: #f0f4ff; color: #1976d2; }
+.po-closure .page-size-btn.active { background: linear-gradient(135deg, #667eea, #764ba2); color: #fff; font-weight: 700; }
+
+.po-closure .page-num-btn {
+  min-width: 34px; height: 34px; border-radius: 8px; border: 1px solid #d0d5dd;
+  background: #fff; color: #444; font-size: 0.82rem; font-weight: 500;
+  cursor: pointer; transition: all 0.15s; padding: 0 4px;
+}
+.po-closure .page-num-btn:hover { background: #f0f4ff; border-color: #667eea; color: #1976d2; }
+.po-closure .page-num-btn.active {
+  background: linear-gradient(135deg, #667eea, #764ba2); border-color: #667eea;
+  color: #fff; font-weight: 700; box-shadow: 0 2px 8px rgba(102, 126, 234, 0.4);
+}
+
+.po-closure .page-nav-btn {
+  width: 34px; height: 34px; border-radius: 8px; border: 1px solid #d0d5dd;
+  background: #fff; color: #555; font-size: 0.85rem; cursor: pointer;
+  display: flex; align-items: center; justify-content: center; transition: all 0.15s;
+}
+.po-closure .page-nav-btn:hover:not(:disabled) { background: #f0f4ff; border-color: #667eea; color: #667eea; }
+.po-closure .page-nav-btn:disabled { opacity: 0.35; cursor: not-allowed; }
+
+.po-closure .page-ellipsis { padding: 0 4px; color: #aaa; font-size: 0.9rem; line-height: 34px; user-select: none; }
+
+@media (max-width: 768px) {
+  .po-closure .pagination-bar { flex-direction: column; align-items: flex-start !important; }
+  .po-closure .page-size-btn { padding: 5px 9px; }
+}
+
+/* ── Confirmation dialog ───────────────────────────────────────────────
+   A plain fixed-position panel rather than a CoreUI modal: the surrounding
+   screens in this app use the same pattern, and it keeps the component free of
+   an extra module import for a single two-field dialog. */
+
+.po-closure .modal-backdrop-custom {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.45);
+  z-index: 1040;
+}
+
+.po-closure .modal-custom {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: min(520px, calc(100vw - 2rem));
+  max-height: calc(100vh - 2rem);
+  overflow-y: auto;
+  z-index: 1050;
+}

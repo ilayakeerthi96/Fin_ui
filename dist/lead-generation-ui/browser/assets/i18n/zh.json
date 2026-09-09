@@ -1,0 +1,23 @@
+{
+  "HEADER_SYSTEM_TITLE": "供应商管理系统",
+  "HEADER_CHANGE_PASSWORD": "修改密码",
+  "HEADER_LOGOUT": "退出登录",
+  "HEADER_CONFIRM_LOGOUT_TITLE": "确认退出登录",
+  "HEADER_CONFIRM_LOGOUT_MESSAGE": "您确定要退出登录吗？",
+  "HEADER_LOGOUT_YES": "是，退出登录",
+  "HEADER_LOGOUT_NO": "否，留在此页",
+  "HEADER_LANGUAGE": "语言",
+
+  "LOGIN_WELCOME_BACK": "欢迎回来",
+  "LOGIN_SIGN_IN_SUBTITLE": "登录您的账户",
+  "LOGIN_EMAIL_PLACEHOLDER": "电子邮件地址",
+  "LOGIN_EMAIL_REQUIRED": "电子邮件为必填项。",
+  "LOGIN_EMAIL_INVALID": "请输入有效的电子邮件地址。",
+  "LOGIN_PASSWORD_PLACEHOLDER": "密码",
+  "LOGIN_PASSWORD_REQUIRED": "密码为必填项。",
+  "LOGIN_SIGN_IN_BUTTON": "登录",
+  "LOGIN_SIGNING_IN": "正在登录...",
+  "LOGIN_SUPPLIER_PROMPT": "您是希望与我们合作的供应商吗？",
+  "LOGIN_REGISTER_BUTTON": "注册为供应商",
+  "LOGIN_FOOTER_RIGHTS": "版权所有。"
+}

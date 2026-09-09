@@ -120,7 +120,7 @@
             [(ngModel)]="statusFilter" (change)="applyFilters()">
             <option value="ALL">All Status</option>
             <option value="SUBMITTED">Pending Review</option>
-            <option value="APPROVED">Approved</option>
+            <option value="APPROVED">Ready for Payment</option>
             <option value="REJECTED">Rejected</option>
             <option value="PAID">Paid</option>
           </select>
@@ -206,6 +206,9 @@
                   'bg-danger':            inv.status==='REJECTED_CLOSED',
                   'bg-info':              inv.status==='PAID'
                 }">{{ getInvoiceStatusLabel(inv.status) }}</span>
+                <div class="text-muted small mt-1" *ngIf="inv.status==='PAID' && inv.paidBy">
+                  by {{ inv.paidBy }}
+                </div>
               </td>
 
               <td class="text-center">
@@ -232,6 +235,10 @@
                   <button *ngIf="inv.status==='APPROVED'" class="btn btn-sm btn-info shadow-sm text-white"
                     (click)="openActionModal(inv, 'paid')" title="Mark as Paid">
                     <i class="bi bi-currency-rupee"></i>
+                  </button>
+                  <button class="btn btn-sm btn-light text-success shadow-sm"
+                    (click)="downloadInvoiceFromRow(inv)" title="Download Invoice">
+                    <i class="bi bi-file-earmark-pdf"></i>
                   </button>
                 </div>
               </td>
@@ -433,8 +440,13 @@
     </div>
 
     <div *ngIf="selectedInvoice.status==='PAID'" class="alert alert-info">
-      <strong><i class="bi bi-check-circle-fill me-1"></i>Paid on {{ formatDate(selectedInvoice.paidAt) }}</strong>
+      <strong><i class="bi bi-check-circle-fill me-1"></i>Paid on {{ formatDateTime(selectedInvoice.paidAt) }}</strong>
+      <span *ngIf="selectedInvoice.paidBy"> by <strong>{{ selectedInvoice.paidBy }}</strong></span>
+      <span *ngIf="selectedInvoice.paymentMode"> via <strong>{{ selectedInvoice.paymentMode }}</strong></span>
       <span *ngIf="selectedInvoice.paymentReference"> | Ref: {{ selectedInvoice.paymentReference }}</span>
+      <div class="small mt-1" *ngIf="selectedInvoice.paymentRemarks">
+        <i class="bi bi-chat-left-text me-1"></i>{{ selectedInvoice.paymentRemarks }}
+      </div>
     </div>
 
     <div id="buyer-invoice-print">
@@ -608,10 +620,28 @@
 
     <div *ngIf="pendingAction==='paid'" class="mb-3">
       <label class="form-label fw-semibold">
-        Payment Reference <small class="text-muted">(optional)</small>
+        Payment Mode <span class="text-danger">*</span>
+      </label>
+      <select class="form-select mb-3" [(ngModel)]="paymentMode">
+        <option value="" disabled>— Select how this was paid —</option>
+        <option *ngFor="let m of paymentModeOptions" [value]="m">{{ m }}</option>
+      </select>
+
+      <label class="form-label fw-semibold">
+        Payment Reference <span class="text-danger">*</span>
       </label>
       <input type="text" class="form-control" [(ngModel)]="paymentReference"
         placeholder="e.g. NEFT/UTR number, cheque number"/>
+      <small class="text-muted d-block mb-3">
+        Required so this payment can be traced back to a bank record later. Who recorded it
+        ({{ buyerName }}) and the exact date/time are captured automatically.
+      </small>
+
+      <label class="form-label fw-semibold">
+        Remarks <span class="text-muted fw-normal">(optional)</span>
+      </label>
+      <textarea class="form-control" rows="2" [(ngModel)]="paymentRemarks"
+        placeholder="Anything worth noting about this payment"></textarea>
     </div>
   </c-modal-body>
 
@@ -995,7 +1025,7 @@
             [(ngModel)]="statusFilter" (change)="applyFilters()">
             <option value="ALL">All Status</option>
             <option value="SUBMITTED">Pending Review</option>
-            <option value="APPROVED">Approved</option>
+            <option value="APPROVED">Ready for Payment</option>
             <option value="REJECTED">Rejected</option>
             <option value="PAID">Paid</option>
           </select>
@@ -1080,6 +1110,9 @@
                   'bg-danger':            inv.status==='REJECTED_CLOSED',
                   'bg-info':              inv.status==='PAID'
                 }">{{ getInvoiceStatusLabel(inv.status) }}</span>
+                <div class="text-muted small mt-1" *ngIf="inv.status==='PAID' && inv.paidBy">
+                  by {{ inv.paidBy }}
+                </div>
               </td>
 
               <td class="text-center">
@@ -1106,6 +1139,10 @@
                   <button *ngIf="inv.status==='APPROVED'" class="btn btn-sm btn-info shadow-sm text-white"
                     (click)="openActionModal(inv, 'paid')" title="Mark as Paid">
                     <i class="bi bi-currency-rupee"></i>
+                  </button>
+                  <button class="btn btn-sm btn-light text-success shadow-sm"
+                    (click)="downloadInvoiceFromRow(inv)" title="Download Invoice">
+                    <i class="bi bi-file-earmark-pdf"></i>
                   </button>
                 </div>
               </td>
@@ -1311,8 +1348,13 @@
     </div>
 
     <div *ngIf="selectedInvoice.status==='PAID'" class="alert alert-info">
-      <strong><i class="bi bi-check-circle-fill me-1"></i>Paid on {{ formatDate(selectedInvoice.paidAt) }}</strong>
+      <strong><i class="bi bi-check-circle-fill me-1"></i>Paid on {{ formatDateTime(selectedInvoice.paidAt) }}</strong>
+      <span *ngIf="selectedInvoice.paidBy"> by <strong>{{ selectedInvoice.paidBy }}</strong></span>
+      <span *ngIf="selectedInvoice.paymentMode"> via <strong>{{ selectedInvoice.paymentMode }}</strong></span>
       <span *ngIf="selectedInvoice.paymentReference"> | Ref: {{ selectedInvoice.paymentReference }}</span>
+      <div class="small mt-1" *ngIf="selectedInvoice.paymentRemarks">
+        <i class="bi bi-chat-left-text me-1"></i>{{ selectedInvoice.paymentRemarks }}
+      </div>
     </div>
 
     <div id="buyer-invoice-print">
@@ -1520,10 +1562,28 @@
 
     <div *ngIf="pendingAction==='paid'" class="mb-3">
       <label class="form-label fw-semibold">
-        Payment Reference <small class="text-muted">(optional)</small>
+        Payment Mode <span class="text-danger">*</span>
+      </label>
+      <select class="form-select mb-3" [(ngModel)]="paymentMode">
+        <option value="" disabled>— Select how this was paid —</option>
+        <option *ngFor="let m of paymentModeOptions" [value]="m">{{ m }}</option>
+      </select>
+
+      <label class="form-label fw-semibold">
+        Payment Reference <span class="text-danger">*</span>
       </label>
       <input type="text" class="form-control" [(ngModel)]="paymentReference"
         placeholder="e.g. NEFT/UTR number, cheque number"/>
+      <small class="text-muted d-block mb-3">
+        Required so this payment can be traced back to a bank record later. Who recorded it
+        ({{ buyerName }}) and the exact date/time are captured automatically.
+      </small>
+
+      <label class="form-label fw-semibold">
+        Remarks <span class="text-muted fw-normal">(optional)</span>
+      </label>
+      <textarea class="form-control" rows="2" [(ngModel)]="paymentRemarks"
+        placeholder="Anything worth noting about this payment"></textarea>
     </div>
   </c-modal-body>
 

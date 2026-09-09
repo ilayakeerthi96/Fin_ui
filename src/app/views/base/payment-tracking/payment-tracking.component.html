@@ -1,0 +1,265 @@
+<c-container fluid class="payment-tracking">
+
+  <c-row class="mb-3 align-items-center">
+    <c-col [md]="8">
+      <h4 class="page-title mb-1">Payment Tracking</h4>
+      <p class="page-subtitle mb-0">
+        Supplier invoices and where their money is. Marking an invoice paid updates the
+        purchase order's payment status automatically.
+      </p>
+    </c-col>
+    <c-col [md]="4" class="text-end">
+      <button cButton color="secondary" variant="outline" size="sm"
+              (click)="load()" [disabled]="isLoading">
+        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24"
+             fill="none" stroke="currentColor" stroke-width="2" class="me-1" style="vertical-align:-2px;">
+          <path d="M21 2v6h-6"/><path d="M3 12a9 9 0 0 1 15-6.7L21 8"/>
+          <path d="M3 22v-6h6"/><path d="M21 12a9 9 0 0 1-15 6.7L3 16"/>
+        </svg>
+        Refresh
+      </button>
+    </c-col>
+  </c-row>
+
+  <!-- ===================== DASHBOARD-STYLE SUMMARY TILES ===================== -->
+  <div class="row g-3 mb-4">
+    <div class="col-6 col-md-3">
+      <div class="stat-card">
+        <div class="stat-icon-wrap stat-purple">
+          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 1v22M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+        </div>
+        <div class="stat-info">
+          <div class="stat-value stat-value-sm">₹{{ totalInvoiced | number:'1.2-2' }}</div>
+          <div class="stat-label">Total Invoiced</div>
+        </div>
+      </div>
+    </div>
+    <div class="col-6 col-md-3">
+      <div class="stat-card">
+        <div class="stat-icon-wrap stat-green">
+          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 6 9 17l-5-5"/></svg>
+        </div>
+        <div class="stat-info">
+          <div class="stat-value stat-value-sm">₹{{ totalPaid | number:'1.2-2' }}</div>
+          <div class="stat-label">Paid · {{ paidCount }} invoice(s)</div>
+        </div>
+      </div>
+    </div>
+    <div class="col-6 col-md-3">
+      <div class="stat-card">
+        <div class="stat-icon-wrap stat-hold">
+          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
+        </div>
+        <div class="stat-info">
+          <div class="stat-value stat-value-sm">₹{{ totalOutstanding | number:'1.2-2' }}</div>
+          <div class="stat-label">Approved · {{ approvedCount }} awaiting payment</div>
+        </div>
+      </div>
+    </div>
+    <div class="col-6 col-md-3">
+      <div class="stat-card" [class.stat-card-alert]="overdueCount > 0">
+        <div class="stat-icon-wrap stat-red">
+          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0Z"/><path d="M12 9v4M12 17h.01"/></svg>
+        </div>
+        <div class="stat-info">
+          <div class="stat-value stat-value-sm">{{ overdueCount }}</div>
+          <div class="stat-label">Overdue · ₹{{ overdueAmount | number:'1.2-2' }}</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Collection progress — the one bar that says how healthy things are at a glance -->
+  <c-card class="mb-4 collection-card">
+    <c-card-body>
+      <div class="d-flex justify-content-between align-items-center mb-2">
+        <span class="fw-semibold">Collection Progress</span>
+        <span class="text-muted small">
+          ₹{{ totalPaid | number:'1.2-2' }} of ₹{{ totalInvoiced | number:'1.2-2' }} collected
+        </span>
+      </div>
+      <div class="progress" style="height: 10px;">
+        <div class="progress-bar bg-success" [style.width.%]="collectionPercent"></div>
+      </div>
+      <div class="text-end small text-muted mt-1">{{ collectionPercent }}%</div>
+    </c-card-body>
+  </c-card>
+
+  <!-- ===================== FILTERS ===================== -->
+  <c-card class="mb-3">
+    <c-card-body>
+      <c-row class="align-items-end">
+        <c-col [md]="3" class="mb-2">
+          <label class="form-label">Status</label>
+          <select class="form-select form-select-sm" [(ngModel)]="statusFilter"
+                  name="statusFilter" (change)="applyFilters()">
+            <option *ngFor="let s of statusOptions" [value]="s">{{ s === 'ALL' ? 'All Status' : statusLabel(s) }}</option>
+          </select>
+        </c-col>
+        <c-col [md]="6" class="mb-2">
+          <label class="form-label">Search</label>
+          <input class="form-control form-control-sm" [(ngModel)]="searchText" name="searchText"
+                 (input)="applyFilters()"
+                 placeholder="Invoice number, PO number, supplier or payment reference">
+        </c-col>
+        <c-col [md]="3" class="mb-2 text-end">
+          <span class="text-muted small">{{ filtered.length }} of {{ invoices.length }} invoice(s)</span>
+        </c-col>
+      </c-row>
+    </c-card-body>
+  </c-card>
+
+  <div class="alert alert-danger" *ngIf="errorMessage">{{ errorMessage }}</div>
+
+  <!-- ===================== TABLE ===================== -->
+  <div class="card po-style-card">
+
+    <div class="text-center py-5" *ngIf="isLoading">
+      <c-spinner color="primary"></c-spinner>
+      <p class="mt-2 text-muted">Loading invoices…</p>
+    </div>
+
+    <div class="text-center py-5 text-muted" *ngIf="!isLoading && filtered.length === 0">
+      No invoices match the current filters.
+    </div>
+
+    <div class="table-responsive" *ngIf="!isLoading && filtered.length > 0">
+
+      <!-- Table header with result count -->
+      <div class="px-4 pt-3 pb-2 d-flex align-items-center justify-content-between">
+        <h5 class="fw-bold text-dark mb-0">
+          <i class="bi bi-table me-2 text-primary"></i>Invoices
+        </h5>
+        <small class="text-muted">{{ filtered.length }} result{{ filtered.length !== 1 ? 's' : '' }}</small>
+      </div>
+
+      <table class="table po-table mb-0">
+        <thead class="table-header">
+          <tr>
+            <th>Invoice / Supplier</th>
+            <th>PO</th>
+            <th class="text-end">Amount</th>
+            <th class="text-end">Balance Due</th>
+            <th class="text-center">Status</th>
+            <th>Due Date</th>
+            <th class="text-center">Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr class="po-main-row" *ngFor="let inv of paginated; trackBy: trackById"
+              [class.table-danger]="daysOverdue(inv) > 0 && inv.status === 'APPROVED'">
+            <td>
+              <a class="po-number-link" href="javascript:void(0)" (click)="viewPO(inv)">
+                <i class="bi bi-file-earmark-text me-1"></i>{{ inv.invoiceNumber }}
+              </a>
+              <div class="text-muted small mt-1">{{ inv.supplierName }}</div>
+            </td>
+            <td>
+              <a href="javascript:void(0)" (click)="viewPO(inv)">{{ inv.poNumber || '—' }}</a>
+            </td>
+            <td class="text-end">
+              <div class="fw-bold text-success fs-6">{{ getSymbolForCode(inv.currency) }}{{ inv.totalAmount | number:'1.2-2' }}</div>
+              <small class="text-muted" *ngIf="inv.advancePaidAmount">
+                Advance {{ inv.advancePaidAmount | number:'1.2-2' }}
+              </small>
+            </td>
+            <td class="text-end fw-semibold">{{ balanceDue(inv) | number:'1.2-2' }}</td>
+            <td class="text-center"><span class="badge" [ngClass]="'bg-' + statusColor(inv.status)">{{ statusLabel(inv.status) }}</span></td>
+            <td class="small">
+              <span *ngIf="inv.dueDate" [class.text-danger]="daysOverdue(inv) > 0 && inv.status === 'APPROVED'"
+                    [class.fw-bold]="daysOverdue(inv) > 0 && inv.status === 'APPROVED'">
+                {{ inv.dueDate | date:'dd MMM yy' }}
+                <span *ngIf="daysOverdue(inv) > 0 && inv.status === 'APPROVED'">({{ daysOverdue(inv) }}d overdue)</span>
+              </span>
+              <span *ngIf="!inv.dueDate" class="text-muted">—</span>
+              <div class="text-muted small mt-1" *ngIf="inv.paymentReference">Ref: {{ inv.paymentReference }}</div>
+            </td>
+            <td class="text-center">
+              <button cButton color="success" size="sm"
+                      *ngIf="canMarkPaid(inv)"
+                      (click)="openPayModal(inv)">Mark as Paid</button>
+              <span class="text-muted small" *ngIf="inv.status === 'PAID'">Settled</span>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+
+      <!-- ===== PAGINATION BAR ===== -->
+      <div class="pagination-bar d-flex align-items-center justify-content-between flex-wrap gap-3 px-4 py-3">
+        <div class="d-flex align-items-center gap-3 flex-wrap">
+          <span class="text-muted small">
+            Showing <strong>{{ startIndex }}–{{ endIndex }}</strong> of <strong>{{ filtered.length }}</strong> invoices
+          </span>
+          <div class="d-flex align-items-center gap-2">
+            <label class="text-muted small mb-0 text-nowrap">Rows per page:</label>
+            <div class="page-size-group">
+              <button *ngFor="let size of pageSizeOptions" class="page-size-btn"
+                      [class.active]="pageSize === size" (click)="onPageSizeChange(size)">{{ size }}</button>
+            </div>
+          </div>
+        </div>
+        <div class="d-flex align-items-center gap-1">
+          <button class="page-nav-btn" [disabled]="currentPage === 1" (click)="goToPage(1)" title="First page">
+            <i class="bi bi-chevron-double-left"></i>
+          </button>
+          <button class="page-nav-btn" [disabled]="currentPage === 1" (click)="goToPage(currentPage - 1)" title="Previous page">
+            <i class="bi bi-chevron-left"></i>
+          </button>
+          <ng-container *ngFor="let page of pageNumbers">
+            <span *ngIf="page === -1" class="page-ellipsis">…</span>
+            <button *ngIf="page !== -1" class="page-num-btn" [class.active]="currentPage === page" (click)="goToPage(page)">{{ page }}</button>
+          </ng-container>
+          <button class="page-nav-btn" [disabled]="currentPage === totalPages" (click)="goToPage(currentPage + 1)" title="Next page">
+            <i class="bi bi-chevron-right"></i>
+          </button>
+          <button class="page-nav-btn" [disabled]="currentPage === totalPages" (click)="goToPage(totalPages)" title="Last page">
+            <i class="bi bi-chevron-double-right"></i>
+          </button>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ===================== MARK AS PAID DIALOG ===================== -->
+  <div class="modal-backdrop-custom" *ngIf="showPayModal" (click)="closePayModal()"></div>
+  <div class="modal-custom" *ngIf="showPayModal">
+    <c-card>
+      <c-card-header><strong>Record Payment</strong></c-card-header>
+      <c-card-body>
+        <p class="mb-3">
+          Marking <strong>{{ payTarget?.invoiceNumber }}</strong> as paid
+          ({{ getSymbolForCode(payTarget?.currency) }}{{ payTarget?.totalAmount | number:'1.2-2' }})
+          for {{ payTarget?.supplierName }}.
+        </p>
+
+        <label class="form-label">Payment Mode <span class="req">*</span></label>
+        <select class="form-select mb-3" [(ngModel)]="paymentMode" name="paymentMode">
+          <option value="" disabled>— Select how this was paid —</option>
+          <option *ngFor="let m of paymentModeOptions" [value]="m">{{ m }}</option>
+        </select>
+
+        <label class="form-label">Payment Reference <span class="req">*</span></label>
+        <input class="form-control" [(ngModel)]="paymentReference" name="paymentReference"
+               placeholder="UTR / NEFT / cheque number">
+        <small class="text-muted d-block mb-3">
+          Required so the payment can be traced back to a bank record later.
+        </small>
+
+        <label class="form-label">Remarks <span class="text-muted fw-normal">(optional)</span></label>
+        <textarea class="form-control" rows="2" [(ngModel)]="paymentRemarks" name="paymentRemarks"
+                  placeholder="Anything worth noting about this payment"></textarea>
+
+        <div class="text-end mt-4">
+          <button cButton color="secondary" variant="outline" class="me-2"
+                  (click)="closePayModal()" [disabled]="isSubmittingPayment">Cancel</button>
+          <button cButton color="success" (click)="confirmPayment()" [disabled]="isSubmittingPayment">
+            <c-spinner size="sm" *ngIf="isSubmittingPayment"></c-spinner>
+            Confirm Payment
+          </button>
+        </div>
+      </c-card-body>
+    </c-card>
+  </div>
+
+</c-container>

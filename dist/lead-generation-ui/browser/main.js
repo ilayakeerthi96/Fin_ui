@@ -1,27 +1,24 @@
 import {
-  AuthService
-} from "./chunk-YYZTLVCI.js";
-import {
-  MessageService
-} from "./chunk-WEOZ35HD.js";
-import "./chunk-UFIZ2IVU.js";
-import {
-  ColorModeService,
-  DropdownModule,
-  IconSetService,
-  SidebarModule,
-  takeUntilDestroyed
-} from "./chunk-CEIWP34N.js";
-import {
   AUTO_STYLE,
   AnimationGroupPlayer,
   AnimationMetadataType,
+  ColorModeService,
+  DropdownModule,
+  IconSetService,
   NoopAnimationPlayer,
+  SidebarModule,
   sequence,
   style,
+  takeUntilDestroyed,
   ɵPRE_STYLE
-} from "./chunk-UYRRITDD.js";
-import "./chunk-OQFLHQ4N.js";
+} from "./chunk-U7YW3DHP.js";
+import {
+  AuthService
+} from "./chunk-S3OSUDOO.js";
+import {
+  MessageService
+} from "./chunk-4TRDTO5Y.js";
+import "./chunk-JKMYCEKN.js";
 import {
   ANIMATION_MODULE_TYPE,
   ActivatedRoute,
@@ -64,7 +61,7 @@ import {
   ɵɵdirectiveInject,
   ɵɵelement,
   ɵɵinject
-} from "./chunk-U6WG77QJ.js";
+} from "./chunk-BCCUO726.js";
 import {
   __objRest,
   __privateAdd,
@@ -4529,13 +4526,8 @@ var routes = [
     pathMatch: "full"
   },
   {
-    path: "register",
-    loadComponent: () => import("./chunk-L5UJXZ77.js").then((m) => m.SupplierRegisterComponent),
-    data: { title: "Supplier Registration" }
-  },
-  {
     path: "",
-    loadComponent: () => import("./chunk-EDWEBBPW.js").then((m) => m.DefaultLayoutComponent),
+    loadComponent: () => import("./chunk-C3G3GS7G.js").then((m) => m.DefaultLayoutComponent),
     data: { title: "Home" },
     children: [
       {
@@ -4543,404 +4535,189 @@ var routes = [
         redirectTo: "hierarchy-dashboard",
         pathMatch: "full"
       },
+      // ==================================================================
+      // DASHBOARDS
+      // ==================================================================
+      {
+        path: "orgadmin-dashboard",
+        loadComponent: () => import("./chunk-5Z6MVN2T.js").then((m) => m.OrgAdminDashboardComponent),
+        data: {
+          title: "Admin Dashboard",
+          roles: ["ORGANIZATION_ADMIN"]
+        }
+      },
       {
         path: "hierarchy-dashboard",
-        loadComponent: () => import("./chunk-MSEHPCRQ.js").then((m) => m.HierarchyDashboardComponent),
+        loadComponent: () => import("./chunk-CUO7W4TE.js").then((m) => m.HierarchyDashboardComponent),
         data: {
           title: "Dashboard",
           roles: ["CEO", "COO", "MANAGER", "PROCUREMENT", "FINANCE", "ADMIN"]
         }
       },
-      // ✅ NEW: Legal Team dashboard — contracts only, no RFQ/PO/Supplier overview
-      {
-        path: "legal-dashboard",
-        loadComponent: () => import("./chunk-C3UHMZI7.js").then((m) => m.LegalDashboardComponent),
-        data: {
-          title: "Legal Dashboard",
-          roles: ["LEGAL"]
-        }
-      },
-      {
-        path: "change-password",
-        loadComponent: () => import("./chunk-QAR5P2KX.js").then((m) => m.ChangePasswordComponent),
-        data: { title: "Change Password" }
-      },
-      {
-        path: "superadmin-dashboard",
-        loadComponent: () => import("./chunk-KBVEXS5P.js").then((m) => m.SuperAdminDashboardComponent),
-        data: {
-          title: "Super Admin Dashboard",
-          roles: ["SUPER_ADMIN"]
-        }
-      },
-      {
-        path: "orgadmin-dashboard",
-        loadComponent: () => import("./chunk-3G23AOKJ.js").then((m) => m.OrgAdminDashboardComponent),
-        data: {
-          title: "Organization Admin Dashboard",
-          roles: ["ORGANIZATION_ADMIN"]
-        }
-      },
-      {
-        path: "hierarchy-levels",
-        loadComponent: () => import("./chunk-AJ4U7JYQ.js").then((m) => m.HierarchyLevelManagementComponent),
-        data: {
-          title: "Hierarchy Levels",
-          roles: ["ORGANIZATION_ADMIN"]
-        }
-      },
-      {
-        path: "hierarchy-users",
-        loadComponent: () => import("./chunk-PKC7M5LK.js").then((m) => m.HierarchyUserManagementComponent),
-        data: {
-          title: "Hierarchy Users",
-          roles: ["ORGANIZATION_ADMIN"]
-        }
-      },
-      {
-        path: "reporting-structure",
-        loadComponent: () => import("./chunk-F4ZNWDLD.js").then((m) => m.ReportingStructureComponent),
-        data: {
-          title: "Reporting Structure",
-          roles: ["ORGANIZATION_ADMIN"]
-        }
-      },
-      {
-        path: "approval-flow-config",
-        loadComponent: () => import("./chunk-BGYOADVE.js").then((m) => m.ApprovalFlowConfigComponent),
-        data: {
-          title: "Approval Configuration",
-          roles: ["ORGANIZATION_ADMIN"]
-        }
-      },
       {
         path: "supplier-dashboard",
-        loadComponent: () => import("./chunk-YC3SZIWC.js").then((m) => m.SupplierDashboardComponent),
+        loadComponent: () => import("./chunk-QZ3IAFFV.js").then((m) => m.SupplierDashboardComponent),
         data: {
           title: "Supplier Dashboard",
           roles: ["ROLE_SUPPLIER"]
         }
       },
       {
-        path: "dashboard",
-        loadChildren: () => import("./chunk-NJEWQU7R.js").then((m) => m.routes),
+        path: "supplier-reports",
+        loadComponent: () => import("./chunk-HKM34M6V.js").then((m) => m.SupplierReportsComponent),
         data: {
-          roles: ["ADMIN", "CEO", "COO", "PROCUREMENT", "FINANCE"]
+          title: "Reports",
+          roles: ["ROLE_SUPPLIER"]
         }
       },
-      {
-        path: "lead-create",
-        loadChildren: () => import("./chunk-J3JE27LE.js").then((m) => m.routes),
-        data: {
-          roles: ["ADMIN", "CEO", "COO", "PROCUREMENT", "FINANCE"]
-        }
-      },
-      {
-        path: "pending-approvals",
-        loadChildren: () => import("./chunk-BCX5HKEW.js").then((m) => m.routes),
-        data: {
-          roles: ["CEO", "COO", "PROCUREMENT", "MANAGER", "ADMIN"]
-        }
-      },
-      { path: "ceo-dashboard", redirectTo: "hierarchy-dashboard", pathMatch: "full" },
-      { path: "coo-dashboard", redirectTo: "hierarchy-dashboard", pathMatch: "full" },
-      { path: "procurement-dashboard", redirectTo: "hierarchy-dashboard", pathMatch: "full" },
-      { path: "manager-dashboard", redirectTo: "hierarchy-dashboard", pathMatch: "full" },
-      // ✅ NEW: Finance Dashboard (Budget Management module for FINANCE users)
-      {
-        path: "finance-dashboard",
-        loadComponent: () => import("./chunk-NL45XPVE.js").then((m) => m.FinanceDashboardComponent),
-        data: {
-          title: "Finance Dashboard",
-          roles: ["FINANCE"]
-        }
-      },
-      // ✅ NEW: Budget Dashboard for RFQ Creators (buyers)
-      {
-        path: "budget-dashboard",
-        loadComponent: () => import("./chunk-E6CUNN5E.js").then((m) => m.BudgetDashboardComponent),
-        data: {
-          title: "My Department Budget",
-          roles: ["ROLE_BUYER"]
-        }
-      },
-      // ✅ NEW: Budget Increase Request (RFQ creator, when RFQ exceeds budget)
-      {
-        path: "budget-increase-request/:rfqId",
-        loadComponent: () => import("./chunk-SJTSZHJQ.js").then((m) => m.BudgetIncreaseRequestComponent),
-        data: {
-          title: "Request Budget Increase",
-          roles: ["ROLE_BUYER"]
-        }
-      },
-      // ✅ NEW: Budget Increase Request from a PO (when PO amount exceeds budget)
-      {
-        path: "budget-increase-request-po/:poId",
-        loadComponent: () => import("./chunk-SJTSZHJQ.js").then((m) => m.BudgetIncreaseRequestComponent),
-        data: {
-          title: "Request Budget Increase",
-          roles: ["ROLE_BUYER"]
-        }
-      },
-      // ✅ NEW: Budget Increase Approvals (hierarchy users above Finance)
-      {
-        path: "budget-approvals",
-        loadComponent: () => import("./chunk-OUQEP5MT.js").then((m) => m.BudgetApprovalsComponent),
-        data: {
-          title: "Budget Increase Approvals",
-          roles: ["CEO", "COO", "PROCUREMENT", "MANAGER", "ADMIN"]
-        }
-      },
-      {
-        path: "rfq-dashboard",
-        loadChildren: () => import("./chunk-RT5YD6G3.js").then((m) => m.routes),
-        data: { roles: ["ROLE_BUYER"] }
-      },
-      {
-        path: "create-rfq",
-        loadChildren: () => import("./chunk-IW7MG2OC.js").then((m) => m.routes),
-        data: { roles: ["ROLE_BUYER"] }
-      },
-      {
-        path: "quote-comparison",
-        loadChildren: () => import("./chunk-KL345NKO.js").then((m) => m.routes),
-        data: {
-          roles: ["ROLE_BUYER"],
-          title: "Quote Comparison"
-        }
-      },
-      {
-        path: "supplier-quote",
-        loadChildren: () => import("./chunk-NKH2CS5H.js").then((m) => m.routes),
-        data: {
-          roles: ["ROLE_SUPPLIER"],
-          title: "Submit Quote"
-        }
-      },
-      {
-        path: "supplier-evaluation",
-        loadChildren: () => import("./chunk-64OOLING.js").then((m) => m.routes),
-        data: {
-          roles: ["ROLE_BUYER"],
-          title: "Evaluate Suppliers"
-        }
-      },
-      // ✅ NEW: Supplier Final Selection (after evaluation)
-      {
-        path: "supplier-selection/:rfqId",
-        loadComponent: () => import("./chunk-6UUYPBNE.js").then((m) => m.SupplierSelectionComponent),
-        data: {
-          title: "Select Supplier",
-          roles: ["ROLE_BUYER"]
-        }
-      },
-      // ✅ NEW: PO Price Negotiation (after supplier selection)
-      {
-        path: "po-negotiation/:rfqId/:supplierId/:selectionId",
-        loadComponent: () => import("./chunk-6C62IA5D.js").then((m) => m.PONegotiationComponent),
-        data: {
-          title: "PO Price Negotiation",
-          roles: ["ROLE_BUYER"]
-        }
-      },
-      // Purchase Order Routes
+      // ==================================================================
+      // PO MANAGEMENT
+      // ==================================================================
       {
         path: "po-list",
-        loadComponent: () => import("./chunk-Z6T7TVF2.js").then((m) => m.POListComponent),
+        loadComponent: () => import("./chunk-7ZJ3E57I.js").then((m) => m.POListComponent),
         data: {
           title: "Purchase Orders",
-          roles: ["ROLE_BUYER"]
+          roles: ["PROCUREMENT_OPERATOR", "ROLE_SUPPLIER"]
+        }
+      },
+      {
+        path: "po-create",
+        loadComponent: () => import("./chunk-DNC6OCWV.js").then((m) => m.PoCreateComponent),
+        data: {
+          title: "Create Purchase Order",
+          roles: ["PROCUREMENT_OPERATOR"]
+        }
+      },
+      {
+        path: "po-edit/:id",
+        loadComponent: () => import("./chunk-DNC6OCWV.js").then((m) => m.PoCreateComponent),
+        data: {
+          title: "Edit Purchase Order",
+          roles: ["PROCUREMENT_OPERATOR"]
         }
       },
       {
         path: "po-details/:id",
-        loadComponent: () => import("./chunk-O6B7NZ7R.js").then((m) => m.PODetailsComponent),
+        loadComponent: () => import("./chunk-XC24IG45.js").then((m) => m.PODetailsComponent),
         data: {
           title: "Purchase Order Details",
-          roles: ["ROLE_BUYER"]
+          roles: ["PROCUREMENT_OPERATOR", "ROLE_SUPPLIER", "CEO", "COO", "MANAGER", "PROCUREMENT", "FINANCE"]
         }
       },
-      // ✅ NEW: GRN Routes (Goods Receipt Note)
       {
-        path: "grn-list",
-        loadComponent: () => import("./chunk-2HQYMA2R.js").then((m) => m.GrnListComponent),
+        path: "po-closure",
+        loadComponent: () => import("./chunk-XGKHSJC4.js").then((m) => m.PoClosureComponent),
         data: {
-          title: "Goods Receipt Notes",
-          roles: ["ROLE_BUYER"]
+          title: "PO Closure",
+          roles: ["PROCUREMENT_OPERATOR"]
         }
       },
+      // ==================================================================
+      // APPROVALS — PO only
+      // ==================================================================
       {
-        path: "grn-create",
-        loadComponent: () => import("./chunk-IUGKBVSX.js").then((m) => m.GrnCreateComponent),
+        path: "pending-approvals",
+        loadChildren: () => import("./chunk-FCX552EG.js").then((m) => m.routes),
         data: {
-          title: "Create GRN",
-          roles: ["ROLE_BUYER"]
+          roles: ["ORGANIZATION_ADMIN", "CEO", "COO", "PROCUREMENT", "MANAGER", "FINANCE", "ADMIN"]
         }
       },
-      {
-        path: "grn-view/:id",
-        loadComponent: () => import("./chunk-2HQYMA2R.js").then((m) => m.GrnListComponent),
-        data: {
-          title: "View GRN",
-          roles: ["ROLE_BUYER"]
-        }
-      },
-      {
-        path: "grn-qa/:id",
-        loadComponent: () => import("./chunk-DMB6RL2U.js").then((m) => m.GrnQaComponent),
-        data: {
-          title: "View GRN",
-          roles: ["ROLE_BUYER"]
-        }
-      },
-      // ✅ NEW: 3-Way Match Route
-      {
-        path: "three-way-match",
-        loadComponent: () => import("./chunk-GQKTBQBL.js").then((m) => m.ThreeWayMatchComponent),
-        data: {
-          title: "3-Way Match",
-          roles: ["ROLE_BUYER"]
-        }
-      },
-      {
-        path: "create-b",
-        loadChildren: () => import("./chunk-AYJRPZGV.js").then((m) => m.routes),
-        data: { roles: ["ORGANIZATION_ADMIN"] }
-      },
-      {
-        path: "create-s",
-        loadChildren: () => import("./chunk-5JC6LFAU.js").then((m) => m.routes),
-        data: { roles: ["ADMIN", "ORGANIZATION_ADMIN"] }
-      },
-      {
-        path: "evaluation-criteria",
-        loadComponent: () => import("./chunk-F3PE3V4X.js").then((m) => m.EvaluationCriteriaComponent),
-        data: {
-          title: "Evaluation Criteria Management",
-          roles: ["ORGANIZATION_ADMIN"]
-        }
-      },
-      {
-        path: "registration-questionnaire",
-        loadComponent: () => import("./chunk-XYD4SR6I.js").then((m) => m.RegistrationQuestionnaireComponent),
-        data: {
-          title: "Registration Questionnaire",
-          roles: ["ORGANIZATION_ADMIN"]
-        }
-      },
-      {
-        path: "risk-questions",
-        loadComponent: () => import("./chunk-XJXZSXIW.js").then((m) => m.RiskQuestionsComponent),
-        data: {
-          title: "Risk Assessment Questions",
-          roles: ["ORGANIZATION_ADMIN"]
-        }
-      },
-      {
-        path: "supplier-risk-dashboard",
-        loadComponent: () => import("./chunk-K2JKGKEL.js").then((m) => m.SupplierRiskDashboardComponent),
-        data: {
-          title: "Supplier Risk Dashboard",
-          roles: ["ORGANIZATION_ADMIN"]
-        }
-      },
-      {
-        path: "rfi-dashboard",
-        loadComponent: () => import("./chunk-XYAX7UKO.js").then((m) => m.RfiDashboardComponent),
-        data: { title: "RFI Dashboard", roles: ["ROLE_BUYER"] }
-      },
-      {
-        path: "rfi-create",
-        loadComponent: () => import("./chunk-UPYYTNB7.js").then((m) => m.RfiCreateComponent),
-        data: { title: "Create RFI", roles: ["ROLE_BUYER"] }
-      },
-      {
-        path: "rfi-responses/:rfiId",
-        loadComponent: () => import("./chunk-WLYIJ2UA.js").then((m) => m.RfiResponsesComponent),
-        data: { title: "RFI Responses", roles: ["ROLE_BUYER"] }
-      },
-      {
-        path: "rfi-inbox",
-        loadComponent: () => import("./chunk-CCH43ASV.js").then((m) => m.RfiInboxComponent),
-        data: { title: "RFI Inbox", roles: ["ROLE_SUPPLIER"] }
-      },
-      {
-        path: "rfi-response/:rfiId",
-        loadComponent: () => import("./chunk-57OWONMN.js").then((m) => m.RfiResponseFormComponent),
-        data: { title: "Respond to RFI", roles: ["ROLE_SUPPLIER"] }
-      },
-      // ✅ NEW: ASN (Advance Shipping Notice) tracking
-      {
-        path: "asn-create",
-        loadComponent: () => import("./chunk-CYJ7O7MU.js").then((m) => m.AsnCreateComponent),
-        data: { title: "Create ASN", roles: ["ROLE_SUPPLIER"] }
-      },
-      {
-        path: "asn-list",
-        loadComponent: () => import("./chunk-W33Z4V5H.js").then((m) => m.AsnListComponent),
-        data: { title: "My Shipments", roles: ["ROLE_SUPPLIER"] }
-      },
-      {
-        path: "asn-tracking",
-        loadComponent: () => import("./chunk-ALZQNM2N.js").then((m) => m.AsnTrackingComponent),
-        data: { title: "ASN Tracking", roles: ["ROLE_BUYER"] }
-      },
-      {
-        path: "contract-create/:rfqId/:supplierId",
-        loadComponent: () => import("./chunk-KZ32FRZF.js").then((m) => m.ContractCreateComponent),
-        data: { title: "Create Contract", roles: ["ROLE_BUYER"] }
-      },
-      {
-        path: "contract-list",
-        loadComponent: () => import("./chunk-DEUAQKCV.js").then((m) => m.ContractListComponent),
-        data: { title: "Contracts", roles: ["ROLE_BUYER"] }
-      },
-      {
-        path: "contract-detail/:contractId",
-        loadComponent: () => import("./chunk-MDLCUGYR.js").then((m) => m.ContractDetailComponent),
-        data: { title: "Contract", roles: ["ROLE_BUYER", "ROLE_SUPPLIER"] }
-      },
-      {
-        path: "contract-approvals",
-        loadComponent: () => import("./chunk-K45X65SE.js").then((m) => m.ContractApprovalsComponent),
-        data: { title: "Contract Approvals", roles: ["CEO", "COO", "PROCUREMENT", "MANAGER", "ADMIN", "LEGAL"] }
-      },
-      {
-        path: "contract-inbox",
-        loadComponent: () => import("./chunk-BYS3FTHG.js").then((m) => m.ContractInboxComponent),
-        data: { title: "My Contracts", roles: ["ROLE_SUPPLIER"] }
-      },
-      {
-        path: "rfq-feedback/:rfqId",
-        loadComponent: () => import("./chunk-YKPYFPV5.js").then((m) => m.RfqFeedbackComponent),
-        data: {
-          title: "Supplier Performance Feedback",
-          roles: ["ROLE_BUYER"]
-        }
-      },
+      // ==================================================================
+      // INVOICES & PAYMENT
+      // ==================================================================
       {
         path: "invoices",
-        loadComponent: () => import("./chunk-PNH6YNZP.js").then((m) => m.BuyerInvoicesComponent),
+        loadComponent: () => import("./chunk-5EQUVR7M.js").then((m) => m.BuyerInvoicesComponent),
         data: {
           title: "Invoice Management",
-          roles: ["ROLE_BUYER"]
+          roles: ["PROCUREMENT_OPERATOR"]
         }
+      },
+      {
+        path: "payment-tracking",
+        loadComponent: () => import("./chunk-6LTMSQVN.js").then((m) => m.PaymentTrackingComponent),
+        data: {
+          title: "Payment Tracking",
+          roles: ["PROCUREMENT_OPERATOR"]
+        }
+      },
+      {
+        path: "status-tracking",
+        loadComponent: () => import("./chunk-UPVDUMOK.js").then((m) => m.StatusTrackingComponent),
+        data: {
+          title: "Status Tracking",
+          roles: ["PROCUREMENT_OPERATOR"]
+        }
+      },
+      // ==================================================================
+      // MASTER DATA & USERS
+      // ==================================================================
+      {
+        path: "create-s",
+        loadChildren: () => import("./chunk-WMSQPSKU.js").then((m) => m.routes),
+        data: { roles: ["PROCUREMENT_OPERATOR"] }
+      },
+      // 'create-b' (Buyer Companies) route removed — this is a single-buyer app, so there is
+      // nothing left to register. The component files stay on disk; only the route is gone.
+      // 'hierarchy-levels', 'reporting-structure' and 'approval-flow-config' routes removed —
+      // all three are specific to the approval hierarchy, and there is no approval step left
+      // to configure (see PurchaseOrder.isReleasable()). Component files stay on disk.
+      {
+        path: "hierarchy-users",
+        loadComponent: () => import("./chunk-EJROQGKC.js").then((m) => m.HierarchyUserManagementComponent),
+        data: {
+          title: "Manage Users",
+          roles: ["ORGANIZATION_ADMIN"]
+        }
+      },
+      // ==================================================================
+      // REPORTS & AUDIT
+      // ==================================================================
+      {
+        path: "spend-analysis",
+        loadComponent: () => import("./chunk-ESH4XGDF.js").then((m) => m.SpendAnalysisComponent),
+        data: {
+          title: "Reports",
+          roles: ["ORGANIZATION_ADMIN", "PROCUREMENT_OPERATOR"]
+        }
+      },
+      {
+        path: "audit-log",
+        loadComponent: () => import("./chunk-WTI5OW2Y.js").then((m) => m.AuditLogComponent),
+        data: {
+          title: "Audit Log",
+          roles: ["ORGANIZATION_ADMIN", "PROCUREMENT_OPERATOR"]
+        }
+      },
+      // ==================================================================
+      // ACCOUNT
+      // ==================================================================
+      {
+        path: "change-password",
+        loadComponent: () => import("./chunk-FRP3KG6A.js").then((m) => m.ChangePasswordComponent),
+        data: { title: "Change Password" }
       }
     ]
   },
   {
     path: "login",
-    loadComponent: () => import("./chunk-MLRNDBNI.js").then((m) => m.LoginComponent),
+    loadComponent: () => import("./chunk-RNVKUZJA.js").then((m) => m.LoginComponent),
     data: { title: "Login Page" }
   },
+  // "Forgot password" lives as a modal directly on the login page (see login.component.ts's
+  // fpStep state machine) — no separate route needed.
+  //
+  // The public /register route for supplier self-registration has been removed: suppliers
+  // are created by the Admin, and its gateway allowlist entries went with it.
   {
     path: "404",
-    loadComponent: () => import("./chunk-A3MHY3X4.js").then((m) => m.Page404Component),
+    loadComponent: () => import("./chunk-UOSU2YI2.js").then((m) => m.Page404Component),
     data: { title: "Page Not Found" }
   },
   {
     path: "500",
-    loadComponent: () => import("./chunk-WDJXDMJV.js").then((m) => m.Page500Component),
+    loadComponent: () => import("./chunk-ZD2V2EXH.js").then((m) => m.Page500Component),
     data: { title: "Server Error" }
   },
   { path: "**", redirectTo: "404" }

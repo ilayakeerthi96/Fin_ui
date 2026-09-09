@@ -548,12 +548,11 @@ export class POListComponent implements OnInit {
   ) {}
 
   ngOnInit(): void {
-    this.buyerId = Number(localStorage.getItem('buyerId'));
-    if (!this.buyerId || isNaN(this.buyerId)) {
-      this.messageService.showMessage('error', 'Error', 'Buyer ID not found. Please login again.');
-      this.router.navigate(['/login']);
-      return;
-    }
+    const raw = Number(localStorage.getItem('buyerId'));
+    this.buyerId = raw && !isNaN(raw) ? raw : null;
+    // Admin (ORGANIZATION_ADMIN) has no buyerId — that key is only set for buyer-type
+    // logins. loadPurchaseOrders() already handles the null case by fetching all POs;
+    // loadLoggedInBuyer() already guards itself with `if (!this.buyerId) return;`.
     this.buildFinancialYearOptions();
     this.selectedFYOption = this.getCurrentFYValue();
     this.updateActiveDateRangeLabel();
@@ -842,14 +841,29 @@ export class POListComponent implements OnInit {
   //  PURCHASE ORDERS
   // =========================================================================
 
+  /**
+   * Loads the PO list for whoever is signed in.
+   *
+   * The Admin has no buyerId — that identifier belongs to a buyer login, and the Admin is a
+   * different account entirely — so scoping this to a buyer would have shown them an empty
+   * list with no error. When there is no buyerId we fetch every PO instead, which is exactly
+   * what the Admin is meant to see; a buyer login keeps its existing buyer-scoped query.
+   */
   loadPurchaseOrders(): void {
-    if (!this.buyerId) return;
     this.isLoading = true;
 
-    this.dataService.getPurchaseOrdersByBuyer(this.buyerId).subscribe({
+    const request = this.buyerId
+      ? this.dataService.getPurchaseOrdersByBuyer(this.buyerId)
+      : this.dataService.getAllPurchaseOrders();
+
+    request.subscribe({
       next: (response: any) => {
-        if (response && response.success) {
+        if (Array.isArray(response)) {
+          this.purchaseOrders = response;
+        } else if (response && response.success) {
           this.purchaseOrders = response.data || [];
+        } else if (Array.isArray(response?.data)) {
+          this.purchaseOrders = response.data;
         } else {
           this.purchaseOrders = [];
         }
@@ -1102,8 +1116,82 @@ export class POListComponent implements OnInit {
     });
   }
 
-  goToQuoteComparison(): void { this.router.navigate(['/rfq-dashboard']); }
-  goBack(): void { this.router.navigate(['/rfq-dashboard']); }
+  /**
+   * POs are typed in by the Admin now rather than derived from a quote comparison, so this
+   * points at the manual PO form. The method name is kept because the empty-state markup
+   * still calls it.
+   */
+  goToQuoteComparison(): void { this.router.navigate(['/po-create']); }
+
+  /** RFQ dashboard is gone; the PO list is this screen's own home. */
+  goBack(): void { this.router.navigate(['/po-list']); }
+
+  createPO(): void { this.router.navigate(['/po-create']); }
+
+  editPO(po: any): void { this.router.navigate(['/po-edit', po.id]); }
+
+  /** Only DRAFT and returned POs can be edited — the same rule the API enforces. */
+  canEdit(po: any): boolean {
+    return po?.status === 'DRAFT' || po?.status === 'RETURNED_FOR_REVISION';
+  }
+
+  /**
+   * There is no approval step: a freshly created PO releases straight to the supplier, one
+   * click, no intermediate state. DRAFT and RETURNED_FOR_REVISION (from before this change)
+   * both qualify; APPROVED is kept only so a PO created under the old flow still has a way
+   * out.
+   */
+  canRelease(po: any): boolean {
+    return po?.status === 'DRAFT' || po?.status === 'RETURNED_FOR_REVISION' || po?.status === 'APPROVED';
+  }
+
+  releasingId: number | null = null;
+
+  /**
+   * Releases a PO to the supplier — the moment they can see it and raise an invoice against
+   * it. No approval step precedes this: the PO goes straight from DRAFT to RELEASED.
+   */
+  releasePO(po: any): void {
+    if (!this.canRelease(po)) {
+      this.messageService.showMessage('warning', 'Cannot release',
+        'PO ' + po.poNumber + ' is ' + po.status + ' and cannot be released from this status.');
+      return;
+    }
+
+    this.releasingId = po.id;
+    this.dataService.releasePO(po.id, '').subscribe({
+      next: () => {
+        this.releasingId = null;
+        this.messageService.showMessage('success', 'PO released',
+          po.poNumber + ' has been released. The supplier can now see it and invoice against it.');
+        this.loadPurchaseOrders();
+      },
+      error: (err: any) => {
+        this.releasingId = null;
+        this.messageService.showMessage('error', 'Release failed',
+          err?.error?.message || 'The PO could not be released.');
+      }
+    });
+  }
+
+  /** Colour for the PO-level payment roll-up badge. */
+  paymentBadgeClass(status: string): string {
+    switch (status) {
+      case 'PAID':           return 'bg-success';
+      case 'PARTIALLY_PAID': return 'bg-warning text-dark';
+      default:               return 'bg-secondary';
+    }
+  }
+
+  /** "Unpaid" reads like something's wrong; it's just the normal starting state for a PO
+   *  that hasn't reached payment yet. */
+  paymentStatusLabel(status: string): string {
+    switch (status) {
+      case 'PAID':           return 'Paid';
+      case 'PARTIALLY_PAID': return 'Partially Paid';
+      default:               return 'Awaiting Payment';
+    }
+  }
 
   // =========================================================================
   //  HELPERS

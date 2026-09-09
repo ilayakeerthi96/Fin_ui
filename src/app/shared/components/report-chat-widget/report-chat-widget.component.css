@@ -1,0 +1,185 @@
+/* ============================================================================
+   Report Assistant — floating widget, bottom-left corner, every page.
+   The sidebar is a fixed panel on that same left edge at z-index 1035 (CoreUI's
+   --cui-sidebar-zindex) — anything lower would render UNDER it and vanish
+   behind the sidebar entirely, exactly the same class of bug as the
+   MessageService/CoreUI-modal stacking issue fixed earlier in styles.scss.
+   1045 clears the sidebar while staying below CoreUI modals (1055) and the
+   MatDialog alert layer (2000), so an open modal or alert still wins.
+   ============================================================================ */
+
+.widget-root {
+  position: fixed;
+  right: 24px;
+  bottom: 24px;
+  z-index: 1045;
+}
+
+.launcher-btn {
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  border: none;
+  background: #4f46e5;
+  color: #ffffff;
+  font-size: 1.4rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  box-shadow: 0 4px 16px rgba(79, 70, 229, 0.35);
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.launcher-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(79, 70, 229, 0.45);
+}
+
+.widget-panel {
+  width: 360px;
+  max-width: calc(100vw - 48px);
+  max-height: 70vh;
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 14px;
+  box-shadow: 0 12px 40px rgba(15, 23, 42, 0.18);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.widget-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 16px;
+  background: #4f46e5;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+.widget-header-left {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+}
+
+.widget-avatar {
+  width: 34px;
+  height: 34px;
+  border-radius: 9px;
+  background: rgba(255, 255, 255, 0.18);
+  color: #ffffff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.95rem;
+  flex-shrink: 0;
+}
+
+.widget-title { font-weight: 700; font-size: 0.88rem; color: #ffffff; }
+.widget-subtitle { font-size: 0.7rem; color: rgba(255, 255, 255, 0.8); margin-top: 1px; }
+
+.minimise-btn {
+  width: 26px;
+  height: 26px;
+  border-radius: 6px;
+  border: none;
+  background: rgba(255, 255, 255, 0.15);
+  color: #ffffff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+.minimise-btn:hover { background: rgba(255, 255, 255, 0.28); }
+
+.widget-scroll {
+  flex: 1;
+  overflow-y: auto;
+  padding: 14px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  background: #f8fafc;
+  min-height: 200px;
+}
+
+.widget-row { display: flex; }
+.widget-row-user { justify-content: flex-end; }
+
+.widget-bubble {
+  max-width: 85%;
+  padding: 9px 12px;
+  border-radius: 12px;
+  font-size: 0.82rem;
+  line-height: 1.45;
+}
+
+.bubble-bot {
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  color: #0f172a;
+  border-bottom-left-radius: 4px;
+}
+
+.bubble-user {
+  background: #4f46e5;
+  color: #ffffff;
+  border-bottom-right-radius: 4px;
+}
+
+.widget-highlight {
+  font-size: 1.15rem;
+  font-weight: 800;
+  color: #4f46e5;
+  margin-top: 5px;
+}
+
+.widget-rows {
+  margin-top: 7px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.widget-row-item {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  font-size: 0.76rem;
+  padding: 3px 0;
+}
+
+.widget-row-label { color: #64748b; }
+.widget-row-value { font-weight: 600; color: #0f172a; }
+
+.widget-row-clickable {
+  color: #4f46e5;
+  cursor: pointer;
+  padding: 5px 9px;
+  background: #eef2ff;
+  border-radius: 8px;
+  transition: background 0.15s ease;
+}
+.widget-row-clickable:hover { background: #e0e7ff; }
+
+.widget-input-bar {
+  display: flex;
+  gap: 8px;
+  padding: 12px 14px;
+  border-top: 1px solid #e2e8f0;
+  background: #ffffff;
+  flex-shrink: 0;
+}
+
+.widget-input-bar input { font-size: 0.82rem; }
+.widget-input-bar .btn { flex-shrink: 0; }
+
+@media (max-width: 480px) {
+  .widget-root { right: 12px; bottom: 12px; }
+  .widget-panel { width: calc(100vw - 24px); }
+}

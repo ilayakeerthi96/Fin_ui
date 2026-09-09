@@ -1,0 +1,154 @@
+<c-container fluid class="audit-log">
+
+  <c-row class="mb-3">
+    <c-col [md]="8">
+      <h4 class="page-title mb-1">Audit Log</h4>
+      <p class="page-subtitle mb-0">
+        Every action recorded across POs, invoices, payments, suppliers and users.
+        Entries are append-only and cannot be edited or deleted.
+      </p>
+    </c-col>
+    <c-col [md]="4" class="text-end">
+      <span class="text-muted small">{{ rangeLabel }}</span>
+    </c-col>
+  </c-row>
+
+  <!-- ===================== FILTERS ===================== -->
+  <c-card class="mb-3">
+    <c-card-body>
+      <c-row class="align-items-end">
+        <c-col [md]="2" class="mb-2">
+          <label class="form-label">Type</label>
+          <select class="form-select form-select-sm" [(ngModel)]="filters.entityType" name="entityType">
+            <option *ngFor="let o of entityTypeOptions" [value]="o.value">{{ o.label }}</option>
+          </select>
+        </c-col>
+        <c-col [md]="3" class="mb-2">
+          <label class="form-label">Action</label>
+          <select class="form-select form-select-sm" [(ngModel)]="filters.action" name="action">
+            <option *ngFor="let a of actionOptions" [value]="a">{{ a || 'All actions' }}</option>
+          </select>
+        </c-col>
+        <c-col [md]="3" class="mb-2">
+          <label class="form-label">User email</label>
+          <input class="form-control form-control-sm" [(ngModel)]="filters.actorEmail"
+                 name="actorEmail" placeholder="e.g. admin@itti.com">
+        </c-col>
+        <c-col [md]="2" class="mb-2">
+          <label class="form-label">From</label>
+          <input type="date" class="form-control form-control-sm"
+                 [(ngModel)]="filters.fromDate" name="fromDate">
+        </c-col>
+        <c-col [md]="2" class="mb-2">
+          <label class="form-label">To</label>
+          <input type="date" class="form-control form-control-sm"
+                 [(ngModel)]="filters.toDate" name="toDate">
+        </c-col>
+      </c-row>
+      <div class="mt-2">
+        <button cButton color="primary" size="sm" class="me-2" (click)="applyFilters()">Search</button>
+        <button cButton color="secondary" variant="outline" size="sm" (click)="clearFilters()">Clear</button>
+      </div>
+    </c-card-body>
+  </c-card>
+
+  <div class="alert alert-danger" *ngIf="errorMessage">{{ errorMessage }}</div>
+
+  <!-- ===================== RESULTS ===================== -->
+  <c-card>
+    <c-card-header><strong>Entries</strong></c-card-header>
+    <c-card-body class="p-0">
+
+      <div class="text-center py-5" *ngIf="isLoading">
+        <c-spinner color="primary"></c-spinner>
+        <p class="mt-2 text-muted">Loading audit entries…</p>
+      </div>
+
+      <div class="text-center py-5 text-muted" *ngIf="!isLoading && logs.length === 0">
+        No audit entries match these filters.
+      </div>
+
+      <div class="table-responsive" *ngIf="!isLoading && logs.length > 0">
+        <table class="table table-sm table-hover align-middle mb-0">
+          <thead>
+            <tr>
+              <th style="width:160px">When</th>
+              <th style="width:200px">Who</th>
+              <th style="width:120px">Role</th>
+              <th style="width:230px">Action</th>
+              <th style="width:150px">Type</th>
+              <th>Record</th>
+              <th style="width:90px">Result</th>
+              <th style="width:70px"></th>
+            </tr>
+          </thead>
+          <tbody>
+            <ng-container *ngFor="let log of logs; trackBy: trackById">
+              <tr (click)="showDetail(log)" class="log-row">
+                <td class="text-muted small">{{ log.eventTime | date:'dd MMM yy, HH:mm:ss' }}</td>
+                <td>
+                  <div>{{ log.actorName || '—' }}</div>
+                  <div class="text-muted small">{{ log.actorEmail }}</div>
+                </td>
+                <td><span class="text-muted small">{{ log.actorRole || '—' }}</span></td>
+                <td>
+                  <c-badge [color]="badgeColor(log)">{{ log.action }}</c-badge>
+                </td>
+                <td class="small">{{ log.entityType }}</td>
+                <td class="small">
+                  <span class="fw-semibold">{{ log.entityRef || '—' }}</span>
+                  <span class="text-muted" *ngIf="log.remarks"> — {{ log.remarks }}</span>
+                </td>
+                <td>
+                  <c-badge [color]="log.status === 'SUCCESS' ? 'success' : 'danger'">
+                    {{ log.status }}
+                  </c-badge>
+                </td>
+                <td class="text-center">
+                  <button cButton color="secondary" variant="ghost" size="sm"
+                          *ngIf="hasSnapshot(log)"
+                          [title]="selectedLog === log ? 'Hide values' : 'Show before/after values'">
+                    {{ selectedLog === log ? '▴' : '▾' }}
+                  </button>
+                </td>
+              </tr>
+
+              <!-- Before / after snapshot -->
+              <tr *ngIf="selectedLog === log && hasSnapshot(log)" class="detail-row">
+                <td colspan="8">
+                  <c-row>
+                    <c-col [md]="6">
+                      <div class="snapshot-label">Before</div>
+                      <pre class="snapshot">{{ prettyJson(log.oldValue) }}</pre>
+                    </c-col>
+                    <c-col [md]="6">
+                      <div class="snapshot-label">After</div>
+                      <pre class="snapshot">{{ prettyJson(log.newValue) }}</pre>
+                    </c-col>
+                  </c-row>
+                  <div class="text-muted small mt-2">
+                    IP {{ log.ipAddress || 'unknown' }} · {{ log.userAgent || 'unknown client' }}
+                  </div>
+                </td>
+              </tr>
+            </ng-container>
+          </tbody>
+        </table>
+      </div>
+
+    </c-card-body>
+  </c-card>
+
+  <!-- ===================== PAGING ===================== -->
+  <div class="d-flex justify-content-between align-items-center mt-3"
+       *ngIf="!isLoading && totalPages > 1">
+    <span class="text-muted small">Page {{ page + 1 }} of {{ totalPages }}</span>
+    <div>
+      <button cButton color="secondary" variant="outline" size="sm" class="me-2"
+              [disabled]="page === 0" (click)="prevPage()">Previous</button>
+      <button cButton color="secondary" variant="outline" size="sm"
+              [disabled]="page + 1 >= totalPages" (click)="nextPage()">Next</button>
+    </div>
+  </div>
+
+</c-container>
